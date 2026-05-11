@@ -72,14 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "CIA" },
+      { name: "description", content: "CAI Command Hub is a smart airport dashboard for real-time operational insights and passenger flow management." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "CIA" },
+      { property: "og:description", content: "CAI Command Hub is a smart airport dashboard for real-time operational insights and passenger flow management." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "CIA" },
+      { name: "twitter:description", content: "CAI Command Hub is a smart airport dashboard for real-time operational insights and passenger flow management." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/59a9ce62-8db1-401b-851b-c59c1ef9d869/id-preview-9fc158db--9fa6216e-09f6-43d5-9918-a3fbbd53ab2e.lovable.app-1778489430942.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/59a9ce62-8db1-401b-851b-c59c1ef9d869/id-preview-9fc158db--9fa6216e-09f6-43d5-9918-a3fbbd53ab2e.lovable.app-1778489430942.png" },
     ],
     links: [
       {
