@@ -9,8 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TransportRouteImport } from './routes/transport'
+import { Route as ServicesRouteImport } from './routes/services'
+import { Route as NavigationRouteImport } from './routes/navigation'
+import { Route as HeatmapRouteImport } from './routes/heatmap'
+import { Route as GatesRouteImport } from './routes/gates'
+import { Route as FlightsRouteImport } from './routes/flights'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TransportRoute = TransportRouteImport.update({
+  id: '/transport',
+  path: '/transport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NavigationRoute = NavigationRouteImport.update({
+  id: '/navigation',
+  path: '/navigation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HeatmapRoute = HeatmapRouteImport.update({
+  id: '/heatmap',
+  path: '/heatmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GatesRoute = GatesRouteImport.update({
+  id: '/gates',
+  path: '/gates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlightsRoute = FlightsRouteImport.update({
+  id: '/flights',
+  path: '/flights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +55,116 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/flights': typeof FlightsRoute
+  '/gates': typeof GatesRoute
+  '/heatmap': typeof HeatmapRoute
+  '/navigation': typeof NavigationRoute
+  '/services': typeof ServicesRoute
+  '/transport': typeof TransportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/flights': typeof FlightsRoute
+  '/gates': typeof GatesRoute
+  '/heatmap': typeof HeatmapRoute
+  '/navigation': typeof NavigationRoute
+  '/services': typeof ServicesRoute
+  '/transport': typeof TransportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/flights': typeof FlightsRoute
+  '/gates': typeof GatesRoute
+  '/heatmap': typeof HeatmapRoute
+  '/navigation': typeof NavigationRoute
+  '/services': typeof ServicesRoute
+  '/transport': typeof TransportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/flights'
+    | '/gates'
+    | '/heatmap'
+    | '/navigation'
+    | '/services'
+    | '/transport'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/flights'
+    | '/gates'
+    | '/heatmap'
+    | '/navigation'
+    | '/services'
+    | '/transport'
+  id:
+    | '__root__'
+    | '/'
+    | '/flights'
+    | '/gates'
+    | '/heatmap'
+    | '/navigation'
+    | '/services'
+    | '/transport'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FlightsRoute: typeof FlightsRoute
+  GatesRoute: typeof GatesRoute
+  HeatmapRoute: typeof HeatmapRoute
+  NavigationRoute: typeof NavigationRoute
+  ServicesRoute: typeof ServicesRoute
+  TransportRoute: typeof TransportRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/transport': {
+      id: '/transport'
+      path: '/transport'
+      fullPath: '/transport'
+      preLoaderRoute: typeof TransportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/navigation': {
+      id: '/navigation'
+      path: '/navigation'
+      fullPath: '/navigation'
+      preLoaderRoute: typeof NavigationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/heatmap': {
+      id: '/heatmap'
+      path: '/heatmap'
+      fullPath: '/heatmap'
+      preLoaderRoute: typeof HeatmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gates': {
+      id: '/gates'
+      path: '/gates'
+      fullPath: '/gates'
+      preLoaderRoute: typeof GatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flights': {
+      id: '/flights'
+      path: '/flights'
+      fullPath: '/flights'
+      preLoaderRoute: typeof FlightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +177,23 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FlightsRoute: FlightsRoute,
+  GatesRoute: GatesRoute,
+  HeatmapRoute: HeatmapRoute,
+  NavigationRoute: NavigationRoute,
+  ServicesRoute: ServicesRoute,
+  TransportRoute: TransportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
