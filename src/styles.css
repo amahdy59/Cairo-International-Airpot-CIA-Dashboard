@@ -137,14 +137,29 @@
   html, body {
     background-color: var(--color-background);
     background-image:
-      linear-gradient(color-mix(in oklab, var(--cyan) 13%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 13%, transparent) 1px, transparent 1px),
-      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 12%, transparent), transparent 28rem);
-    background-size: 44px 44px, 44px 44px, auto;
+      linear-gradient(color-mix(in oklab, var(--cyan) 24%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 24%, transparent) 1px, transparent 1px),
+      linear-gradient(color-mix(in oklab, var(--cyan) 12%, transparent) 2px, transparent 2px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 12%, transparent) 2px, transparent 2px),
+      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 16%, transparent), transparent 30rem);
+    background-size: 32px 32px, 32px 32px, 160px 160px, 160px 160px, auto;
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-display);
     font-feature-settings: "ss01", "cv11";
+  }
+
+  button,
+  a,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    cursor: pointer;
+  }
+
+  input,
+  textarea {
+    cursor: text;
   }
 
   /* Strong, accessible focus state */

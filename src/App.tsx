@@ -274,8 +274,11 @@ export function App() {
             {c.skip}
           </a>
           <div className="flex min-w-0 items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-primary/40 bg-primary/15 glow-cyan">
-              <Plane aria-hidden="true" className="h-4 w-4 text-primary" strokeWidth={2.4} />
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan" aria-hidden="true">
+              <div className="leading-none text-center">
+                <div className="font-mono text-[13px] font-black tracking-tight text-primary">CAI</div>
+                <Plane className="mx-auto mt-0.5 h-3 w-3 text-primary" strokeWidth={2.4} />
+              </div>
             </div>
             <div className="min-w-0 leading-tight">
               <p className="truncate font-mono text-[10px] tracking-[0.22em] text-primary">CAI - CAIRO INTL</p>
@@ -639,22 +642,29 @@ function ManagerDashboard({ language }: { language: Language }) {
             </div>
           </div>
 
-          <SectionPanel title={c.parkingGates} action={<StatusPill tone="ok" icon={<ParkingSquare className="h-3 w-3" />}>2,180</StatusPill>}>
-            <ul className="space-y-2.5 text-sm">
+          <SectionPanel title={c.parkingGates} action={<StatusPill tone="ok" icon={<ParkingSquare className="h-3 w-3" />}>2,180 free</StatusPill>}>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {[
-                { zone: "T3 Pier F", value: 86 },
-                { zone: "T2 Pier B", value: 71 },
-                { zone: "T1 Halls 1-3", value: 54 },
+                { area: "T3 Pier F gates", plain: "Busy boarding bank", used: 86, free: "4 gates free", action: "Hold non-urgent gate swaps", tone: "warn" as Tone },
+                { area: "T2 Pier B gates", plain: "Healthy flow", used: 71, free: "7 gates free", action: "Keep current allocation", tone: "info" as Tone },
+                { area: "T1 parking / halls", plain: "Comfortable capacity", used: 54, free: "980 spaces free", action: "Route overflow here", tone: "ok" as Tone },
               ].map((row) => (
-                <li key={row.zone}>
-                  <div className="flex justify-between text-xs">
-                    <span>{row.zone}</span>
-                    <span className="font-mono text-muted-foreground">{row.value}%</span>
+                <article key={row.area} className="panel-inner p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold">{row.area}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{row.plain}</p>
+                    </div>
+                    <StatusPill tone={row.tone}>{row.used}% used</StatusPill>
                   </div>
-                  <ProgressBar value={row.value} className="mt-1" color={row.value > 80 ? "var(--status-warn)" : "var(--cyan)"} />
-                </li>
+                  <ProgressBar value={row.used} className="mt-3" color={row.used > 80 ? "var(--status-warn)" : "var(--cyan)"} />
+                  <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+                    <span className="font-medium text-foreground">{row.free}</span>
+                    <span className="text-muted-foreground">{row.action}</span>
+                  </div>
+                </article>
               ))}
-            </ul>
+            </div>
           </SectionPanel>
         </div>
       )}
@@ -662,6 +672,7 @@ function ManagerDashboard({ language }: { language: Language }) {
       {tab === "safety" && (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           <DecisionQueue language={language} />
+          <SafetyControls language={language} />
           <SectionPanel title={c.safetyChecks}>
             <ul className="space-y-2">
               {SAFETY_CHECKS.map(({ icon: Icon, label, status, tone, last }) => (
@@ -742,6 +753,33 @@ function DecisionQueue({ language }: { language: Language }) {
           </li>
         ))}
       </ul>
+    </SectionPanel>
+  );
+}
+
+function SafetyControls({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const controls = [
+    { label: isArabic ? "خطر متراكم" : "Accumulation risk", value: isArabic ? "متوسط" : "Medium", detail: isArabic ? "3 ملاحظات مفتوحة أكثر من 24 ساعة" : "3 findings open longer than 24h", tone: "warn" as Tone },
+    { label: isArabic ? "مالك الإجراء" : "Action owner", value: isArabic ? "محدد" : "Assigned", detail: isArabic ? "كل بند سلامة له مسؤول وموعد" : "Every safety item has an owner and due time", tone: "ok" as Tone },
+    { label: isArabic ? "تصعيد تلقائي" : "Auto-escalation", value: isArabic ? "90 دقيقة" : "90 min", detail: isArabic ? "يصعد إذا لم يبدأ الإجراء" : "Escalates if action has not started", tone: "info" as Tone },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "ضوابط منع تراكم المشكلات" : "Controls to prevent issue build-up"}>
+      <div className="grid grid-cols-1 gap-3">
+        {controls.map((control) => (
+          <article key={control.label} className="panel-inner p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">{control.label}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{control.detail}</p>
+              </div>
+              <StatusPill tone={control.tone}>{control.value}</StatusPill>
+            </div>
+          </article>
+        ))}
+      </div>
     </SectionPanel>
   );
 }
