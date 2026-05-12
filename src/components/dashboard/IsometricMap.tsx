@@ -1,188 +1,320 @@
 import { useState } from "react";
-import { Info } from "lucide-react";
+import {
+  Armchair,
+  BadgeInfo,
+  Bus,
+  Car,
+  DoorOpen,
+  Info,
+  Landmark,
+  MapPin,
+  ShieldCheck,
+  Stethoscope,
+  Utensils,
+} from "lucide-react";
 
 /**
- * Isometric depiction of Cairo International Airport (CAI / HECA).
- * Layout reflects real geometry (approximate, not to scale):
- *  - 3 parallel runways oriented ~05/23 (NE-SW): 05L/23R (east), 05C/23C (center), 05R/23L (west)
- *  - T1 (north-east, original 1963 building, refurbished)
- *  - T2 (between T1 and T3, reopened 2021 after rebuild — linear concourse)
- *  - T3 (large, opened 2009, EgyptAir hub, with concourse pier)
- *  - Seasonal / Hajj Terminal (south-west)
- *  - Cargo Village (north)
- *  - Multi-story Parking (front of T3) and surface lots near T1/T2
- *  - APM/shuttle link between T1, T2, T3 (currently bus shuttle)
+ * 2D schematic of Cairo International Airport (CAI / HECA).
+ * Indicative, not to scale. It keeps authentic CAI elements visible:
+ * T1 north of T2/T3, T2 connected to T3, Seasonal/Hajj terminal west of T3,
+ * three parallel 05/23 runways, car parks, APM/terminal transfer, and passenger facilities.
  */
 
-type ZoneId = "T1" | "T2" | "T3" | "ST" | "CARGO" | "PARK" | "RWY" | "APM";
+type ZoneId =
+  | "T1"
+  | "T2"
+  | "T3"
+  | "ST"
+  | "CARGO"
+  | "PARK"
+  | "RWY"
+  | "APM"
+  | "ATM"
+  | "FOOD"
+  | "LOUNGE"
+  | "GATES"
+  | "SERVICES"
+  | "OPS";
+
+type LayerId = "atm" | "food" | "lounges" | "gates" | "services" | "ops";
 
 const ZONE_INFO: Record<ZoneId, { title: string; body: string }> = {
   T1: {
     title: "Terminal 1",
-    body: "Original terminal (1963, refurbished). Hall 1 — international departures (non-EgyptAir). Hall 2/3 — domestic & charter.",
+    body: "Older terminal complex north of T2/T3. It has departure and arrival halls, 12 gates, restaurants, shops, medical services, ATMs and transport access.",
   },
   T2: {
     title: "Terminal 2",
-    body: "Rebuilt and reopened 2022. Star Alliance & SkyTeam partners (excl. EgyptAir). 7.5M pax/yr capacity.",
+    body: "Renovated international terminal connected to T3 by airbridge. It includes check-in, duty free, eateries, lounges, gates and passenger services.",
   },
   T3: {
     title: "Terminal 3",
-    body: "Opened 2009. EgyptAir hub & all Star Alliance EgyptAir flights. Capacity 11M pax/yr. Largest terminal.",
+    body: "Largest passenger terminal and EgyptAir hub. It includes international/domestic processing, pier gates, lounges, shops and connected parking.",
   },
   ST: {
-    title: "Seasonal Terminal (Hajj)",
-    body: "Used during Hajj/Umrah pilgrimage seasons and overflow charter operations.",
+    title: "Seasonal / Hajj Terminal",
+    body: "Seasonal terminal used for pilgrimage and overflow charter operations, west of the main T2/T3 terminal area.",
   },
   CARGO: {
-    title: "Cairo Cargo Village",
-    body: "Dedicated freight terminal — perishables, e-commerce, and aircraft maintenance bays.",
+    title: "Cargo Village",
+    body: "Freight and support area serving cargo, logistics and airport operations away from passenger flows.",
   },
   PARK: {
-    title: "Multi-storey Car Park",
-    body: "≈3,000 covered bays directly in front of T3, with skybridge access.",
+    title: "Car Parking",
+    body: "Airport parking areas connect to the terminals and the airport people mover/transfer route.",
   },
   RWY: {
     title: "Runway System",
-    body: "Three parallel runways: 05L/23R (4,000 m), 05C/23C (3,300 m), 05R/23L (3,180 m).",
+    body: "CAI uses three parallel 05/23 runways. The diagram shows orientation and separation schematically, not at survey scale.",
   },
   APM: {
-    title: "Inter-Terminal Shuttle",
-    body: "Free shuttle bus between T1 ↔ T2 ↔ T3 every 10 minutes. APM (people mover) under construction.",
+    title: "Terminal Transfer / APM",
+    body: "Airport transfer route links T1, car parks, Air Mall and T2/T3. Use it for inter-terminal movement.",
+  },
+  ATM: {
+    title: "Banks / ATM",
+    body: "Banks, ATMs and currency exchange services are listed by Cairo Airport in terminal passenger services.",
+  },
+  FOOD: {
+    title: "Restaurants & Cafeterias",
+    body: "Food and drink areas are available in the passenger terminals, including public and airside zones.",
+  },
+  LOUNGE: {
+    title: "Lounges",
+    body: "Passenger lounges are available in the terminals, including premium lounges in T2/T3 and first class lounge options.",
+  },
+  GATES: {
+    title: "Gate Areas",
+    body: "Gate markers show the main passenger boarding zones: T1 gates, T2 pier gates and T3 pier gates.",
+  },
+  SERVICES: {
+    title: "Passenger Services",
+    body: "Information desks, medical/pharmacy support, baggage wrapping, car rental and reduced-mobility assistance are terminal services.",
+  },
+  OPS: {
+    title: "Manager / Operations Points",
+    body: "Operational markers highlight runway, apron, security and maintenance areas useful for command-center review.",
   },
 };
+
+const LAYERS: Array<{ id: LayerId; label: string; icon: typeof MapPin }> = [
+  { id: "atm", label: "ATM", icon: Landmark },
+  { id: "food", label: "Food", icon: Utensils },
+  { id: "lounges", label: "Lounges", icon: Armchair },
+  { id: "gates", label: "Gates", icon: DoorOpen },
+  { id: "services", label: "Services", icon: BadgeInfo },
+  { id: "ops", label: "Ops", icon: ShieldCheck },
+];
+
+const MARKERS: Array<{
+  id: string;
+  zone: ZoneId;
+  layer: LayerId;
+  x: number;
+  y: number;
+  label: string;
+  icon: typeof MapPin;
+}> = [
+  { id: "atm-t1", zone: "ATM", layer: "atm", x: 654, y: 168, label: "ATM", icon: Landmark },
+  { id: "atm-t2", zone: "ATM", layer: "atm", x: 564, y: 305, label: "ATM", icon: Landmark },
+  { id: "atm-t3", zone: "ATM", layer: "atm", x: 390, y: 390, label: "ATM", icon: Landmark },
+  { id: "food-t1", zone: "FOOD", layer: "food", x: 736, y: 198, label: "Food", icon: Utensils },
+  { id: "food-t2", zone: "FOOD", layer: "food", x: 632, y: 336, label: "Food", icon: Utensils },
+  { id: "food-t3", zone: "FOOD", layer: "food", x: 500, y: 432, label: "Food", icon: Utensils },
+  { id: "lounge-t2", zone: "LOUNGE", layer: "lounges", x: 690, y: 296, label: "Lounge", icon: Armchair },
+  { id: "lounge-t3", zone: "LOUNGE", layer: "lounges", x: 545, y: 366, label: "Lounge", icon: Armchair },
+  { id: "gate-t1", zone: "GATES", layer: "gates", x: 782, y: 150, label: "Gates 1-12", icon: DoorOpen },
+  { id: "gate-t2", zone: "GATES", layer: "gates", x: 724, y: 374, label: "T2 Gates", icon: DoorOpen },
+  { id: "gate-t3", zone: "GATES", layer: "gates", x: 430, y: 518, label: "T3 Pier", icon: DoorOpen },
+  { id: "info-t1", zone: "SERVICES", layer: "services", x: 612, y: 218, label: "Info", icon: BadgeInfo },
+  { id: "medical-t2", zone: "SERVICES", layer: "services", x: 522, y: 346, label: "Medical", icon: Stethoscope },
+  { id: "baggage-t3", zone: "SERVICES", layer: "services", x: 338, y: 434, label: "Services", icon: BadgeInfo },
+  { id: "ops-rwy", zone: "OPS", layer: "ops", x: 834, y: 562, label: "Runway Ops", icon: ShieldCheck },
+  { id: "ops-apron", zone: "OPS", layer: "ops", x: 620, y: 468, label: "Apron", icon: ShieldCheck },
+  { id: "ops-cargo", zone: "OPS", layer: "ops", x: 430, y: 116, label: "Cargo Ops", icon: ShieldCheck },
+];
 
 export function IsometricMap({ className = "", interactive = true }: { className?: string; interactive?: boolean }) {
   const [hover, setHover] = useState<ZoneId | null>(null);
   const [pinned, setPinned] = useState<ZoneId | null>("T3");
+  const [visibleLayers, setVisibleLayers] = useState<Record<LayerId, boolean>>({
+    atm: false,
+    food: false,
+    lounges: false,
+    gates: true,
+    services: false,
+    ops: false,
+  });
   const active = hover ?? pinned;
 
   const handleClick = (id: ZoneId) => interactive && setPinned(id);
   const handleEnter = (id: ZoneId) => interactive && setHover(id);
   const handleLeave = () => interactive && setHover(null);
+  const toggleLayer = (id: LayerId) => setVisibleLayers((current) => ({ ...current, [id]: !current[id] }));
 
   return (
     <div className={`relative panel overflow-hidden ${className}`}>
-      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
 
       <div className="absolute top-3 start-3 z-10 flex items-center gap-2 text-[10px] font-mono tracking-[0.18em] text-primary">
         <span className="h-1.5 w-1.5 rounded-full bg-primary glow-cyan" />
-        CAI · ISOMETRIC
+        CAI - 2D MAP
       </div>
       <div className="absolute top-3 end-3 z-10 text-[10px] font-mono text-muted-foreground">
-        N ↑ · 30.111° N · 31.413° E
+        N up - indicative layout
       </div>
 
-      <svg viewBox="0 0 1100 720" className="w-full h-auto block" role="img" aria-label="Isometric map of Cairo International Airport">
+      <div className="absolute top-10 start-3 end-3 z-20 flex flex-wrap gap-1.5">
+        {LAYERS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => toggleLayer(id)}
+            aria-pressed={visibleLayers[id]}
+            className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors ${
+              visibleLayers[id]
+                ? "border-primary/60 bg-primary/15 text-primary"
+                : "border-border bg-background/75 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <svg viewBox="0 0 1100 720" className="w-full h-auto block" role="img" aria-label="2D map of Cairo International Airport">
         <defs>
-          <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="oklch(0.22 0.04 250)" />
-            <stop offset="1" stopColor="oklch(0.16 0.04 250)" />
+          <linearGradient id="mapGround2d" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="oklch(0.20 0.04 245)" />
+            <stop offset="1" stopColor="oklch(0.15 0.035 250)" />
           </linearGradient>
-          <linearGradient id="rwy" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="oklch(0.26 0.03 250)" />
-            <stop offset="1" stopColor="oklch(0.32 0.03 250)" />
-          </linearGradient>
-          <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="oklch(0.62 0.10 210)" />
-            <stop offset="1" stopColor="oklch(0.42 0.08 240)" />
-          </linearGradient>
-          <linearGradient id="roofWarm" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="oklch(0.70 0.14 80)" />
-            <stop offset="1" stopColor="oklch(0.50 0.10 60)" />
-          </linearGradient>
-          <linearGradient id="side" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="oklch(0.30 0.05 250)" />
-            <stop offset="1" stopColor="oklch(0.22 0.05 250)" />
-          </linearGradient>
+          <filter id="mapGlow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Ground plate (isometric diamond) */}
-        <polygon points="550,40 1080,360 550,680 20,360" fill="url(#ground)" stroke="oklch(0.34 0.05 250)" />
+        <rect x="36" y="78" width="1028" height="584" rx="22" fill="url(#mapGround2d)" stroke="oklch(0.34 0.05 245)" />
+        <path d="M116 612 C252 548, 330 534, 456 564 C618 603, 776 626, 1012 574" fill="none" stroke="oklch(0.28 0.04 245)" strokeWidth="28" opacity="0.55" />
+        <path d="M150 252 C280 210, 398 205, 506 232 C618 260, 738 254, 954 188" fill="none" stroke="oklch(0.28 0.04 245)" strokeWidth="20" opacity="0.4" />
 
-        {/* Compass / north arrow */}
-        <g transform="translate(70 80)">
-          <circle r="22" fill="oklch(0.20 0.04 250)" stroke="oklch(0.40 0.06 250)" />
-          <path d="M0,-16 L6,8 L0,2 L-6,8 Z" fill="var(--cyan)" />
-          <text y="32" textAnchor="middle" fontSize="9" fill="oklch(0.85 0.02 240)" fontFamily="ui-monospace">N</text>
+        <g transform="translate(78 116)">
+          <circle r="22" fill="oklch(0.16 0.04 250)" stroke="oklch(0.42 0.06 245)" />
+          <path d="M0,-16 L6,8 L0,3 L-6,8 Z" fill="var(--cyan)" />
+          <text y="34" textAnchor="middle" fontSize="9" fill="oklch(0.85 0.02 240)" fontFamily="ui-monospace">N</text>
         </g>
 
-        {/* === RUNWAYS (3 parallel, oriented along isometric NE-SW axis) === */}
-        <Runway label="05L / 23R · 4,000 m" x1={120} y1={300} x2={760} y2={620} onEnter={() => handleEnter("RWY")} onLeave={handleLeave} onClick={() => handleClick("RWY")} active={active === "RWY"} />
-        <Runway label="05C / 23C · 3,300 m" x1={210} y1={245} x2={850} y2={565} onEnter={() => handleEnter("RWY")} onLeave={handleLeave} onClick={() => handleClick("RWY")} active={active === "RWY"} />
-        <Runway label="05R / 23L · 3,180 m" x1={300} y1={190} x2={940} y2={510} onEnter={() => handleEnter("RWY")} onLeave={handleLeave} onClick={() => handleClick("RWY")} active={active === "RWY"} />
+        <Runway2D label="05L / 23R" x={148} y={514} w={824} active={active === "RWY"} onEnter={() => handleEnter("RWY")} onLeave={handleLeave} onClick={() => handleClick("RWY")} />
+        <Runway2D label="05C / 23C" x={138} y={570} w={824} active={active === "RWY"} onEnter={() => handleEnter("RWY")} onLeave={handleLeave} onClick={() => handleClick("RWY")} />
+        <Runway2D label="05R / 23L" x={126} y={626} w={824} active={active === "RWY"} onEnter={() => handleEnter("RWY")} onLeave={handleLeave} onClick={() => handleClick("RWY")} />
 
-        {/* Taxiways */}
-        <g stroke="oklch(0.35 0.04 250)" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.85">
-          <path d="M 380 220 L 470 175 L 620 250" />
-          <path d="M 540 300 L 670 235 L 780 290" />
-          <path d="M 700 380 L 830 315" />
+        <g stroke="oklch(0.43 0.045 245)" strokeWidth="8" fill="none" strokeLinecap="round" opacity="0.9">
+          <path d="M614 416 C652 462, 696 488, 742 516" />
+          <path d="M514 394 C554 452, 600 486, 640 536" />
+          <path d="M726 240 C768 326, 816 410, 852 516" />
         </g>
 
-        {/* === CARGO VILLAGE (top) === */}
-        <Building
-          x={380} y={70} w={150} d={70} h={28}
-          label="Cargo Village" small
-          roof="url(#roofWarm)"
-          active={active === "CARGO"}
-          onEnter={() => handleEnter("CARGO")} onLeave={handleLeave} onClick={() => handleClick("CARGO")}
-        />
-
-        {/* === T1 (older, NE side) === */}
-        <Building
-          x={620} y={150} w={140} d={70} h={36}
-          label="T1" sub="Terminal 1"
+        <TerminalBlock
+          id="T1"
+          x={596}
+          y={128}
+          w={238}
+          h={116}
+          label="T1"
+          sub="Terminal 1"
+          color="oklch(0.68 0.15 150)"
           active={active === "T1"}
-          onEnter={() => handleEnter("T1")} onLeave={handleLeave} onClick={() => handleClick("T1")}
+          onEnter={() => handleEnter("T1")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("T1")}
         />
-
-        {/* === T2 (middle, linear concourse) === */}
-        <Building
-          x={500} y={260} w={170} d={62} h={42}
-          label="T2" sub="Terminal 2"
+        <TerminalBlock
+          id="T2"
+          x={500}
+          y={268}
+          w={252}
+          h={116}
+          label="T2"
+          sub="Terminal 2"
+          color="oklch(0.74 0.13 215)"
           active={active === "T2"}
-          onEnter={() => handleEnter("T2")} onLeave={handleLeave} onClick={() => handleClick("T2")}
+          onEnter={() => handleEnter("T2")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("T2")}
         />
-
-        {/* === T3 (largest, with concourse pier extending toward apron) === */}
-        <Building
-          x={340} y={370} w={200} d={75} h={50}
-          label="T3" sub="Terminal 3 · EgyptAir Hub"
+        <TerminalBlock
+          id="T3"
+          x={286}
+          y={360}
+          w={294}
+          h={122}
+          label="T3"
+          sub="Terminal 3 - EgyptAir Hub"
+          color="oklch(0.72 0.18 330)"
           active={active === "T3"}
-          onEnter={() => handleEnter("T3")} onLeave={handleLeave} onClick={() => handleClick("T3")}
+          onEnter={() => handleEnter("T3")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("T3")}
         />
-        {/* T3 pier extending southwest toward the runways */}
-        <Building
-          x={310} y={460} w={50} d={140} h={28}
-          label="" small
+        <TerminalBlock
+          id="T3-pier"
+          x={396}
+          y={480}
+          w={94}
+          h={86}
+          label=""
+          sub=""
+          color="oklch(0.72 0.18 330)"
           active={active === "T3"}
-          onEnter={() => handleEnter("T3")} onLeave={handleLeave} onClick={() => handleClick("T3")}
+          onEnter={() => handleEnter("T3")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("T3")}
         />
-
-        {/* === Multi-storey parking in front of T3 === */}
-        <Building
-          x={235} y={395} w={90} d={60} h={56}
-          label="Parking" sub="≈3,000 bays" small
-          roof="oklch(0.32 0.04 250)"
-          active={active === "PARK"}
-          onEnter={() => handleEnter("PARK")} onLeave={handleLeave} onClick={() => handleClick("PARK")}
-        />
-        {/* parking grid lines */}
-        <g pointerEvents="none">
-          {[0, 1, 2, 3].map((i) => (
-            <line key={i} x1={235 + i * 22} y1={395 - 56} x2={235 + i * 22 + 60 * 0.5} y2={395 - 56 + 60 * 0.5} stroke="oklch(0.50 0.06 240)" strokeWidth="0.6" opacity="0.6" />
-          ))}
-        </g>
-
-        {/* === Seasonal / Hajj terminal (south) === */}
-        <Building
-          x={620} y={520} w={130} d={60} h={30}
-          label="Seasonal" sub="Hajj Terminal" small
-          roof="url(#roofWarm)"
+        <TerminalBlock
+          id="ST"
+          x={160}
+          y={382}
+          w={118}
+          h={88}
+          label="ST"
+          sub="Seasonal"
+          color="oklch(0.78 0.14 80)"
           active={active === "ST"}
-          onEnter={() => handleEnter("ST")} onLeave={handleLeave} onClick={() => handleClick("ST")}
+          onEnter={() => handleEnter("ST")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("ST")}
         />
 
-        {/* === Inter-terminal shuttle line (T1 ↔ T2 ↔ T3) === */}
+        <FacilityArea
+          id="CARGO"
+          x={352}
+          y={102}
+          w={168}
+          h={70}
+          label="Cargo Village"
+          active={active === "CARGO"}
+          onEnter={() => handleEnter("CARGO")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("CARGO")}
+        />
+        <FacilityArea
+          id="PARK"
+          x={252}
+          y={286}
+          w={146}
+          h={72}
+          label="Car Park"
+          icon={Car}
+          active={active === "PARK"}
+          onEnter={() => handleEnter("PARK")}
+          onLeave={handleLeave}
+          onClick={() => handleClick("PARK")}
+        />
+
         <g
           onMouseEnter={() => handleEnter("APM")}
           onMouseLeave={handleLeave}
@@ -190,39 +322,34 @@ export function IsometricMap({ className = "", interactive = true }: { className
           style={{ cursor: interactive ? "pointer" : "default" }}
         >
           <path
-            d="M 690 186 C 640 220, 600 260, 585 290 S 470 360, 440 405"
+            d="M716 244 C674 268, 640 278, 626 326 C596 374, 520 392, 432 396 C356 398, 324 364, 316 322"
             fill="none"
             stroke="var(--cyan)"
-            strokeWidth="3"
-            strokeOpacity={active === "APM" ? 0.95 : 0.55}
-            strokeDasharray="8 8"
+            strokeWidth="4"
+            strokeOpacity={active === "APM" ? 0.98 : 0.62}
+            strokeDasharray="9 8"
             className="flow-line"
           />
-          <ShuttleStop cx={690} cy={186} label="T1" />
-          <ShuttleStop cx={585} cy={296} label="T2" />
-          <ShuttleStop cx={440} cy={406} label="T3" />
+          <TransferStop cx={716} cy={244} label="T1" />
+          <TransferStop cx={626} cy={326} label="T2" />
+          <TransferStop cx={432} cy={396} label="T3" />
+          <TransferStop cx={316} cy={322} label="P" />
         </g>
 
-        {/* Aircraft silhouettes on apron */}
-        {[
-          [430, 470, 30],
-          [380, 540, 30],
-          [560, 350, -30],
-          [690, 270, -30],
-          [780, 220, -30],
-        ].map(([x, y, r], i) => (
-          <g key={i} transform={`translate(${x} ${y}) rotate(${r})`} opacity="0.85" pointerEvents="none">
-            <path d="M0 0 L20 -2 L26 -10 L29 -2 L46 0 L29 2 L26 10 L20 2 Z" fill="oklch(0.85 0.02 240)" stroke="oklch(0.35 0.04 240)" strokeWidth="0.6" />
-          </g>
+        {MARKERS.filter((marker) => visibleLayers[marker.layer]).map((marker) => (
+          <MapMarker
+            key={marker.id}
+            {...marker}
+            active={active === marker.zone}
+            onEnter={() => handleEnter(marker.zone)}
+            onLeave={handleLeave}
+            onClick={() => handleClick(marker.zone)}
+          />
         ))}
-
-        {/* Compass label for runway heading */}
-        <text x="950" y="200" fontSize="9" fontFamily="ui-monospace" fill="oklch(0.6 0.04 240)">RWY HDG 047°</text>
       </svg>
 
-      {/* Info card */}
       {active && (
-        <div className="absolute bottom-3 start-3 max-w-[320px] panel-inner p-3 bg-background/90">
+        <div className="absolute bottom-3 start-3 max-w-[330px] panel-inner p-3 bg-background/90">
           <div className="flex items-center gap-2">
             <Info className="h-3.5 w-3.5 text-primary" />
             <h4 className="text-sm font-semibold">{ZONE_INFO[active].title}</h4>
@@ -231,151 +358,162 @@ export function IsometricMap({ className = "", interactive = true }: { className
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-3 end-3 panel-inner px-3 py-2 flex items-center gap-3 text-[10px] font-mono">
-        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: "linear-gradient(oklch(0.62 0.10 210), oklch(0.42 0.08 240))" }} />Terminal</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm" style={{ background: "linear-gradient(oklch(0.70 0.14 80), oklch(0.50 0.10 60))" }} />Cargo / Hajj</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-primary/70" />Shuttle</span>
+      <div className="absolute bottom-3 end-3 panel-inner px-3 py-2 flex flex-wrap items-center justify-end gap-3 text-[10px] font-mono max-w-[360px]">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-primary/70" />Transfer</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[oklch(0.72_0.18_330)]" />Terminal</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[oklch(0.38_0.03_245)]" />Runway</span>
       </div>
     </div>
   );
 }
 
-function Runway({
-  x1, y1, x2, y2, label, active, onEnter, onLeave, onClick,
+function Runway2D({
+  x,
+  y,
+  w,
+  label,
+  active,
+  onEnter,
+  onLeave,
+  onClick,
 }: {
-  x1: number; y1: number; x2: number; y2: number; label: string;
+  x: number;
+  y: number;
+  w: number;
+  label: string;
   active?: boolean;
-  onEnter?: () => void; onLeave?: () => void; onClick?: () => void;
+  onEnter?: () => void;
+  onLeave?: () => void;
+  onClick?: () => void;
 }) {
-  // Build a thick rotated runway as a parallelogram
-  const dx = x2 - x1, dy = y2 - y1;
-  const len = Math.hypot(dx, dy);
-  const nx = -dy / len, ny = dx / len; // normal
-  const w = 28;
-  const p1 = [x1 + nx * w, y1 + ny * w];
-  const p2 = [x2 + nx * w, y2 + ny * w];
-  const p3 = [x2 - nx * w, y2 - ny * w];
-  const p4 = [x1 - nx * w, y1 - ny * w];
-  const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-  const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-
   return (
-    <g onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{ cursor: "pointer" }}>
-      {/* shadow */}
-      <polygon
-        points={`${p1[0] + 6},${p1[1] + 8} ${p2[0] + 6},${p2[1] + 8} ${p3[0] + 6},${p3[1] + 8} ${p4[0] + 6},${p4[1] + 8}`}
-        fill="oklch(0.10 0.02 250)" opacity="0.5"
-      />
-      <polygon
-        points={`${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]} ${p4[0]},${p4[1]}`}
-        fill="url(#rwy)"
-        stroke={active ? "var(--cyan)" : "oklch(0.42 0.05 250)"}
-        strokeWidth={active ? 1.5 : 0.8}
-      />
-      {/* center stripes */}
-      <line
-        x1={x1} y1={y1} x2={x2} y2={y2}
-        stroke="oklch(0.92 0.02 240)" strokeWidth="1.6"
-        strokeDasharray="14 10" opacity="0.65"
-      />
-      <text
-        transform={`translate(${cx} ${cy}) rotate(${angle})`}
-        textAnchor="middle" dy="-12"
-        fontSize="9" fontFamily="ui-monospace" letterSpacing="0.12em"
-        fill="oklch(0.78 0.04 230)"
-      >
+    <g transform={`rotate(-8 ${x + w / 2} ${y})`} onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{ cursor: "pointer" }}>
+      <rect x={x} y={y - 18} width={w} height={36} rx="5" fill="oklch(0.30 0.03 245)" stroke={active ? "var(--cyan)" : "oklch(0.44 0.04 245)"} strokeWidth={active ? 2 : 1} filter={active ? "url(#mapGlow)" : undefined} />
+      <line x1={x + 28} y1={y} x2={x + w - 28} y2={y} stroke="oklch(0.92 0.02 240)" strokeWidth="2" strokeDasharray="18 14" opacity="0.72" />
+      <text x={x + w - 74} y={y - 26} textAnchor="middle" fontSize="10" fontFamily="ui-monospace" fill="oklch(0.78 0.04 230)" letterSpacing="0.1em">
         {label}
       </text>
     </g>
   );
 }
 
-function Building({
-  x, y, w, d, h, label, sub, small, roof = "url(#roof)", active, onEnter, onLeave, onClick,
+function TerminalBlock({
+  x,
+  y,
+  w,
+  h,
+  label,
+  sub,
+  color,
+  active,
+  onEnter,
+  onLeave,
+  onClick,
 }: {
-  x: number; y: number; w: number; d: number; h: number;
-  label: string; sub?: string; small?: boolean;
-  roof?: string;
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+  sub: string;
+  color: string;
   active?: boolean;
-  onEnter?: () => void; onLeave?: () => void; onClick?: () => void;
+  onEnter?: () => void;
+  onLeave?: () => void;
+  onClick?: () => void;
 }) {
-  // isometric projection helper: from (x,y) base, building extends w to right, d "into" page (down-right), h up.
-  // We render with a simple oblique projection (offset = d * 0.5, -d * 0.5) for clean diagonals.
-  const ox = d * 0.5, oy = -d * 0.5;
-
-  // base footprint corners
-  const A = [x, y];                     // front-left
-  const B = [x + w, y];                 // front-right
-  const C = [x + w + ox, y + oy];       // back-right (raised)
-  const D = [x + ox, y + oy];           // back-left (raised)
-
-  // top corners (lifted by h)
-  const At = [A[0], A[1] - h];
-  const Bt = [B[0], B[1] - h];
-  const Ct = [C[0], C[1] - h];
-  const Dt = [D[0], D[1] - h];
-
   return (
-    <g
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      onClick={onClick}
-      style={{ cursor: "pointer" }}
-      filter={active ? "drop-shadow(0 0 8px var(--cyan))" : undefined}
-    >
-      {/* ground shadow */}
-      <polygon
-        points={`${A[0] + 6},${A[1] + 6} ${B[0] + 6},${B[1] + 6} ${C[0] + 6},${C[1] + 6} ${D[0] + 6},${D[1] + 6}`}
-        fill="oklch(0.10 0.02 250)" opacity="0.55"
-      />
-      {/* right side */}
-      <polygon points={`${B[0]},${B[1]} ${Bt[0]},${Bt[1]} ${Ct[0]},${Ct[1]} ${C[0]},${C[1]}`} fill="url(#side)" stroke="oklch(0.18 0.03 250)" strokeWidth="0.6" />
-      {/* front */}
-      <polygon points={`${A[0]},${A[1]} ${At[0]},${At[1]} ${Bt[0]},${Bt[1]} ${B[0]},${B[1]}`} fill="oklch(0.34 0.05 250)" stroke="oklch(0.18 0.03 250)" strokeWidth="0.6" />
-      {/* roof */}
-      <polygon points={`${At[0]},${At[1]} ${Bt[0]},${Bt[1]} ${Ct[0]},${Ct[1]} ${Dt[0]},${Dt[1]}`} fill={roof} stroke={active ? "var(--cyan)" : "oklch(0.20 0.03 250)"} strokeWidth={active ? 1.4 : 0.8} />
-      {/* roof skylight bar */}
-      <line x1={At[0] + 8} y1={At[1] + (Dt[1] - At[1]) * 0.5} x2={Bt[0] - 8} y2={Bt[1] + (Ct[1] - Bt[1]) * 0.5} stroke="var(--cyan)" strokeWidth="1.6" opacity="0.55" />
-      {/* labels */}
+    <g onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{ cursor: "pointer" }} filter={active ? "url(#mapGlow)" : undefined}>
+      <rect x={x} y={y} width={w} height={h} rx="10" fill="oklch(0.22 0.04 245)" stroke={active ? "var(--cyan)" : color} strokeWidth={active ? 2.5 : 1.4} />
+      <rect x={x + 8} y={y + 8} width={w - 16} height={h - 16} rx="7" fill={color} opacity="0.24" />
       {label && (
-        <g pointerEvents="none">
-          <text
-            x={(At[0] + Ct[0]) / 2}
-            y={(At[1] + Ct[1]) / 2 + 2}
-            textAnchor="middle"
-            fontSize={small ? 10 : 14}
-            fontWeight="700"
-            fill="oklch(0.98 0.01 230)"
-            fontFamily="Inter, ui-sans-serif"
-            letterSpacing="0.1em"
-          >
+        <>
+          <text x={x + 18} y={y + 34} fontSize="24" fontWeight="800" fill="oklch(0.98 0.01 230)" fontFamily="Inter, ui-sans-serif">
             {label}
           </text>
-          {sub && (
-            <text
-              x={(At[0] + Ct[0]) / 2}
-              y={(At[1] + Ct[1]) / 2 + 14}
-              textAnchor="middle"
-              fontSize={9}
-              fill="oklch(0.85 0.02 230)"
-              fontFamily="ui-monospace"
-            >
-              {sub}
-            </text>
-          )}
-        </g>
+          <text x={x + 18} y={y + 56} fontSize="11" fill="oklch(0.84 0.02 230)" fontFamily="ui-monospace">
+            {sub}
+          </text>
+        </>
       )}
     </g>
   );
 }
 
-function ShuttleStop({ cx, cy, label }: { cx: number; cy: number; label: string }) {
+function FacilityArea({
+  x,
+  y,
+  w,
+  h,
+  label,
+  icon: Icon = Bus,
+  active,
+  onEnter,
+  onLeave,
+  onClick,
+}: {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  label: string;
+  icon?: typeof Bus;
+  active?: boolean;
+  onEnter?: () => void;
+  onLeave?: () => void;
+  onClick?: () => void;
+}) {
+  return (
+    <g onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{ cursor: "pointer" }} filter={active ? "url(#mapGlow)" : undefined}>
+      <rect x={x} y={y} width={w} height={h} rx="9" fill="oklch(0.18 0.035 245)" stroke={active ? "var(--cyan)" : "oklch(0.48 0.08 85)"} strokeWidth={active ? 2 : 1.2} strokeDasharray="7 5" />
+      <Icon x={x + 14} y={y + 18} width={18} height={18} color="var(--cyan)" strokeWidth={2} />
+      <text x={x + 40} y={y + 32} fontSize="12" fontWeight="700" fill="oklch(0.94 0.01 230)" fontFamily="Inter, ui-sans-serif">
+        {label}
+      </text>
+    </g>
+  );
+}
+
+function TransferStop({ cx, cy, label }: { cx: number; cy: number; label: string }) {
   return (
     <g pointerEvents="none">
       <circle cx={cx} cy={cy} r="8" fill="oklch(0.16 0.04 250)" stroke="var(--cyan)" strokeWidth="2" />
       <circle cx={cx} cy={cy} r="3" fill="var(--cyan)" />
-      <text x={cx + 12} y={cy + 4} fontSize="10" fontFamily="ui-monospace" fill="oklch(0.95 0.01 230)">{label}</text>
+      <text x={cx + 12} y={cy + 4} fontSize="10" fontFamily="ui-monospace" fill="oklch(0.95 0.01 230)">
+        {label}
+      </text>
+    </g>
+  );
+}
+
+function MapMarker({
+  x,
+  y,
+  label,
+  icon: Icon,
+  active,
+  onEnter,
+  onLeave,
+  onClick,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  icon: typeof MapPin;
+  active?: boolean;
+  onEnter?: () => void;
+  onLeave?: () => void;
+  onClick?: () => void;
+}) {
+  return (
+    <g onMouseEnter={onEnter} onMouseLeave={onLeave} onClick={onClick} style={{ cursor: "pointer" }} filter={active ? "url(#mapGlow)" : undefined}>
+      <rect x={x - 13} y={y - 13} width={26} height={26} rx="8" fill={active ? "var(--cyan)" : "oklch(0.14 0.04 250)"} stroke="oklch(0.88 0.02 230)" strokeOpacity="0.7" />
+      <Icon x={x - 7} y={y - 7} width={14} height={14} color={active ? "oklch(0.12 0.04 250)" : "var(--cyan)"} strokeWidth={2.2} />
+      <text x={x + 17} y={y + 4} fontSize="10" fontFamily="ui-monospace" fill="oklch(0.92 0.01 230)">
+        {label}
+      </text>
     </g>
   );
 }

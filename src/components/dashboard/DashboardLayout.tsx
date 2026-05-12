@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Plane, Map as MapIcon, Activity, ShieldCheck, Navigation as NavIcon, Contrast, Languages, Users, Briefcase } from "lucide-react";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
 
@@ -24,7 +24,22 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 function Shell({ children }: { children: ReactNode }) {
   const { mode, setMode, lang, setLang, hc, setHc } = useDashboard();
   const location = useLocation();
-  const tabs = mode === "traveler" ? TRAVELER : MANAGER;
+  const navigate = useNavigate();
+  const routeMode = location.pathname === "/ops" || location.pathname === "/safety" ? "manager" : "traveler";
+  const tabs = routeMode === "traveler" ? TRAVELER : MANAGER;
+
+  useEffect(() => {
+    if (mode !== routeMode) setMode(routeMode);
+  }, [mode, routeMode, setMode]);
+
+  const switchMode = (nextMode: "traveler" | "manager") => {
+    setMode(nextMode);
+    if (nextMode === "traveler") {
+      void navigate({ to: "/" });
+      return;
+    }
+    void navigate({ to: "/ops" });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -62,8 +77,8 @@ function Shell({ children }: { children: ReactNode }) {
 
           <div className="ms-auto flex items-center gap-2">
             <div className="flex items-center bg-secondary/60 border border-border rounded-lg p-0.5">
-              <ModeBtn active={mode === "traveler"} onClick={() => setMode("traveler")} icon={<Users className="h-3.5 w-3.5" />} label="Traveler" />
-              <ModeBtn active={mode === "manager"} onClick={() => setMode("manager")} icon={<Briefcase className="h-3.5 w-3.5" />} label="Manager" />
+              <ModeBtn active={routeMode === "traveler"} onClick={() => switchMode("traveler")} icon={<Users className="h-3.5 w-3.5" />} label="Traveler" />
+              <ModeBtn active={routeMode === "manager"} onClick={() => switchMode("manager")} icon={<Briefcase className="h-3.5 w-3.5" />} label="Manager" />
             </div>
 
             <button

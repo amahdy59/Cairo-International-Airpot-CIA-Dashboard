@@ -16,11 +16,16 @@ type Ctx = {
 
 const DashCtx = createContext<Ctx | null>(null);
 
+function getInitialMode(): Mode {
+  if (typeof window === "undefined") return "traveler";
+  return window.location.pathname === "/ops" || window.location.pathname === "/safety" ? "manager" : "traveler";
+}
+
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>("en");
   const [hc, setHc] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [mode, setMode] = useState<Mode>("traveler");
+  const [mode, setMode] = useState<Mode>(getInitialMode);
 
   useEffect(() => {
     const root = document.documentElement;

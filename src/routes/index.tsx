@@ -8,7 +8,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Cairo Airport — Map & Terminals" },
-      { name: "description", content: "Interactive isometric map of Cairo International Airport. Find your terminal, gates, parking and shuttle." },
+      { name: "description", content: "Interactive 2D map of Cairo International Airport. Find your terminal, gates, parking and shuttle." },
     ],
   }),
   component: HomePage,
