@@ -3,9 +3,11 @@ import {
   BadgeInfo,
   Building2,
   Car,
+  CircleX,
   CircleDollarSign,
   Coffee,
   DoorOpen,
+  Eye,
   Info,
   MapPin,
   Plane,
@@ -231,6 +233,7 @@ const scenes: Scene[] = [
 export function AirportMap2D({ className = "", language = "en" }: { className?: string; language?: Language }) {
   const [activeSceneId, setActiveSceneId] = useState<SceneId>("overview");
   const [activeHotspotId, setActiveHotspotId] = useState(scenes[0].hotspots[0].id);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [activeLayers, setActiveLayers] = useState<Record<LayerId, boolean>>({
     restaurants: true,
     services: true,
@@ -252,6 +255,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
     const scene = scenes.find((item) => item.id === sceneId) ?? scenes[0];
     setActiveSceneId(scene.id);
     setActiveHotspotId(scene.hotspots[0].id);
+    setPreviewOpen(false);
   };
 
   return (
@@ -295,17 +299,8 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         </nav>
 
         <div>
-          <div className="relative overflow-hidden rounded-lg border border-border bg-background">
-            <img src={activeScene.image} alt={activeScene.title[language]} className="aspect-[16/9] w-full object-cover" loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-white/10" />
-            <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M8 80 C26 66, 42 58, 64 64 C78 68, 88 62, 96 50" fill="none" stroke="rgba(255,255,255,.75)" strokeWidth="0.5" strokeDasharray="2 2" />
-              <path d="M15 32 C36 24, 58 28, 88 20" fill="none" stroke="rgba(255,211,67,.8)" strokeWidth="0.45" />
-            </svg>
-            <div className="absolute start-4 top-4 max-w-[78%] rounded-md bg-background/85 p-3 backdrop-blur">
-              <h3 className="text-lg font-semibold">{activeScene.title[language]}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{activeScene.subtitle[language]}</p>
-            </div>
+          <div className="relative overflow-hidden rounded-lg border border-border bg-[#dcecf2]">
+            <AirportDiagram sceneId={activeScene.id} title={activeScene.title[language]} subtitle={activeScene.subtitle[language]} />
             {visibleHotspots.map((hotspot, index) => {
               const Icon = hotspot.icon;
               const active = hotspot.id === activeHotspot.id;
@@ -321,13 +316,10 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
                   style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
                 >
                   <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{index + 1}</span>
+                  <span className="hidden sm:inline">{index + 1}. {hotspot.title[language]}</span>
                 </button>
               );
             })}
-            <div className="absolute bottom-3 end-3 rounded bg-background/85 px-2 py-1 font-mono text-[10px] text-muted-foreground backdrop-blur">
-              {activeScene.sourceLabel}
-            </div>
           </div>
 
           <div className="mt-3">
@@ -355,8 +347,12 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{copy.selected}</p>
             <h3 className="mt-2 text-lg font-semibold">{activeHotspot.title[language]}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activeHotspot.summary[language]}</p>
+            <button type="button" onClick={() => setPreviewOpen(true)} className="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary">
+              <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
+              {language === "ar" ? "عرض صورة حقيقية" : "View real image"}
+            </button>
             {activeHotspot.detailTarget && (
-              <button type="button" onClick={() => selectScene(activeHotspot.detailTarget!)} className="mt-4 inline-flex h-9 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90">
+              <button type="button" onClick={() => selectScene(activeHotspot.detailTarget!)} className="mt-4 ms-2 inline-flex h-9 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90">
                 {copy.visit}
               </button>
             )}
@@ -375,6 +371,144 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
           </div>
         </aside>
       </div>
+
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="airport-photo-title">
+          <div className="panel max-h-[90vh] w-full max-w-4xl overflow-hidden">
+            <div className="flex items-center justify-between gap-3 border-b border-border p-4">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{activeScene.sourceLabel}</p>
+                <h3 id="airport-photo-title" className="text-lg font-semibold">{activeHotspot.title[language]}</h3>
+              </div>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="grid h-9 w-9 place-items-center rounded-md border border-border hover:bg-secondary" aria-label={language === "ar" ? "إغلاق الصورة" : "Close image"}>
+                <CircleX aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </div>
+            <img src={activeScene.image} alt={activeHotspot.title[language]} className="max-h-[68vh] w-full object-cover" />
+            <div className="flex items-center justify-between gap-3 p-4 text-xs text-muted-foreground">
+              <span>{activeScene.subtitle[language]}</span>
+              <a href={activeScene.source} target="_blank" rel="noreferrer" className="text-primary hover:underline">{copy.source}</a>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+function AirportDiagram({ sceneId, title, subtitle }: { sceneId: SceneId; title: string; subtitle: string }) {
+  const focus: Record<SceneId, { x: number; y: number; w: number; fill: string; label: string }> = {
+    overview: { x: 390, y: 335, w: 310, fill: "#2f8fbc", label: "CAI" },
+    terminal1: { x: 175, y: 350, w: 245, fill: "#15959f", label: "T1" },
+    terminal2: { x: 430, y: 330, w: 240, fill: "#176bc5", label: "T2" },
+    terminal3: { x: 680, y: 350, w: 245, fill: "#7747b8", label: "T3" },
+    airside: { x: 760, y: 170, w: 190, fill: "#5f514d", label: "OPS" },
+  };
+  const selected = focus[sceneId];
+
+  return (
+    <svg viewBox="0 0 1080 640" className="block aspect-[16/9] w-full" role="img" aria-label={`${title}. ${subtitle}`}>
+      <defs>
+        <pattern id="airport-grid" width="36" height="36" patternUnits="userSpaceOnUse">
+          <path d="M36 0H0V36" fill="none" stroke="#9db4bc" strokeOpacity="0.35" strokeWidth="1" />
+        </pattern>
+        <filter id="diagram-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#263238" floodOpacity="0.22" />
+        </filter>
+        <linearGradient id="terminal-roof" x1="0" x2="1">
+          <stop offset="0" stopColor="#f7fbfc" />
+          <stop offset="1" stopColor="#c9d8dc" />
+        </linearGradient>
+      </defs>
+
+      <rect width="1080" height="640" fill="#e8f3f7" />
+      <rect width="1080" height="640" fill="url(#airport-grid)" />
+      <path d="M30 560 C220 500 330 525 500 475 C690 420 815 455 1040 390" fill="none" stroke="#6f8b72" strokeWidth="54" strokeLinecap="round" opacity="0.22" />
+      <text x="44" y="58" fill="#17364b" fontFamily="Inter, Arial" fontSize="34" fontWeight="850">CAIRO INTERNATIONAL AIRPORT</text>
+      <text x="46" y="88" fill="#6c7a86" fontFamily="Inter, Arial" fontSize="16" letterSpacing="7">AIRPORT LAYOUT OVERVIEW</text>
+      <line x1="46" y1="104" x2="106" y2="104" stroke="#10aeca" strokeWidth="4" />
+      <text x="46" y="132" fill="#315166" fontFamily="Inter, Arial" fontSize="13" fontWeight="700">{title}</text>
+      <text x="46" y="152" fill="#627985" fontFamily="Inter, Arial" fontSize="12">{subtitle}</text>
+
+      <g transform="translate(70 170) rotate(-5)" filter="url(#diagram-shadow)">
+        {[0, 58, 116].map((offset) => (
+          <g key={offset} transform={`translate(0 ${offset})`}>
+            <rect width="880" height="38" rx="8" fill="#7f8e93" />
+            <line x1="40" y1="19" x2="830" y2="19" stroke="#fff" strokeWidth="3" strokeDasharray="28 18" opacity="0.95" />
+          </g>
+        ))}
+        <path d="M20 168 C240 108 430 134 700 82" fill="none" stroke="#e6b84c" strokeWidth="4" strokeDasharray="16 10" />
+        <path d="M90 206 C320 136 520 170 820 118" fill="none" stroke="#e6b84c" strokeWidth="3" />
+      </g>
+
+      <g filter="url(#diagram-shadow)">
+        <TerminalShape x={165} y={350} width={245} color="#15959f" label="TERMINAL 1" active={sceneId === "terminal1"} />
+        <TerminalShape x={420} y={330} width={255} color="#176bc5" label="TERMINAL 2" active={sceneId === "terminal2"} />
+        <TerminalShape x={680} y={350} width={245} color="#7747b8" label="TERMINAL 3" active={sceneId === "terminal3"} />
+        <path d="M300 470 C420 440 555 442 740 470" fill="none" stroke="#6e7f84" strokeWidth="42" strokeLinecap="round" />
+        <line x1="290" y1="470" x2="750" y2="470" stroke="#fff" strokeWidth="3" strokeDasharray="18 16" opacity="0.9" />
+        <rect x="430" y="472" width="220" height="52" rx="8" fill="#95b7bd" stroke="#fff" strokeWidth="3" />
+        <text x="540" y="504" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="18" fontWeight="800">MAIN HALLS</text>
+        <rect x="120" y="505" width="150" height="78" rx="8" fill="#6d8791" />
+        <rect x="810" y="505" width="150" height="78" rx="8" fill="#6d8791" />
+        <text x="195" y="550" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="18" fontWeight="800">PARKING</text>
+        <text x="885" y="550" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="18" fontWeight="800">PARKING</text>
+        <ControlTower />
+        <rect x="775" y="128" width="190" height="66" rx="8" fill={sceneId === "airside" ? "#5f514d" : "#87949a"} stroke="#fff" strokeWidth="3" />
+        <text x="870" y="168" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="16" fontWeight="800">SERVICE / MAINT.</text>
+      </g>
+
+      <g opacity="0.95">
+        <Callout x={260} y={280} color="#15959f" label="TERMINAL 1" />
+        <Callout x={535} y={268} color="#176bc5" label="TERMINAL 2" />
+        <Callout x={805} y={280} color="#7747b8" label="TERMINAL 3" />
+        <Callout x={245} y={155} color="#17364b" label="RUNWAY" />
+        <Callout x={540} y={170} color="#176bc5" label="TAXIWAY" />
+        <Callout x={795} y={170} color="#15959f" label="APRON" />
+      </g>
+
+      {sceneId !== "overview" && (
+        <g filter="url(#diagram-shadow)">
+          <rect x={selected.x - 18} y={selected.y - 22} width={selected.w + 36} height="142" rx="16" fill="none" stroke={selected.fill} strokeWidth="5" strokeDasharray="10 8" />
+          <rect x="42" y="565" width="250" height="42" rx="8" fill={selected.fill} />
+          <text x="167" y="592" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="16" fontWeight="850">{selected.label} DETAILED VIEW</text>
+        </g>
+      )}
+    </svg>
+  );
+}
+
+function TerminalShape({ x, y, width, color, label, active }: { x: number; y: number; width: number; color: string; label: string; active: boolean }) {
+  return (
+    <g>
+      <path d={`M${x} ${y + 92} L${x + width} ${y + 34} L${x + width + 76} ${y + 72} L${x + 78} ${y + 132} Z`} fill="#eef5f7" stroke={active ? color : "#b4c2c7"} strokeWidth={active ? 5 : 2} />
+      <path d={`M${x + 34} ${y + 78} L${x + width - 15} ${y + 36} L${x + width - 15} ${y + 5} L${x + 34} ${y + 47} Z`} fill="url(#terminal-roof)" />
+      <path d={`M${x + 42} ${y + 82} L${x + width - 26} ${y + 43}`} stroke="#3b7184" strokeWidth="8" strokeDasharray="14 8" opacity="0.75" />
+      <rect x={x + width / 2 - 72} y={y + 55} width="146" height="38" rx="7" fill={color} />
+      <text x={x + width / 2} y={y + 80} textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="15" fontWeight="850">{label}</text>
+    </g>
+  );
+}
+
+function Callout({ x, y, color, label }: { x: number; y: number; color: string; label: string }) {
+  return (
+    <g>
+      <rect x={x - 68} y={y - 22} width="136" height="42" rx="8" fill={color} stroke="#fff" strokeWidth="2" />
+      <line x1={x} y1={y + 20} x2={x} y2={y + 82} stroke="#fff" strokeWidth="3" />
+      <circle cx={x} cy={y + 85} r="7" fill={color} stroke="#fff" strokeWidth="3" />
+      <text x={x} y={y + 5} textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="15" fontWeight="850">{label}</text>
+    </g>
+  );
+}
+
+function ControlTower() {
+  return (
+    <g>
+      <path d="M536 336 L584 336 L574 228 L546 228 Z" fill="#d9e5e8" stroke="#9aa9ad" strokeWidth="2" />
+      <ellipse cx="560" cy="226" rx="44" ry="16" fill="#edf5f7" stroke="#87959a" strokeWidth="2" />
+      <rect x="526" y="205" width="68" height="30" rx="6" fill="#3e6f7f" />
+      <rect x="536" y="212" width="48" height="12" fill="#9fd6e4" />
+      <text x="560" y="258" textAnchor="middle" fill="#44565d" fontFamily="Inter, Arial" fontSize="11" fontWeight="800">TOWER</text>
+    </g>
   );
 }

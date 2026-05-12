@@ -136,6 +136,12 @@
 
   html, body {
     background-color: var(--color-background);
+    background-image:
+      linear-gradient(color-mix(in oklab, var(--cyan) 13%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 13%, transparent) 1px, transparent 1px),
+      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 12%, transparent), transparent 28rem);
+    background-size: 44px 44px, 44px 44px, auto;
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-display);
     font-feature-settings: "ss01", "cv11";
