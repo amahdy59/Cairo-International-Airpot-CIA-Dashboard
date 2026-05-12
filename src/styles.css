@@ -49,15 +49,15 @@
   --color-grid: var(--grid);
 }
 
-:root, .dark {
+:root,
+.dark {
   --radius: 0.75rem;
 
-  /* Deep navy command-center palette */
-  --background: oklch(0.16 0.04 250);
+  --background: oklch(0.15 0.02 250);
   --foreground: oklch(0.97 0.01 230);
 
-  --surface: oklch(0.20 0.045 250);
-  --surface-2: oklch(0.24 0.05 252);
+  --surface: oklch(0.20 0.035 248);
+  --surface-2: oklch(0.24 0.04 252);
 
   --card: oklch(0.21 0.045 252);
   --card-foreground: oklch(0.97 0.01 230);
@@ -157,10 +157,6 @@
     box-shadow: 0 0 0 1px color-mix(in oklab, var(--cyan) 30%, transparent),
       0 0 24px -6px color-mix(in oklab, var(--cyan) 60%, transparent);
   }
-  .glow-magenta {
-    box-shadow: 0 0 0 1px color-mix(in oklab, var(--magenta) 35%, transparent),
-      0 0 28px -6px color-mix(in oklab, var(--magenta) 60%, transparent);
-  }
   .panel {
     background: linear-gradient(180deg,
       color-mix(in oklab, var(--surface) 92%, transparent),
@@ -181,49 +177,17 @@
     background-size: 32px 32px;
     background-position: -1px -1px;
   }
-  .scanline {
-    background: repeating-linear-gradient(
-      180deg,
-      transparent 0,
-      transparent 3px,
-      color-mix(in oklab, var(--cyan) 6%, transparent) 3px,
-      color-mix(in oklab, var(--cyan) 6%, transparent) 4px
-    );
-  }
-  .text-balance { text-wrap: balance; }
-  .corner-brackets {
-    position: relative;
-  }
-  .corner-brackets::before,
-  .corner-brackets::after {
-    content: "";
+  .sr-only {
     position: absolute;
-    width: 14px;
-    height: 14px;
-    border: 1.5px solid var(--cyan);
-    opacity: 0.7;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
-  .corner-brackets::before {
-    top: 6px; left: 6px;
-    border-right: none; border-bottom: none;
-  }
-  .corner-brackets::after {
-    bottom: 6px; right: 6px;
-    border-left: none; border-top: none;
-  }
-}
-
-@keyframes pulse-ring {
-  0% { transform: scale(0.85); opacity: 0.9; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-.pulse-dot::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  border: 2px solid currentColor;
-  animation: pulse-ring 2s ease-out infinite;
 }
 
 @keyframes flow-dash {
