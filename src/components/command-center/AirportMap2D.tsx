@@ -98,7 +98,7 @@ const basePrompt =
 const scenes: Scene[] = [
   {
     id: "overview",
-    aiImage: ai(`${basePrompt}, full airport overview with Terminal 1 left, Terminal 2 center, Terminal 3 right, main halls, parking, ground transport, control tower`, 59101),
+    aiImage: ai(`${basePrompt}, reference style labeled airport layout overview like a premium airport infographic, title Cairo International Airport, visible labels for RUNWAY, TAXIWAY, APRON, CONTROL TOWER, TERMINAL 1, TERMINAL 2, TERMINAL 3, PARKING, MAIN HALLS, GROUND TRANSPORT, SERVICE MAINTENANCE, wide isometric aerial composition`, 59111),
     realImage: commons("Cairo Airport Terminal 3.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:Cairo_Airport_Terminal_3.jpg",
     sourceLabel: "Wikimedia Commons / Alensha",

@@ -8,6 +8,7 @@ import {
   Building2,
   Car,
   Clock,
+  CircleDollarSign,
   Coffee,
   Contrast,
   Droplets,
@@ -26,6 +27,7 @@ import {
   Radio,
   ShieldCheck,
   Train,
+  Utensils,
   Users,
 } from "lucide-react";
 import { AirportMap2D, type Language } from "@/components/command-center/AirportMap2D";
@@ -265,7 +267,7 @@ export function App() {
   }, [highContrast, language]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background/88 text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-4 lg:px-8">
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground">
