@@ -1,148 +1,149 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { TerminalMap } from "@/components/dashboard/TerminalMap";
-import { StatCard, StatusPill, Panel, Sparkline, Bar } from "@/components/dashboard/widgets";
-import {
-  Users, PlaneTakeoff, PlaneLanding, Gauge, AlertTriangle, ShieldCheck,
-  Clock, Wind, Building2, Briefcase, Luggage, Sparkles,
-} from "lucide-react";
+import { IsometricMap } from "@/components/dashboard/IsometricMap";
+import { Panel } from "@/components/dashboard/widgets";
+import { Plane, Building2, Bus, Luggage, Coffee, Accessibility, ShieldCheck, Phone } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Airport Pulse · CAI Smart Airport Command Center" }, { name: "description", content: "Real-time operational pulse for Cairo International Airport — passenger flow, flights, terminals, transport and services." }] }),
-  component: Page,
+  head: () => ({
+    meta: [
+      { title: "Cairo Airport — Map & Terminals" },
+      { name: "description", content: "Interactive isometric map of Cairo International Airport. Find your terminal, gates, parking and shuttle." },
+    ],
+  }),
+  component: HomePage,
 });
 
-const flow = [62, 70, 78, 85, 92, 88, 96, 102, 110, 105, 112, 118, 124, 121, 128];
+const TERMINALS = [
+  {
+    code: "T1",
+    name: "Terminal 1",
+    color: "oklch(0.78 0.15 150)",
+    summary: "Domestic, charter & non-EgyptAir international",
+    airlines: ["Air Arabia Egypt", "Saudia (some)", "Domestic carriers"],
+    halls: "Hall 1 · Hall 2 · Hall 3",
+  },
+  {
+    code: "T2",
+    name: "Terminal 2",
+    color: "oklch(0.82 0.15 210)",
+    summary: "Star Alliance & SkyTeam partners (excl. EgyptAir)",
+    airlines: ["Lufthansa", "Emirates", "British Airways", "KLM", "Qatar Airways"],
+    halls: "Single linear concourse",
+  },
+  {
+    code: "T3",
+    name: "Terminal 3",
+    color: "oklch(0.72 0.20 330)",
+    summary: "EgyptAir hub & Star Alliance EgyptAir flights",
+    airlines: ["EgyptAir", "Star Alliance partners with EgyptAir"],
+    halls: "Concourse + pier · 11M pax/yr",
+  },
+];
 
-function Page() {
+const QUICK_LINKS = [
+  { icon: Plane, label: "Book a flight", desc: "EgyptAir official booking", href: "https://www.egyptair.com/" },
+  { icon: ShieldCheck, label: "Check-in / Manage", desc: "Online check-in & ticket confirmation", href: "https://www.egyptair.com/en/Pages/managemybooking.aspx" },
+  { icon: Building2, label: "Visa info", desc: "Visa on arrival & e-visa", href: "https://visa2egypt.gov.eg/" },
+  { icon: Luggage, label: "Lost & found", desc: "Report lost baggage", href: "https://cairo-airport.com/" },
+  { icon: Phone, label: "Airport contact", desc: "+20 2 2265 5000", href: "tel:+20222655000" },
+  { icon: Accessibility, label: "Special assistance", desc: "Ahlan Meet & Assist", href: "https://cairo-airport.com/" },
+];
+
+function HomePage() {
   return (
-    <DashboardLayout section="Airport Pulse Overview" sub="Operations · CAI · Mar 2025">
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12 grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Passengers Today" value="92,418" delta="+8.4% vs avg" deltaTone="ok" icon={Users} hint="Daily benchmark 85,000" accent="cyan" />
-          <StatCard label="Aircraft Movements" value="612" unit="/ day" delta="+3.1%" deltaTone="ok" icon={PlaneTakeoff} hint="Mar-25 total: 18,154" accent="cyan" />
-          <StatCard label="On-time Performance" value="87.2" unit="%" delta="-1.4%" deltaTone="warn" icon={Clock} accent="warn" />
-          <StatCard label="Active Alerts" value="4" delta="2 new" deltaTone="crit" icon={AlertTriangle} hint="1 security · 3 ops" accent="magenta" />
+    <DashboardLayout>
+      <div className="space-y-5">
+        {/* Hero header */}
+        <div className="panel p-5 lg:p-6 flex flex-col lg:flex-row gap-4 lg:items-end justify-between">
+          <div>
+            <div className="text-[11px] font-mono tracking-[0.22em] text-primary">CAIRO INTERNATIONAL · CAI / HECA</div>
+            <h1 className="mt-1 text-2xl lg:text-3xl font-semibold tracking-tight">Find your terminal at a glance</h1>
+            <p className="text-sm text-muted-foreground max-w-xl mt-1.5">
+              Tap any building below for quick facts. Three terminals, a seasonal Hajj terminal, three parallel runways and a free inter-terminal shuttle.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://www.google.com/maps/place/Cairo+International+Airport"
+              target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-md border border-border hover:bg-secondary text-sm"
+            >
+              <Building2 className="h-4 w-4 text-primary" /> Open in Google Maps
+            </a>
+          </div>
         </div>
 
-        {/* Map + side rails */}
-        <div className="col-span-12 lg:col-span-8">
-          <TerminalMap className="h-[460px]" />
-        </div>
-
-        <div className="col-span-12 lg:col-span-4 grid gap-4">
-          <Panel title="Passenger Flow · Last 6h" action={<StatusPill tone="info">live</StatusPill>}>
-            <div className="flex items-baseline justify-between mb-2">
-              <div>
-                <div className="text-2xl font-semibold">12,841<span className="text-xs text-muted-foreground font-mono ms-1">/ hr</span></div>
-                <div className="text-[11px] text-muted-foreground">Annual: 30.94M passengers</div>
-              </div>
-              <StatusPill tone="ok" icon={<ShieldCheck className="h-3 w-3" />}>nominal</StatusPill>
-            </div>
-            <Sparkline data={flow} height={64} />
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              {[
-                { l: "T1", v: "1,820", t: "ok" as const },
-                { l: "T2", v: "3,612", t: "warn" as const },
-                { l: "T3", v: "6,704", t: "high" as const },
-              ].map(x => (
-                <div key={x.l} className="panel-inner py-2">
-                  <div className="text-[10px] font-mono text-muted-foreground">{x.l}</div>
-                  <div className="text-sm font-semibold">{x.v}</div>
-                  <StatusPill tone={x.t}>{x.t}</StatusPill>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Live Alerts">
-            <ul className="space-y-2">
-              {[
-                { t: "crit" as const, ic: AlertTriangle, title: "Security · Checkpoint B", note: "Queue >18 min · re-route" },
-                { t: "warn" as const, ic: PlaneLanding, title: "MS 982 · Inbound delay", note: "ETA +22 min · Gate D14" },
-                { t: "info" as const, ic: Luggage, title: "Baggage carousel 7", note: "Throughput dipped 14%" },
-              ].map((a, i) => (
-                <li key={i} className="flex gap-3 panel-inner p-2.5">
-                  <div className={`h-8 w-8 grid place-items-center rounded-md border ${a.t === "crit" ? "border-status-crit/40 bg-status-crit/10 text-status-crit" : a.t === "warn" ? "border-status-warn/40 bg-status-warn/10 text-status-warn" : "border-primary/40 bg-primary/10 text-primary"}`}>
-                    <a.ic className="h-4 w-4" />
+        {/* Map + Terminals legend */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-5">
+          <IsometricMap className="aspect-[1100/720]" />
+          <div className="space-y-3">
+            {TERMINALS.map((t) => (
+              <div key={t.code} className="panel p-4 hover:border-primary/40 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div
+                    className="h-10 w-10 rounded-lg grid place-items-center font-bold text-sm"
+                    style={{ background: `color-mix(in oklab, ${t.color} 18%, transparent)`, color: t.color, border: `1px solid color-mix(in oklab, ${t.color} 50%, transparent)` }}
+                  >
+                    {t.code}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{a.title}</div>
-                    <div className="text-[11px] text-muted-foreground">{a.note}</div>
+                    <div className="font-semibold">{t.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{t.summary}</div>
+                    <div className="text-[11px] font-mono text-muted-foreground/80 mt-1.5">{t.halls}</div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {t.airlines.map((a) => (
+                        <span key={a} className="text-[10px] font-mono px-2 py-0.5 rounded border border-border bg-background/60">
+                          {a}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <StatusPill tone={a.t}>{a.t}</StatusPill>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-        </div>
-
-        {/* Bottom row */}
-        <div className="col-span-12 lg:col-span-4">
-          <Panel title="Terminal Load" action={<span className="text-[10px] font-mono text-muted-foreground">capacity vs current</span>}>
-            <div className="space-y-3">
-              {[
-                { l: "Terminal 1", v: 48, c: "var(--status-ok)" },
-                { l: "Terminal 2", v: 71, c: "var(--status-warn)" },
-                { l: "Terminal 3", v: 88, c: "var(--status-high)" },
-                { l: "Seasonal Terminal", v: 32, c: "var(--status-ok)" },
-              ].map(t => (
-                <div key={t.l}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>{t.l}</span>
-                    <span className="font-mono text-muted-foreground">{t.v}%</span>
-                  </div>
-                  <Bar value={t.v} color={t.c} />
                 </div>
-              ))}
-            </div>
-          </Panel>
-        </div>
-
-        <div className="col-span-12 lg:col-span-4">
-          <Panel title="Service Pulse">
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { ic: Briefcase, l: "Ahlan Service", v: "142 active" },
-                { ic: Building2, l: "Lounges", v: "68% used" },
-                { ic: Luggage, l: "Bag Wrap", v: "queue 6" },
-                { ic: Sparkles, l: "Duty Free", v: "EGP 1.2M" },
-              ].map(s => (
-                <div key={s.l} className="panel-inner p-3">
-                  <s.ic className="h-4 w-4 text-primary mb-1.5" />
-                  <div className="text-[11px] text-muted-foreground">{s.l}</div>
-                  <div className="text-sm font-semibold">{s.v}</div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-        </div>
-
-        <div className="col-span-12 lg:col-span-4">
-          <Panel title="Comfort Index" action={<StatusPill tone="ok">good</StatusPill>}>
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="text-3xl font-semibold">8.6<span className="text-xs text-muted-foreground font-mono">/10</span></div>
-                <div className="text-[11px] text-muted-foreground">across 7 zones</div>
               </div>
-              <Gauge className="h-10 w-10 text-primary/60" />
-            </div>
-            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-              {[
-                { l: "Temp", v: "23°C" },
-                { l: "RH", v: "44%" },
-                { l: "CO₂", v: "612" },
-                { l: "Noise", v: "56dB" },
-              ].map(x => (
-                <div key={x.l} className="panel-inner py-2">
-                  <Wind className="h-3 w-3 mx-auto text-primary mb-1" />
-                  <div className="text-[10px] text-muted-foreground font-mono">{x.l}</div>
-                  <div className="text-xs font-semibold">{x.v}</div>
+            ))}
+            <div className="panel-inner p-3 flex items-start gap-3">
+              <Bus className="h-4 w-4 text-primary mt-0.5" />
+              <div className="text-xs">
+                <div className="font-medium">Inter-terminal shuttle</div>
+                <div className="text-muted-foreground mt-0.5">
+                  Free bus T1 ↔ T2 ↔ T3 every ~10 min, 24/7. Look for the cyan shuttle stop signs.
                 </div>
-              ))}
+              </div>
             </div>
-          </Panel>
+          </div>
         </div>
+
+        {/* Useful links */}
+        <Panel title="Useful links">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {QUICK_LINKS.map(({ icon: Icon, label, desc, href }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank" rel="noreferrer"
+                className="panel-inner p-3 hover:border-primary/40 transition-colors flex items-start gap-3 group"
+              >
+                <div className="h-9 w-9 grid place-items-center rounded-md bg-primary/10 border border-primary/30 shrink-0">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium group-hover:text-primary transition-colors">{label}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{desc}</div>
+                </div>
+              </a>
+            ))}
+            <a href="#" className="panel-inner p-3 hover:border-primary/40 transition-colors flex items-start gap-3">
+              <div className="h-9 w-9 grid place-items-center rounded-md bg-primary/10 border border-primary/30 shrink-0">
+                <Coffee className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-medium">Lounges & shops</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Duty Free, Ahlan VIP lounges</div>
+              </div>
+            </a>
+          </div>
+        </Panel>
       </div>
     </DashboardLayout>
   );
