@@ -215,10 +215,15 @@ function IconButton({ pressed, label, onClick, children }: { pressed: boolean; l
 function TravelerDashboard() {
   return (
     <div className="space-y-5">
-      <Hero eyebrow="Passenger view" title="Find your terminal and services at a glance" description="A clean 2D airport schematic with optional layers for gates, ATMs, restaurants, lounges and passenger services." />
+      <Hero
+        eyebrow="Passenger view"
+        title="Explore Cairo Airport through five clickable vector views"
+        description="Use the overview, terminal detail images and airside view to inspect gates, check-in, baggage, passport control, services, lounges, parking and runway areas."
+      />
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.55fr_1fr]">
-        <AirportMap2D className="min-h-[560px]" />
+      <AirportMap2D />
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_360px]">
         <div className="space-y-3">
           {TERMINALS.map((terminal) => (
             <article key={terminal.code} className="panel p-4 transition-colors hover:border-primary/40">
@@ -241,8 +246,8 @@ function TravelerDashboard() {
               </div>
             </article>
           ))}
-          <DirectionsCard />
         </div>
+        <DirectionsCard />
       </div>
 
       <SectionPanel title="Passenger links">

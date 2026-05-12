@@ -1,295 +1,525 @@
-import { useState, type KeyboardEvent } from "react";
-import { Armchair, BadgeInfo, Bus, Car, DoorOpen, Info, Landmark, MapPin, ShieldCheck, Stethoscope, Utensils } from "lucide-react";
+import { useMemo, useState, type KeyboardEvent } from "react";
+import { BadgeInfo, Building2, CircleDollarSign, DoorOpen, Plane, ShieldCheck, ShoppingBag, Utensils } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-type ZoneId = "T1" | "T2" | "T3" | "ST" | "CARGO" | "PARK" | "RWY" | "APM" | "ATM" | "FOOD" | "LOUNGE" | "GATES" | "SERVICES" | "OPS";
-type LayerId = "atm" | "food" | "lounges" | "gates" | "services" | "ops";
+type SceneId = "overview" | "terminal1" | "terminal2" | "terminal3" | "airside";
 
-const ZONE_INFO: Record<ZoneId, { title: string; body: string }> = {
-  T1: {
-    title: "Terminal 1",
-    body: "Terminal 1 sits north of the T2/T3 complex and serves domestic, regional and non-EgyptAir international traffic.",
-  },
-  T2: {
-    title: "Terminal 2",
-    body: "Terminal 2 is the renovated international terminal connected to Terminal 3 by an airbridge.",
-  },
-  T3: {
-    title: "Terminal 3",
-    body: "Terminal 3 is the main EgyptAir hub and the largest passenger terminal at Cairo International Airport.",
-  },
-  ST: {
-    title: "Seasonal / Hajj Terminal",
-    body: "Seasonal terminal used for pilgrimage and overflow charter operations west of the main terminal area.",
-  },
-  CARGO: {
-    title: "Cargo Village",
-    body: "Freight and logistics area separated from passenger flows for cargo handling and airport support operations.",
-  },
-  PARK: {
-    title: "Car Parking",
-    body: "Car parks connect to the terminals and the airport transfer route.",
-  },
-  RWY: {
-    title: "Runway System",
-    body: "CAI operates three parallel 05/23 runways. This schematic shows their relationship, not survey scale.",
-  },
-  APM: {
-    title: "Terminal Transfer",
-    body: "Terminal transfer connects T1, car parks, Air Mall and T2/T3 for inter-terminal movement.",
-  },
-  ATM: {
-    title: "Banks / ATM",
-    body: "Banks, ATMs and currency exchange are listed among Cairo Airport terminal passenger services.",
-  },
-  FOOD: {
-    title: "Restaurants & Cafeterias",
-    body: "Food and drink concessions are available across passenger terminals.",
-  },
-  LOUNGE: {
-    title: "Lounges",
-    body: "Premium and first-class lounge options are available in the passenger terminals.",
-  },
-  GATES: {
-    title: "Gate Areas",
-    body: "Gate markers show the main boarding zones for T1, T2 and T3.",
-  },
-  SERVICES: {
-    title: "Passenger Services",
-    body: "Information, medical support, baggage services, car rental and reduced-mobility assistance are terminal services.",
-  },
-  OPS: {
-    title: "Manager Operations Points",
-    body: "Operational markers highlight runway, apron and cargo areas useful for manager review.",
-  },
+type Hotspot = {
+  id: string;
+  number: number;
+  title: string;
+  summary: string;
+  x: number;
+  y: number;
 };
 
-const LAYERS: Array<{ id: LayerId; label: string; icon: typeof MapPin }> = [
-  { id: "atm", label: "ATM", icon: Landmark },
-  { id: "food", label: "Food", icon: Utensils },
-  { id: "lounges", label: "Lounges", icon: Armchair },
-  { id: "gates", label: "Gates", icon: DoorOpen },
-  { id: "services", label: "Services", icon: BadgeInfo },
-  { id: "ops", label: "Ops", icon: ShieldCheck },
-];
+type Scene = {
+  id: SceneId;
+  title: string;
+  subtitle: string;
+  icon: LucideIcon;
+  facts: string[];
+  hotspots: Hotspot[];
+};
 
-const MARKERS: Array<{ id: string; zone: ZoneId; layer: LayerId; x: number; y: number; label: string; icon: typeof MapPin }> = [
-  { id: "atm-t1", zone: "ATM", layer: "atm", x: 654, y: 168, label: "ATM", icon: Landmark },
-  { id: "atm-t2", zone: "ATM", layer: "atm", x: 564, y: 305, label: "ATM", icon: Landmark },
-  { id: "atm-t3", zone: "ATM", layer: "atm", x: 390, y: 390, label: "ATM", icon: Landmark },
-  { id: "food-t1", zone: "FOOD", layer: "food", x: 736, y: 198, label: "Food", icon: Utensils },
-  { id: "food-t2", zone: "FOOD", layer: "food", x: 632, y: 336, label: "Food", icon: Utensils },
-  { id: "food-t3", zone: "FOOD", layer: "food", x: 500, y: 432, label: "Food", icon: Utensils },
-  { id: "lounge-t2", zone: "LOUNGE", layer: "lounges", x: 690, y: 296, label: "Lounge", icon: Armchair },
-  { id: "lounge-t3", zone: "LOUNGE", layer: "lounges", x: 545, y: 366, label: "Lounge", icon: Armchair },
-  { id: "gate-t1", zone: "GATES", layer: "gates", x: 782, y: 150, label: "Gates 1-12", icon: DoorOpen },
-  { id: "gate-t2", zone: "GATES", layer: "gates", x: 724, y: 374, label: "T2 Gates", icon: DoorOpen },
-  { id: "gate-t3", zone: "GATES", layer: "gates", x: 430, y: 518, label: "T3 Pier", icon: DoorOpen },
-  { id: "info-t1", zone: "SERVICES", layer: "services", x: 612, y: 218, label: "Info", icon: BadgeInfo },
-  { id: "medical-t2", zone: "SERVICES", layer: "services", x: 522, y: 346, label: "Medical", icon: Stethoscope },
-  { id: "baggage-t3", zone: "SERVICES", layer: "services", x: 338, y: 434, label: "Services", icon: BadgeInfo },
-  { id: "ops-rwy", zone: "OPS", layer: "ops", x: 834, y: 562, label: "Runway Ops", icon: ShieldCheck },
-  { id: "ops-apron", zone: "OPS", layer: "ops", x: 620, y: 468, label: "Apron", icon: ShieldCheck },
-  { id: "ops-cargo", zone: "OPS", layer: "ops", x: 430, y: 116, label: "Cargo Ops", icon: ShieldCheck },
+const SCENES: Scene[] = [
+  {
+    id: "overview",
+    title: "Airport overview",
+    subtitle: "Full CAI passenger and airside schematic",
+    icon: Plane,
+    facts: ["Three parallel 05/23 runways", "T1 sits north of the T2/T3 complex", "Seasonal / Hajj terminal is west of T3", "APM links T1, car parks, Air Mall and T2/T3"],
+    hotspots: [
+      { id: "overview-terminal", number: 1, title: "Passenger terminal core", summary: "T1, T2 and T3 are shown as the main passenger buildings with the T2/T3 complex connected.", x: 610, y: 395 },
+      { id: "overview-checkin", number: 2, title: "Check-in halls", summary: "Departure halls contain check-in, baggage wrapping, shops and access to immigration/security.", x: 270, y: 520 },
+      { id: "overview-passport", number: 3, title: "Passport control", summary: "International passenger flow includes immigration/passport control before airside gates.", x: 850, y: 500 },
+      { id: "overview-baggage", number: 4, title: "Baggage claim", summary: "Arrivals flow includes baggage reclaim and customs before landside services.", x: 900, y: 265 },
+      { id: "overview-customs", number: 5, title: "Customs control", summary: "Customs is represented after baggage claim in the arrivals path.", x: 730, y: 150 },
+      { id: "overview-runway", number: 6, title: "Runway and apron", summary: "The airfield area shows three parallel runways, taxiways, apron stands and ground support vehicles.", x: 180, y: 235 },
+    ],
+  },
+  {
+    id: "terminal1",
+    title: "Terminal 1",
+    subtitle: "Halls, check-in, gates and landside services",
+    icon: Building2,
+    facts: ["Older terminal complex north of T2/T3", "Terminal guide sources identify 12 gates", "Includes arrivals, departures and private aviation Hall 4", "Banks/ATM, restaurants, duty free, medical and transport access are represented"],
+    hotspots: [
+      { id: "t1-halls", number: 1, title: "Halls 1-3", summary: "T1 is organized around passenger halls for departures, arrivals and regional/domestic traffic.", x: 255, y: 250 },
+      { id: "t1-checkin", number: 2, title: "Check-in counters", summary: "Departure processing with check-in counters, baggage wrapping and information support.", x: 395, y: 435 },
+      { id: "t1-gates", number: 3, title: "Gates 1-12", summary: "T1 gate zone is shown as a compact boarding pier with numbered gate positions.", x: 690, y: 280 },
+      { id: "t1-services", number: 4, title: "Passenger services", summary: "Restaurants, shops, banking/ATM, medical services, mosque and ground transport are grouped near the hall spine.", x: 565, y: 470 },
+      { id: "t1-transfer", number: 5, title: "Terminal transfer", summary: "The airport people mover/transfer route connects T1 with car parks, Air Mall and T2/T3.", x: 835, y: 430 },
+    ],
+  },
+  {
+    id: "terminal2",
+    title: "Terminal 2",
+    subtitle: "Renovated international terminal connected to T3",
+    icon: DoorOpen,
+    facts: ["International terminal connected directly with T3", "Used by many international carriers", "Includes check-in, immigration/security, lounges, shops and gates", "Good candidate terminal for alliance and partner airline passenger flow"],
+    hotspots: [
+      { id: "t2-checkin", number: 1, title: "Departure hall", summary: "Large check-in area and landside services before security and passport control.", x: 300, y: 430 },
+      { id: "t2-security", number: 2, title: "Security and passport control", summary: "International processing area before passengers enter the airside concourse.", x: 500, y: 300 },
+      { id: "t2-lounges", number: 3, title: "Lounges and retail", summary: "Lounges, duty free, shops, restaurants and cafeterias are represented along the concourse.", x: 650, y: 430 },
+      { id: "t2-gates", number: 4, title: "Pier gates", summary: "Gate bank shown along the airside edge, connected to stands and taxiways.", x: 820, y: 250 },
+      { id: "t2-bridge", number: 5, title: "T2-T3 connector", summary: "A direct connector links Terminal 2 with Terminal 3 for passenger transfer.", x: 865, y: 470 },
+    ],
+  },
+  {
+    id: "terminal3",
+    title: "Terminal 3",
+    subtitle: "EgyptAir hub and largest passenger terminal",
+    icon: ShoppingBag,
+    facts: ["Opened as the main EgyptAir hub", "Largest passenger terminal at CAI", "Includes domestic/international processing, lounges and gate piers", "Connected to T2 and parking/transfer facilities"],
+    hotspots: [
+      { id: "t3-main", number: 1, title: "Main terminal building", summary: "Large terminal block for EgyptAir hub operations and mixed domestic/international passenger processing.", x: 440, y: 345 },
+      { id: "t3-pier", number: 2, title: "Boarding pier", summary: "Extended pier supports the main boarding gate cluster and aircraft stand access.", x: 730, y: 260 },
+      { id: "t3-arrivals", number: 3, title: "Arrivals and baggage", summary: "Arrivals path includes passport control, baggage claim and customs before landside exit.", x: 260, y: 460 },
+      { id: "t3-lounges", number: 4, title: "Lounges and duty free", summary: "Premium lounges, duty free, shops and food services are represented near the secure concourse.", x: 565, y: 480 },
+      { id: "t3-parking", number: 5, title: "Parking and APM access", summary: "Parking and the people mover/transfer route connect T3 with the broader airport complex.", x: 830, y: 450 },
+    ],
+  },
+  {
+    id: "airside",
+    title: "Airside and Seasonal Terminal",
+    subtitle: "Runways, apron, cargo and Hajj/seasonal operations",
+    icon: ShieldCheck,
+    facts: ["Three 05/23 runways are shown schematically", "Seasonal / Hajj terminal supports pilgrimage traffic", "Cargo Village is separated from passenger terminals", "Ground support, apron safety and runway operations are manager-critical areas"],
+    hotspots: [
+      { id: "air-runways", number: 1, title: "Parallel runways", summary: "Three runway strips represent CAI's parallel runway system and taxiway access.", x: 275, y: 260 },
+      { id: "air-apron", number: 2, title: "Apron stands", summary: "Apron aircraft stands show turnaround positions, service vehicles and marshal areas.", x: 600, y: 360 },
+      { id: "air-seasonal", number: 3, title: "Seasonal / Hajj terminal", summary: "Seasonal terminal is represented west of T3 for pilgrimage and overflow operations.", x: 740, y: 500 },
+      { id: "air-cargo", number: 4, title: "Cargo Village", summary: "Cargo operations are shown away from passenger flows for freight and logistics handling.", x: 820, y: 185 },
+      { id: "air-safety", number: 5, title: "Safety and maintenance", summary: "Manager view highlights fire response, runway inspections, PPE and maintenance attention points.", x: 460, y: 510 },
+    ],
+  },
 ];
 
 export function AirportMap2D({ className = "" }: { className?: string }) {
-  const [hoveredZone, setHoveredZone] = useState<ZoneId | null>(null);
-  const [selectedZone, setSelectedZone] = useState<ZoneId>("T3");
-  const [visibleLayers, setVisibleLayers] = useState<Record<LayerId, boolean>>({
-    atm: false,
-    food: false,
-    lounges: false,
-    gates: true,
-    services: false,
-    ops: false,
-  });
-  const activeZone = hoveredZone ?? selectedZone;
-  const activeInfo = ZONE_INFO[activeZone];
+  const [activeSceneId, setActiveSceneId] = useState<SceneId>("overview");
+  const activeScene = SCENES.find((scene) => scene.id === activeSceneId) ?? SCENES[0];
+  const [activeHotspotId, setActiveHotspotId] = useState(activeScene.hotspots[0].id);
+  const activeHotspot = useMemo(
+    () => activeScene.hotspots.find((hotspot) => hotspot.id === activeHotspotId) ?? activeScene.hotspots[0],
+    [activeHotspotId, activeScene],
+  );
 
-  const selectZone = (zone: ZoneId) => setSelectedZone(zone);
-  const handleKeySelect = (event: KeyboardEvent<SVGGElement>, zone: ZoneId) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      selectZone(zone);
-    }
+  const selectScene = (scene: Scene) => {
+    setActiveSceneId(scene.id);
+    setActiveHotspotId(scene.hotspots[0].id);
   };
 
   return (
-    <section className={`panel relative overflow-hidden ${className}`} aria-labelledby="airport-map-title">
-      <div className="pointer-events-none absolute inset-0 grid-bg opacity-20" />
-
-      <div className="absolute start-3 top-3 z-10 flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-primary">
-        <span className="h-1.5 w-1.5 rounded-full bg-primary glow-cyan" />
-        <span id="airport-map-title">CAI - 2D MAP</span>
-      </div>
-      <div className="absolute end-3 top-3 z-10 font-mono text-[10px] text-muted-foreground">N up - schematic</div>
-
-      <div className="absolute inset-x-3 top-10 z-20 flex flex-wrap gap-1.5" aria-label="Map layers">
-        {LAYERS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setVisibleLayers((current) => ({ ...current, [id]: !current[id] }))}
-            aria-pressed={visibleLayers[id]}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors ${
-              visibleLayers[id] ? "border-primary/60 bg-primary/15 text-primary" : "border-border bg-background/75 text-muted-foreground hover:bg-secondary hover:text-foreground"
-            }`}
+    <section className={`panel overflow-hidden ${className}`} aria-labelledby="airport-visual-title">
+      <div className="border-b border-border p-4">
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">Interactive vector image set</p>
+        <div className="mt-1 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 id="airport-visual-title" className="text-2xl font-semibold tracking-tight">
+              Cairo Airport visual guide
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+              Five clickable SVG views inspired by airport infographic design: overview, Terminal 1, Terminal 2, Terminal 3, and airside/seasonal operations.
+            </p>
+          </div>
+          <a
+            href="https://www.cairo-airport.com/en-us/Airport/Airport-Services-Facilities"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs hover:bg-secondary"
           >
-            <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+            <BadgeInfo aria-hidden="true" className="h-4 w-4 text-primary" />
+            Source: Cairo Airport services
+          </a>
+        </div>
       </div>
 
-      <svg viewBox="0 0 1100 720" className="block h-auto w-full" role="img" aria-label="2D schematic map of Cairo International Airport terminals, runways and services">
-        <defs>
-          <linearGradient id="mapGround2d" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="oklch(0.20 0.04 245)" />
-            <stop offset="1" stopColor="oklch(0.15 0.035 250)" />
-          </linearGradient>
-          <filter id="mapGlow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+      <div className="grid gap-4 p-4 xl:grid-cols-[220px_1fr_300px]">
+        <nav className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1" aria-label="Airport SVG views">
+          {SCENES.map((scene, index) => {
+            const Icon = scene.icon;
+            const active = scene.id === activeScene.id;
+            return (
+              <button
+                key={scene.id}
+                type="button"
+                onClick={() => selectScene(scene)}
+                className={`group rounded-md border p-3 text-start transition-colors ${
+                  active ? "border-primary bg-primary/15 text-primary" : "border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+                aria-pressed={active}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-md border border-current/30">
+                    <Icon aria-hidden="true" className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-mono text-[10px] uppercase tracking-wider">Image {index + 1}</span>
+                    <span className="block truncate text-sm font-semibold">{scene.title}</span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </nav>
 
-        <rect x="36" y="78" width="1028" height="584" rx="22" fill="url(#mapGround2d)" stroke="oklch(0.34 0.05 245)" />
-        <path d="M116 612 C252 548, 330 534, 456 564 C618 603, 776 626, 1012 574" fill="none" stroke="oklch(0.28 0.04 245)" strokeWidth="28" opacity="0.55" />
-        <path d="M150 252 C280 210, 398 205, 506 232 C618 260, 738 254, 954 188" fill="none" stroke="oklch(0.28 0.04 245)" strokeWidth="20" opacity="0.4" />
-        <Compass />
-
-        <Runway label="05L / 23R" x={148} y={514} width={824} active={activeZone === "RWY"} onSelect={() => selectZone("RWY")} onFocus={() => setHoveredZone("RWY")} onBlur={() => setHoveredZone(null)} onKeyDown={(event) => handleKeySelect(event, "RWY")} />
-        <Runway label="05C / 23C" x={138} y={570} width={824} active={activeZone === "RWY"} onSelect={() => selectZone("RWY")} onFocus={() => setHoveredZone("RWY")} onBlur={() => setHoveredZone(null)} onKeyDown={(event) => handleKeySelect(event, "RWY")} />
-        <Runway label="05R / 23L" x={126} y={626} width={824} active={activeZone === "RWY"} onSelect={() => selectZone("RWY")} onFocus={() => setHoveredZone("RWY")} onBlur={() => setHoveredZone(null)} onKeyDown={(event) => handleKeySelect(event, "RWY")} />
-
-        <g stroke="oklch(0.43 0.045 245)" strokeWidth="8" fill="none" strokeLinecap="round" opacity="0.9">
-          <path d="M614 416 C652 462, 696 488, 742 516" />
-          <path d="M514 394 C554 452, 600 486, 640 536" />
-          <path d="M726 240 C768 326, 816 410, 852 516" />
-        </g>
-
-        <Terminal zone="T1" x={596} y={128} width={238} height={116} label="T1" subtitle="Terminal 1" color="oklch(0.68 0.15 150)" active={activeZone === "T1"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        <Terminal zone="T2" x={500} y={268} width={252} height={116} label="T2" subtitle="Terminal 2" color="oklch(0.74 0.13 215)" active={activeZone === "T2"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        <Terminal zone="T3" x={286} y={360} width={294} height={122} label="T3" subtitle="Terminal 3" color="oklch(0.72 0.18 330)" active={activeZone === "T3"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        <Terminal zone="T3" x={396} y={480} width={94} height={86} label="" subtitle="" color="oklch(0.72 0.18 330)" active={activeZone === "T3"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        <Terminal zone="ST" x={160} y={382} width={118} height={88} label="ST" subtitle="Seasonal" color="oklch(0.78 0.14 80)" active={activeZone === "ST"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-
-        <Facility zone="CARGO" x={352} y={102} width={168} height={70} label="Cargo Village" active={activeZone === "CARGO"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        <Facility zone="PARK" x={252} y={286} width={146} height={72} label="Car Park" icon={Car} active={activeZone === "PARK"} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        <Transfer active={activeZone === "APM"} onSelect={() => selectZone("APM")} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-
-        {MARKERS.filter((marker) => visibleLayers[marker.layer]).map((marker) => (
-          <Marker key={marker.id} {...marker} active={activeZone === marker.zone} onSelect={selectZone} onHover={setHoveredZone} onKeySelect={handleKeySelect} />
-        ))}
-      </svg>
-
-      <aside className="absolute bottom-3 start-3 max-w-[330px] panel-inner bg-background/90 p-3" aria-live="polite">
-        <div className="flex items-center gap-2">
-          <Info aria-hidden="true" className="h-3.5 w-3.5 text-primary" />
-          <h3 className="text-sm font-semibold">{activeInfo.title}</h3>
+        <div className="overflow-hidden rounded-lg border border-border bg-[#d8f1fa]">
+          <AirportScene scene={activeScene} activeHotspotId={activeHotspot.id} onHotspotSelect={setActiveHotspotId} />
         </div>
-        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{activeInfo.body}</p>
-      </aside>
 
-      <div className="absolute bottom-3 end-3 flex max-w-[360px] flex-wrap items-center justify-end gap-3 panel-inner px-3 py-2 font-mono text-[10px]">
-        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-primary/70" />Transfer</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[oklch(0.72_0.18_330)]" />Terminal</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-[oklch(0.38_0.03_245)]" />Runway</span>
+        <aside className="space-y-3">
+          <div className="panel-inner p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Selected item</p>
+            <h3 className="mt-2 text-lg font-semibold">{activeHotspot.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activeHotspot.summary}</p>
+          </div>
+
+          <div className="panel-inner p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Scene notes</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {activeScene.facts.map((fact) => (
+                <li key={fact} className="flex gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span>{fact}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="panel-inner p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Clickable items</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {activeScene.hotspots.map((hotspot) => (
+                <button
+                  key={hotspot.id}
+                  type="button"
+                  onClick={() => setActiveHotspotId(hotspot.id)}
+                  className={`rounded-full border px-3 py-1 text-xs ${
+                    hotspot.id === activeHotspot.id ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  {hotspot.number}. {hotspot.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
   );
 }
 
-function interactiveProps(zone: ZoneId, onSelect: (zone: ZoneId) => void, onHover: (zone: ZoneId | null) => void, onKeySelect: (event: KeyboardEvent<SVGGElement>, zone: ZoneId) => void) {
-  return {
-    role: "button",
-    tabIndex: 0,
-    onClick: () => onSelect(zone),
-    onMouseEnter: () => onHover(zone),
-    onMouseLeave: () => onHover(null),
-    onFocus: () => onHover(zone),
-    onBlur: () => onHover(null),
-    onKeyDown: (event: KeyboardEvent<SVGGElement>) => onKeySelect(event, zone),
-    style: { cursor: "pointer" },
+function AirportScene({ scene, activeHotspotId, onHotspotSelect }: { scene: Scene; activeHotspotId: string; onHotspotSelect: (id: string) => void }) {
+  return (
+    <svg viewBox="0 0 1080 640" className="block h-auto w-full" role="img" aria-label={`${scene.title}: ${scene.subtitle}`}>
+      <defs>
+        <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="10" stdDeviation="8" floodColor="#4a6670" floodOpacity="0.18" />
+        </filter>
+        <linearGradient id="glass" x1="0" x2="1">
+          <stop offset="0" stopColor="#9ec0c7" />
+          <stop offset="1" stopColor="#d7ecef" />
+        </linearGradient>
+      </defs>
+
+      <rect width="1080" height="640" fill="#d8f1fa" />
+      <text x="540" y="58" textAnchor="middle" fontSize="36" fontWeight="800" fill="#102027" fontFamily="Inter, Arial">
+        {scene.title.toUpperCase()}
+      </text>
+      <text x="540" y="86" textAnchor="middle" fontSize="14" fontWeight="600" fill="#40565d" fontFamily="Inter, Arial">
+        {scene.subtitle}
+      </text>
+
+      {scene.id === "overview" && <OverviewArt />}
+      {scene.id === "terminal1" && <TerminalDetailArt tone="#4aa76c" label="TERMINAL 1" />}
+      {scene.id === "terminal2" && <TerminalDetailArt tone="#2e99c7" label="TERMINAL 2" connector />}
+      {scene.id === "terminal3" && <TerminalDetailArt tone="#a24bb8" label="TERMINAL 3" pier />}
+      {scene.id === "airside" && <AirsideArt />}
+
+      {scene.hotspots.map((hotspot) => (
+        <HotspotButton key={hotspot.id} hotspot={hotspot} active={hotspot.id === activeHotspotId} onSelect={onHotspotSelect} />
+      ))}
+    </svg>
+  );
+}
+
+function HotspotButton({ hotspot, active, onSelect }: { hotspot: Hotspot; active: boolean; onSelect: (id: string) => void }) {
+  const handleKeyDown = (event: KeyboardEvent<SVGGElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect(hotspot.id);
+    }
   };
-}
 
-function Compass() {
   return (
-    <g transform="translate(78 116)" aria-hidden="true">
-      <circle r="22" fill="oklch(0.16 0.04 250)" stroke="oklch(0.42 0.06 245)" />
-      <path d="M0,-16 L6,8 L0,3 L-6,8 Z" fill="var(--cyan)" />
-      <text y="34" textAnchor="middle" fontSize="9" fill="oklch(0.85 0.02 240)" fontFamily="ui-monospace">N</text>
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={`${hotspot.number}. ${hotspot.title}`}
+      onClick={() => onSelect(hotspot.id)}
+      onKeyDown={handleKeyDown}
+      style={{ cursor: "pointer" }}
+    >
+      <line x1={hotspot.x} y1={hotspot.y + 15} x2={hotspot.x} y2={hotspot.y + 86} stroke="#78909c" strokeWidth="2" opacity="0.7" />
+      <circle cx={hotspot.x} cy={hotspot.y} r={active ? 19 : 16} fill={active ? "#ffb300" : "#ffd200"} stroke="#111827" strokeWidth={active ? 3 : 0} />
+      <text x={hotspot.x} y={hotspot.y + 6} textAnchor="middle" fontSize="20" fontWeight="800" fill="#111827" fontFamily="Inter, Arial">
+        {hotspot.number}
+      </text>
     </g>
   );
 }
 
-function Runway({ x, y, width, label, active, onSelect, onFocus, onBlur, onKeyDown }: { x: number; y: number; width: number; label: string; active: boolean; onSelect: () => void; onFocus: () => void; onBlur: () => void; onKeyDown: (event: KeyboardEvent<SVGGElement>) => void }) {
+function OverviewArt() {
   return (
-    <g role="button" tabIndex={0} aria-label={`Runway ${label}`} transform={`rotate(-8 ${x + width / 2} ${y})`} onClick={onSelect} onMouseEnter={onFocus} onMouseLeave={onBlur} onFocus={onFocus} onBlur={onBlur} onKeyDown={onKeyDown} style={{ cursor: "pointer" }}>
-      <rect x={x} y={y - 18} width={width} height={36} rx="5" fill="oklch(0.30 0.03 245)" stroke={active ? "var(--cyan)" : "oklch(0.44 0.04 245)"} strokeWidth={active ? 2 : 1} filter={active ? "url(#mapGlow)" : undefined} />
-      <line x1={x + 28} y1={y} x2={x + width - 28} y2={y} stroke="oklch(0.92 0.02 240)" strokeWidth="2" strokeDasharray="18 14" opacity="0.72" />
-      <text x={x + width - 74} y={y - 26} textAnchor="middle" fontSize="10" fontFamily="ui-monospace" fill="oklch(0.78 0.04 230)" letterSpacing="0.1em">{label}</text>
+    <g filter="url(#softShadow)">
+      <RunwayPlate x={70} y={170} />
+      <TerminalBlock x={460} y={330} width={360} depth={145} height={82} label="AIRPORT" tone="#d84a1b" />
+      <Road x={520} y={500} />
+      <ServicePanel x={110} y={430} label="CHECK-IN" icon="counters" />
+      <ServicePanel x={770} y={185} label="BAGGAGE" icon="belt" />
+      <ServicePanel x={760} y={430} label="PASSPORT" icon="booths" />
+      <ServicePanel x={530} y={115} label="CUSTOMS" icon="scanner" />
+      <ControlTower x={690} y={270} />
+      <PlaneShape x={360} y={260} scale={1.15} />
+      <PlaneShape x={455} y={365} scale={0.95} />
+      <BusShape x={710} y={505} />
     </g>
   );
 }
 
-function Terminal({ zone, x, y, width, height, label, subtitle, color, active, onSelect, onHover, onKeySelect }: { zone: ZoneId; x: number; y: number; width: number; height: number; label: string; subtitle: string; color: string; active: boolean; onSelect: (zone: ZoneId) => void; onHover: (zone: ZoneId | null) => void; onKeySelect: (event: KeyboardEvent<SVGGElement>, zone: ZoneId) => void }) {
+function TerminalDetailArt({ tone, label, connector = false, pier = false }: { tone: string; label: string; connector?: boolean; pier?: boolean }) {
   return (
-    <g aria-label={ZONE_INFO[zone].title} filter={active ? "url(#mapGlow)" : undefined} {...interactiveProps(zone, onSelect, onHover, onKeySelect)}>
-      <rect x={x} y={y} width={width} height={height} rx="10" fill="oklch(0.22 0.04 245)" stroke={active ? "var(--cyan)" : color} strokeWidth={active ? 2.5 : 1.4} />
-      <rect x={x + 8} y={y + 8} width={width - 16} height={height - 16} rx="7" fill={color} opacity="0.24" />
-      {label && (
-        <>
-          <text x={x + 18} y={y + 34} fontSize="24" fontWeight="800" fill="oklch(0.98 0.01 230)" fontFamily="Inter, ui-sans-serif">{label}</text>
-          <text x={x + 18} y={y + 56} fontSize="11" fill="oklch(0.84 0.02 230)" fontFamily="ui-monospace">{subtitle}</text>
-        </>
-      )}
+    <g filter="url(#softShadow)">
+      <rect x="120" y="140" width="820" height="390" rx="18" fill="#ffffff" />
+      <path d="M150 190 H900 V245 H150 Z" fill="#f4f7f8" stroke="#d5dee2" />
+      <TerminalBlock x={265} y={210} width={420} depth={150} height={75} label={label} tone={tone} />
+      {connector && <path d="M685 285 L895 240 L920 265 L710 312 Z" fill="#cfd8dc" stroke="#9eabb1" strokeWidth="3" />}
+      {pier && <TerminalBlock x={610} y={285} width={210} depth={105} height={58} label="PIER" tone={tone} />}
+      <CheckInCounters x={165} y={380} />
+      <GateRow x={700} y={200} />
+      <RetailStrip x={460} y={430} tone={tone} />
+      <PeopleGroup x={300} y={472} />
+      <PeopleGroup x={735} y={390} />
+      <BaggageBelt x={190} y={230} />
+      <SecurityBooths x={560} y={195} />
     </g>
   );
 }
 
-function Facility({ zone, x, y, width, height, label, icon: Icon = Bus, active, onSelect, onHover, onKeySelect }: { zone: ZoneId; x: number; y: number; width: number; height: number; label: string; icon?: typeof Bus; active: boolean; onSelect: (zone: ZoneId) => void; onHover: (zone: ZoneId | null) => void; onKeySelect: (event: KeyboardEvent<SVGGElement>, zone: ZoneId) => void }) {
+function AirsideArt() {
   return (
-    <g aria-label={ZONE_INFO[zone].title} filter={active ? "url(#mapGlow)" : undefined} {...interactiveProps(zone, onSelect, onHover, onKeySelect)}>
-      <rect x={x} y={y} width={width} height={height} rx="9" fill="oklch(0.18 0.035 245)" stroke={active ? "var(--cyan)" : "oklch(0.48 0.08 85)"} strokeWidth={active ? 2 : 1.2} strokeDasharray="7 5" />
-      <Icon x={x + 14} y={y + 18} width={18} height={18} color="var(--cyan)" strokeWidth={2} />
-      <text x={x + 40} y={y + 32} fontSize="12" fontWeight="700" fill="oklch(0.94 0.01 230)" fontFamily="Inter, ui-sans-serif">{label}</text>
+    <g filter="url(#softShadow)">
+      <RunwayPlate x={120} y={150} wide />
+      <PlaneShape x={500} y={290} scale={1.15} />
+      <PlaneShape x={650} y={390} scale={0.95} />
+      <TerminalBlock x={670} y={450} width={220} depth={90} height={55} label="SEASONAL" tone="#d69b17" />
+      <TerminalBlock x={720} y={165} width={190} depth={80} height={50} label="CARGO" tone="#607d8b" />
+      <ServiceTrucks x={480} y={455} />
+      <Helipad x={350} y={470} />
     </g>
   );
 }
 
-function Transfer({ active, onSelect, onHover, onKeySelect }: { active: boolean; onSelect: () => void; onHover: (zone: ZoneId | null) => void; onKeySelect: (event: KeyboardEvent<SVGGElement>, zone: ZoneId) => void }) {
+function RunwayPlate({ x, y, wide = false }: { x: number; y: number; wide?: boolean }) {
+  const width = wide ? 760 : 520;
   return (
-    <g aria-label={ZONE_INFO.APM.title} role="button" tabIndex={0} onClick={onSelect} onMouseEnter={() => onHover("APM")} onMouseLeave={() => onHover(null)} onFocus={() => onHover("APM")} onBlur={() => onHover(null)} onKeyDown={(event) => onKeySelect(event, "APM")} style={{ cursor: "pointer" }}>
-      <path d="M716 244 C674 268, 640 278, 626 326 C596 374, 520 392, 432 396 C356 398, 324 364, 316 322" fill="none" stroke="var(--cyan)" strokeWidth="4" strokeOpacity={active ? 0.98 : 0.62} strokeDasharray="9 8" className="flow-line" />
-      <TransferStop cx={716} cy={244} label="T1" />
-      <TransferStop cx={626} cy={326} label="T2" />
-      <TransferStop cx={432} cy={396} label="T3" />
-      <TransferStop cx={316} cy={322} label="P" />
+    <g>
+      <polygon points={`${x},${y + 170} ${x + width},${y - 80} ${x + width + 250},${y + 45} ${x + 240},${y + 300}`} fill="#edf5f7" />
+      {[0, 54, 108].map((offset) => (
+        <g key={offset} transform={`translate(${x + 40 + offset * 1.2} ${y + offset}) rotate(-23)`}>
+          <rect width={width - 90} height="34" rx="5" fill="#82939b" />
+          <line x1="30" y1="17" x2={width - 130} y2="17" stroke="#fff" strokeWidth="3" strokeDasharray="24 18" />
+        </g>
+      ))}
+      <path d={`M${x + 310} ${y + 95} C${x + 470} ${y + 145}, ${x + 580} ${y + 170}, ${x + 710} ${y + 225}`} fill="none" stroke="#f5b041" strokeWidth="4" />
     </g>
   );
 }
 
-function TransferStop({ cx, cy, label }: { cx: number; cy: number; label: string }) {
+function TerminalBlock({ x, y, width, depth, height, label, tone }: { x: number; y: number; width: number; depth: number; height: number; label: string; tone: string }) {
   return (
-    <g pointerEvents="none">
-      <circle cx={cx} cy={cy} r="8" fill="oklch(0.16 0.04 250)" stroke="var(--cyan)" strokeWidth="2" />
-      <circle cx={cx} cy={cy} r="3" fill="var(--cyan)" />
-      <text x={cx + 12} y={cy + 4} fontSize="10" fontFamily="ui-monospace" fill="oklch(0.95 0.01 230)">{label}</text>
+    <g>
+      <polygon points={`${x},${y + depth} ${x + width},${y + depth - 70} ${x + width + 135},${y} ${x + 130},${y + 68}`} fill="#dfe8eb" stroke="#b8c5ca" strokeWidth="3" />
+      <polygon points={`${x + 25},${y + depth - 8} ${x + width - 15},${y + depth - 78} ${x + width - 15},${y + depth - 78 - height} ${x + 25},${y + depth - 8 - height}`} fill="url(#glass)" stroke="#78909c" />
+      <polygon points={`${x + 25},${y + depth - 8 - height} ${x + width - 15},${y + depth - 78 - height} ${x + width + 55},${y + depth - 122 - height} ${x + 95},${y + depth - 50 - height}`} fill="#cfd8dc" />
+      <text x={x + width / 2 + 60} y={y + depth - height - 60} textAnchor="middle" fontSize="26" fontWeight="800" fill={tone} fontFamily="Inter, Arial" transform={`rotate(-13 ${x + width / 2 + 60} ${y + depth - height - 60})`}>
+        {label}
+      </text>
     </g>
   );
 }
 
-function Marker({ zone, x, y, label, icon: Icon, active, onSelect, onHover, onKeySelect }: { zone: ZoneId; x: number; y: number; label: string; icon: typeof MapPin; active: boolean; onSelect: (zone: ZoneId) => void; onHover: (zone: ZoneId | null) => void; onKeySelect: (event: KeyboardEvent<SVGGElement>, zone: ZoneId) => void }) {
+function ServicePanel({ x, y, label, icon }: { x: number; y: number; label: string; icon: "counters" | "belt" | "booths" | "scanner" }) {
   return (
-    <g aria-label={`${label}: ${ZONE_INFO[zone].title}`} filter={active ? "url(#mapGlow)" : undefined} {...interactiveProps(zone, onSelect, onHover, onKeySelect)}>
-      <rect x={x - 13} y={y - 13} width={26} height={26} rx="8" fill={active ? "var(--cyan)" : "oklch(0.14 0.04 250)"} stroke="oklch(0.88 0.02 230)" strokeOpacity="0.7" />
-      <Icon x={x - 7} y={y - 7} width={14} height={14} color={active ? "oklch(0.12 0.04 250)" : "var(--cyan)"} strokeWidth={2.2} />
-      <text x={x + 17} y={y + 4} fontSize="10" fontFamily="ui-monospace" fill="oklch(0.92 0.01 230)">{label}</text>
+    <g>
+      <polygon points={`${x},${y + 90} ${x + 270},${y} ${x + 380},${y + 55} ${x + 105},${y + 150}`} fill="#fff" stroke="#cfd8dc" strokeWidth="3" />
+      <text x={x + 170} y={y + 28} textAnchor="middle" fontSize="18" fontWeight="800" fill="#263238" fontFamily="Inter, Arial">
+        {label}
+      </text>
+      {icon === "counters" && <CheckInCounters x={x + 70} y={y + 72} small />}
+      {icon === "belt" && <BaggageBelt x={x + 85} y={y + 70} />}
+      {icon === "booths" && <SecurityBooths x={x + 110} y={y + 70} />}
+      {icon === "scanner" && <Scanner x={x + 125} y={y + 60} />}
+    </g>
+  );
+}
+
+function CheckInCounters({ x, y, small = false }: { x: number; y: number; small?: boolean }) {
+  const count = small ? 3 : 5;
+  return (
+    <g>
+      {Array.from({ length: count }).map((_, index) => (
+        <g key={index} transform={`translate(${x + index * 42} ${y})`}>
+          <rect width="34" height="24" fill="#e0e0e0" stroke="#9e9e9e" />
+          <rect x="4" y="-18" width="26" height="16" fill="#f7d13d" stroke="#9e9e9e" />
+          <circle cx="17" cy="42" r="7" fill="#355c7d" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function GateRow({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <g key={index} transform={`translate(${x + index * 32} ${y + index * 8})`}>
+          <rect width="24" height="42" fill="#eceff1" stroke="#90a4ae" />
+          <text x="12" y="24" textAnchor="middle" fontSize="11" fontWeight="800" fill="#546e7a">
+            {index + 1}
+          </text>
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function RetailStrip({ x, y, tone }: { x: number; y: number; tone: string }) {
+  return (
+    <g>
+      <rect x={x} y={y} width="180" height="42" rx="6" fill="#eef5f7" stroke="#b0bec5" />
+      <Utensils x={x + 18} y={y + 11} width="18" height="18" color={tone} />
+      <ShoppingBag x={x + 68} y={y + 11} width="18" height="18" color={tone} />
+      <CircleDollarSign x={x + 118} y={y + 11} width="18" height="18" color={tone} />
+      <text x={x + 90} y={y + 58} textAnchor="middle" fontSize="12" fill="#607d8b" fontFamily="Inter, Arial">
+        food - duty free - ATM
+      </text>
+    </g>
+  );
+}
+
+function BaggageBelt({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <ellipse cx={x + 78} cy={y + 30} rx="80" ry="26" fill="#607d8b" />
+      <ellipse cx={x + 78} cy={y + 30} rx="55" ry="13" fill="#fff" />
+      <rect x={x + 20} y={y + 18} width="25" height="20" fill="#f5a623" />
+      <rect x={x + 115} y={y + 20} width="22" height="18" fill="#7e57c2" />
+    </g>
+  );
+}
+
+function SecurityBooths({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <rect x={x} y={y} width="64" height="55" fill="#90a4ae" />
+      <rect x={x + 10} y={y + 12} width="44" height="36" fill="#263238" />
+      <rect x={x + 84} y={y + 18} width="85" height="28" fill="#b0bec5" />
+      <rect x={x + 98} y={y} width="58" height="24" fill="#455a64" />
+    </g>
+  );
+}
+
+function Scanner({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <rect x={x} y={y} width="54" height="92" fill="#455a64" />
+      <rect x={x + 12} y={y + 18} width="30" height="56" fill="#263238" />
+      <rect x={x + 78} y={y + 52} width="110" height="24" fill="#b0bec5" />
+      <rect x={x + 110} y={y + 20} width="62" height="38" fill="#455a64" />
+    </g>
+  );
+}
+
+function Road({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(-23)`}>
+      <rect width="360" height="54" fill="#78909c" />
+      <line x1="18" y1="27" x2="342" y2="27" stroke="#fff" strokeWidth="3" strokeDasharray="24 18" />
+    </g>
+  );
+}
+
+function ControlTower({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <polygon points={`${x},${y + 170} ${x + 68},${y + 170} ${x + 52},${y + 50} ${x + 18},${y + 50}`} fill="#cfd8dc" />
+      <polygon points={`${x + 4},${y + 50} ${x + 66},${y + 30} ${x + 98},${y + 48} ${x + 36},${y + 70}`} fill="#90a4ae" />
+      <polygon points={`${x + 18},${y + 48} ${x + 80},${y + 32} ${x + 94},${y + 48} ${x + 34},${y + 66}`} fill="#fff" />
+    </g>
+  );
+}
+
+function PlaneShape({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(-18) scale(${scale})`}>
+      <path d="M0 18 L120 5 C146 2 158 12 138 22 L86 46 L118 77 L100 86 L52 58 L12 72 L2 62 L34 40 L0 30 Z" fill="#fff" stroke="#b0bec5" strokeWidth="2" />
+      <path d="M90 11 L126 -24 L138 -18 L114 17 Z" fill="#d84315" />
+      <path d="M54 53 L18 103 L30 108 L76 58 Z" fill="#d84315" />
+      <circle cx="70" cy="35" r="5" fill="#90a4ae" />
+    </g>
+  );
+}
+
+function BusShape({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(-23)`}>
+      <rect width="94" height="38" rx="6" fill="#f5a623" stroke="#8d6e00" />
+      <rect x="12" y="8" width="52" height="13" fill="#fff8e1" />
+      <circle cx="20" cy="40" r="6" fill="#263238" />
+      <circle cx="74" cy="40" r="6" fill="#263238" />
+    </g>
+  );
+}
+
+function PeopleGroup({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      {[0, 24, 48, 78].map((offset, index) => (
+        <g key={offset} transform={`translate(${x + offset} ${y + (index % 2) * 12})`}>
+          <circle cx="0" cy="0" r="6" fill="#5d4037" />
+          <rect x="-5" y="7" width="10" height="26" rx="4" fill={index % 2 ? "#7e57c2" : "#0097a7"} />
+          <line x1="-4" y1="33" x2="-8" y2="49" stroke="#263238" strokeWidth="3" />
+          <line x1="4" y1="33" x2="8" y2="49" stroke="#263238" strokeWidth="3" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function ServiceTrucks({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      {[0, 55, 110].map((offset) => (
+        <g key={offset} transform={`translate(${x + offset} ${y}) rotate(-18)`}>
+          <rect width="42" height="24" fill="#eceff1" stroke="#90a4ae" />
+          <rect x="42" y="7" width="20" height="17" fill="#b0bec5" />
+          <circle cx="12" cy="27" r="4" fill="#263238" />
+          <circle cx="50" cy="27" r="4" fill="#263238" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+function Helipad({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <circle cx={x} cy={y} r="55" fill="#78909c" stroke="#ffcc00" strokeWidth="4" />
+      <text x={x} y={y + 14} textAnchor="middle" fontSize="44" fontWeight="800" fill="#fff" fontFamily="Inter, Arial">
+        H
+      </text>
     </g>
   );
 }
