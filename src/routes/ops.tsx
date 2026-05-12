@@ -122,7 +122,7 @@ function OpsPage() {
   );
 }
 
-function FlightTable({ rows, dirLabel }: { rows: typeof ARRIVALS; dirLabel: string }) {
+function FlightTable({ rows, dirLabel }: { rows: any[]; dirLabel: string }) {
   return (
     <div className="overflow-x-auto -mx-1">
       <table className="w-full text-xs">
