@@ -36,7 +36,6 @@ type Hotspot = {
 
 type Scene = {
   id: SceneId;
-  aiImage: string;
   realImage: string;
   source: string;
   sourceLabel: string;
@@ -49,14 +48,12 @@ type Scene = {
 const ar = (value: string) => value;
 const t = (en: string, arText: string): LocalText => ({ en, ar: arText });
 const commons = (fileName: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
-const ai = (prompt: string, seed: number) =>
-  `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1600&height=900&seed=${seed}&nologo=true&enhance=true`;
 
 const ui = {
   en: {
     eyebrow: "Interactive airport image map",
     title: "Cairo Airport visual command map",
-    description: "Use the AI-generated airport layout as the main interactive canvas. Click hotspots to inspect details, jump into terminal views, or open a real image overlay.",
+    description: "Use the 2D block map as the main interactive canvas. Click differently sized airport zones to inspect details, jump into terminal views, or open a real image overlay.",
     source: "Real image source",
     selected: "Selected area",
     visit: "Open detailed view",
@@ -65,7 +62,7 @@ const ui = {
     views: "Airport image views",
     layers: "Show on map",
     notes: "Useful context",
-    generated: "AI-generated layout",
+    generated: "2D command layout",
   },
   ar: {
     eyebrow: ar("\u062e\u0631\u064a\u0637\u0629 \u0645\u0637\u0627\u0631 \u062a\u0641\u0627\u0639\u0644\u064a\u0629"),
@@ -92,13 +89,60 @@ const layerText: Record<LayerId, LocalText> = {
   gates: t("Gates", ar("\u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a")),
 };
 
-const basePrompt =
-  "premium Apple-style AI generated aerial airport layout illustration for Cairo International Airport, realistic 3D infographic, runway taxiway apron terminals parking palm trees desert city context, clean labels, soft daylight, high detail, no people closeups";
+type ZoneBox = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  tone: "cyan" | "blue" | "purple" | "green" | "amber" | "slate" | "red";
+};
+
+const zoneBoxes: Record<string, ZoneBox> = {
+  "overview-t1": { left: 13, top: 43, width: 24, height: 17, tone: "cyan" },
+  "overview-t2": { left: 39, top: 39, width: 23, height: 18, tone: "blue" },
+  "overview-t3": { left: 64, top: 43, width: 25, height: 17, tone: "purple" },
+  "overview-parking": { left: 7, top: 68, width: 24, height: 17, tone: "blue" },
+  "overview-ground": { left: 38, top: 69, width: 28, height: 15, tone: "green" },
+  "overview-airside": { left: 19, top: 15, width: 66, height: 15, tone: "slate" },
+  "t1-checkin": { left: 13, top: 52, width: 29, height: 18, tone: "cyan" },
+  "t1-gates": { left: 63, top: 31, width: 23, height: 18, tone: "blue" },
+  "t1-food": { left: 43, top: 48, width: 18, height: 15, tone: "amber" },
+  "t1-atm": { left: 55, top: 67, width: 18, height: 13, tone: "green" },
+  "t1-parking": { left: 9, top: 76, width: 27, height: 13, tone: "slate" },
+  "t2-checkin": { left: 14, top: 55, width: 28, height: 17, tone: "blue" },
+  "t2-security": { left: 43, top: 42, width: 20, height: 16, tone: "green" },
+  "t2-lounge": { left: 58, top: 25, width: 22, height: 14, tone: "purple" },
+  "t2-retail": { left: 58, top: 61, width: 24, height: 15, tone: "amber" },
+  "t2-gates": { left: 76, top: 43, width: 16, height: 19, tone: "cyan" },
+  "t3-checkin": { left: 16, top: 55, width: 30, height: 18, tone: "purple" },
+  "t3-lounge": { left: 47, top: 27, width: 20, height: 15, tone: "cyan" },
+  "t3-dutyfree": { left: 58, top: 58, width: 23, height: 17, tone: "amber" },
+  "t3-gates": { left: 75, top: 38, width: 16, height: 24, tone: "blue" },
+  "t3-parking": { left: 8, top: 77, width: 28, height: 13, tone: "slate" },
+  "air-runways": { left: 10, top: 15, width: 56, height: 15, tone: "slate" },
+  "air-apron": { left: 45, top: 39, width: 30, height: 20, tone: "cyan" },
+  "air-cargo": { left: 72, top: 18, width: 20, height: 16, tone: "amber" },
+  "air-seasonal": { left: 70, top: 68, width: 23, height: 16, tone: "green" },
+  "air-maintenance": { left: 35, top: 70, width: 24, height: 14, tone: "red" },
+};
+
+const toneClasses: Record<ZoneBox["tone"], string> = {
+  cyan: "border-cyan/60 bg-cyan/18 text-cyan",
+  blue: "border-primary/60 bg-primary/18 text-primary",
+  purple: "border-magenta/60 bg-magenta/18 text-magenta",
+  green: "border-status-ok/60 bg-status-ok/18 text-status-ok",
+  amber: "border-status-warn/70 bg-status-warn/18 text-status-warn",
+  slate: "border-slate-300/40 bg-slate-900/55 text-slate-100",
+  red: "border-status-crit/65 bg-status-crit/18 text-status-crit",
+};
+
+function getZoneBox(hotspot: Hotspot): ZoneBox {
+  return zoneBoxes[hotspot.id] ?? { left: Math.max(4, hotspot.x - 10), top: Math.max(4, hotspot.y - 7), width: 20, height: 14, tone: "blue" };
+}
 
 const scenes: Scene[] = [
   {
     id: "overview",
-    aiImage: ai(`${basePrompt}, reference style labeled airport layout overview like a premium airport infographic, title Cairo International Airport, visible labels for RUNWAY, TAXIWAY, APRON, CONTROL TOWER, TERMINAL 1, TERMINAL 2, TERMINAL 3, PARKING, MAIN HALLS, GROUND TRANSPORT, SERVICE MAINTENANCE, wide isometric aerial composition`, 59111),
     realImage: commons("Cairo Airport Terminal 3.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:Cairo_Airport_Terminal_3.jpg",
     sourceLabel: "Wikimedia Commons / Alensha",
@@ -120,7 +164,6 @@ const scenes: Scene[] = [
   },
   {
     id: "terminal1",
-    aiImage: ai(`${basePrompt}, detailed Terminal 1 cutaway with check-in halls, gates, restaurants, ATMs, parking, polished airport infographic`, 59102),
     realImage: commons("CairoAirport-Terminal1.JPG"),
     source: "https://commons.wikimedia.org/wiki/File:CairoAirport-Terminal1.JPG",
     sourceLabel: "Wikimedia Commons / Beebah",
@@ -137,7 +180,6 @@ const scenes: Scene[] = [
   },
   {
     id: "terminal2",
-    aiImage: ai(`${basePrompt}, detailed Terminal 2 international concourse with passport control, lounges, duty free, pier gates, sleek Apple map UI`, 59103),
     realImage: commons("CAI T2 20200110.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:CAI_T2_20200110.jpg",
     sourceLabel: "Wikimedia Commons",
@@ -154,7 +196,6 @@ const scenes: Scene[] = [
   },
   {
     id: "terminal3",
-    aiImage: ai(`${basePrompt}, detailed Terminal 3 EgyptAir hub with check in, lounges, duty free, pier gates, parking, premium travel dashboard illustration`, 59104),
     realImage: commons("Gate at Terminal 3 Cairo International Airport - panoramio.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:Gate_at_Terminal_3_Cairo_International_Airport_-_panoramio.jpg",
     sourceLabel: "Wikimedia Commons / Panoramio",
@@ -171,7 +212,6 @@ const scenes: Scene[] = [
   },
   {
     id: "airside",
-    aiImage: ai(`${basePrompt}, detailed airside operations view with runways, taxiways, apron stands, cargo village, maintenance hangars, command center aesthetic`, 59105),
     realImage: commons("Cairo International Airport 03.JPG"),
     source: "https://commons.wikimedia.org/wiki/File:Cairo_International_Airport_03.JPG",
     sourceLabel: "Wikimedia Commons / Ad Meskens",
@@ -247,15 +287,18 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         </nav>
 
         <div>
-          <div className="relative overflow-hidden rounded-lg border border-border bg-background">
-            <img src={activeScene.aiImage} alt={activeScene.title[language]} className="aspect-[16/9] w-full object-cover" loading="eager" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-white/5" />
-            <div className="absolute start-4 top-4 max-w-[78%] rounded-md bg-background/85 p-3 backdrop-blur">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-lg border border-border bg-[#e8f3f7] text-slate-950">
+            <div className="absolute inset-0 opacity-80" style={{ backgroundImage: "linear-gradient(rgba(18,52,68,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(18,52,68,.14) 1px, transparent 1px)", backgroundSize: "34px 34px" }} />
+            <div className="absolute left-[6%] top-[12%] h-[7%] w-[88%] rounded-full bg-slate-500/55 shadow-inner" />
+            <div className="absolute left-[12%] top-[23%] h-[3px] w-[74%] rotate-[-4deg] rounded-full bg-amber-400/80" />
+            <div className="absolute bottom-[10%] left-[9%] h-[9%] w-[82%] rounded-[999px] border-[10px] border-slate-400/55" />
+            <div className="absolute start-4 top-4 max-w-[78%] rounded-md bg-white/88 p-3 shadow-sm backdrop-blur">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary">{copy.generated}</p>
               <h3 className="mt-1 text-lg font-semibold">{activeScene.title[language]}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{activeScene.subtitle[language]}</p>
+              <p className="mt-1 text-xs text-slate-600">{activeScene.subtitle[language]}</p>
             </div>
             {visibleHotspots.map((hotspot, index) => {
+              const box = getZoneBox(hotspot);
               const Icon = hotspot.icon;
               const active = hotspot.id === activeHotspot.id;
               return (
@@ -264,13 +307,16 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
                   type="button"
                   onClick={() => setActiveHotspotId(hotspot.id)}
                   aria-label={hotspot.title[language]}
-                  className={`absolute flex min-h-10 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold shadow-xl backdrop-blur transition hover:scale-[1.03] ${
-                    active ? "border-white bg-primary text-primary-foreground" : "border-white/80 bg-background/90 text-foreground hover:bg-primary hover:text-primary-foreground"
+                  className={`absolute flex flex-col items-start justify-between rounded-xl border-2 p-3 text-start shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:shadow-xl ${
+                    active ? "border-slate-950 bg-white text-slate-950 ring-2 ring-primary" : toneClasses[box.tone]
                   }`}
-                  style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
+                  style={{ left: `${box.left}%`, top: `${box.top}%`, width: `${box.width}%`, height: `${box.height}%` }}
                 >
-                  <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{index + 1}. {hotspot.title[language]}</span>
+                  <span className="flex w-full items-center justify-between gap-2">
+                    <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                    <span className="font-mono text-[10px] opacity-75">0{index + 1}</span>
+                  </span>
+                  <span className="line-clamp-2 text-xs font-bold sm:text-sm">{hotspot.title[language]}</span>
                 </button>
               );
             })}
