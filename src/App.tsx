@@ -78,6 +78,30 @@ type AviationStackResponse = {
   data?: AviationStackFlight[];
 };
 
+function useHeaderClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return {
+    cairo: new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Africa/Cairo",
+      timeZoneName: "short",
+    }).format(now),
+    utc: new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+      timeZoneName: "short",
+    }).format(now),
+  };
+}
+
 const copy = {
   en: {
     skip: "Skip to content",
@@ -363,6 +387,7 @@ export function App() {
   const [mode, setMode] = useState<Mode>(() => (["/ops", "/safety"].includes(window.location.pathname) ? "manager" : "traveler"));
   const [highContrast, setHighContrast] = useState(false);
   const [language, setLanguage] = useState<Language>("en");
+  const clock = useHeaderClock();
   const c = copy[language];
 
   useEffect(() => {
@@ -394,6 +419,18 @@ export function App() {
           </div>
 
           <div className="ms-auto flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-lg border border-border bg-secondary/45 px-3 py-2 xl:flex" aria-label="Current time">
+              <Clock aria-hidden="true" className="h-4 w-4 text-primary" />
+              <div className="leading-tight">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Cairo</p>
+                <p className="font-mono text-xs font-semibold">{clock.cairo}</p>
+              </div>
+              <span className="h-7 w-px bg-border" aria-hidden="true" />
+              <div className="leading-tight">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">UTC</p>
+                <p className="font-mono text-xs font-semibold">{clock.utc}</p>
+              </div>
+            </div>
             <div className="flex items-center rounded-lg border border-border bg-secondary/60 p-0.5" role="group" aria-label="Dashboard mode">
               <ModeButton active={mode === "traveler"} onClick={() => setMode("traveler")} icon={<Users className="h-3.5 w-3.5" />} label={c.traveler} />
               <ModeButton active={mode === "manager"} onClick={() => setMode("manager")} icon={<Briefcase className="h-3.5 w-3.5" />} label={c.manager} />
