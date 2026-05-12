@@ -37,6 +37,46 @@ type Mode = "traveler" | "manager";
 type TravelerTab = "explore" | "directions" | "services";
 type ManagerTab = "operations" | "safety";
 type Tone = "ok" | "info" | "warn" | "high" | "crit";
+type FlightRow = {
+  flight: string;
+  city: string;
+  time: string;
+  status: { en: string; ar: string };
+  tone: Tone;
+  terminal: string;
+  gate: string;
+};
+
+type LiveAirportData = {
+  arrivals: readonly FlightRow[];
+  departures: readonly FlightRow[];
+  lastUpdated: Date;
+  source: string;
+  simulated: boolean;
+};
+
+type AviationStackFlight = {
+  flight_date?: string;
+  flight_status?: string;
+  airline?: { iata?: string; name?: string };
+  flight?: { number?: string; iata?: string };
+  departure?: AviationStackFlightPoint;
+  arrival?: AviationStackFlightPoint;
+};
+
+type AviationStackFlightPoint = {
+  airport?: string;
+  iata?: string;
+  estimated?: string;
+  scheduled?: string;
+  delay?: number;
+  terminal?: string;
+  gate?: string;
+};
+
+type AviationStackResponse = {
+  data?: AviationStackFlight[];
+};
 
 const copy = {
   en: {
@@ -229,6 +269,73 @@ const DEPARTURES = [
   { flight: "MS717", city: "Luxor (LXR)", time: "12:30", status: { en: "Final call", ar: "النداء الأخير" }, tone: "warn" as Tone, terminal: "T1", gate: "3-D" },
 ] as const;
 
+function useLiveAirportData(): LiveAirportData {
+  const [data, setData] = useState<LiveAirportData>(() => ({
+    arrivals: ARRIVALS,
+    departures: DEPARTURES,
+    lastUpdated: new Date(),
+    source: "Static operational sample",
+    simulated: true,
+  }));
+
+  useEffect(() => {
+    const aviationstackKey = import.meta.env.VITE_AVIATIONSTACK_KEY as string | undefined;
+    let active = true;
+
+    const load = async () => {
+      if (!aviationstackKey) {
+        setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, source: "Simulated until VITE_AVIATIONSTACK_KEY is configured" }));
+        return;
+      }
+
+      try {
+        const [arrivalsResponse, departuresResponse] = await Promise.all([
+          fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&arr_iata=CAI&limit=4`),
+          fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&dep_iata=CAI&limit=4`),
+        ]);
+        if (!active || !arrivalsResponse.ok || !departuresResponse.ok) return;
+        const [arrivalsJson, departuresJson] = (await Promise.all([arrivalsResponse.json(), departuresResponse.json()])) as [AviationStackResponse, AviationStackResponse];
+        const mapFlight = (item: AviationStackFlight, direction: "arrival" | "departure"): FlightRow => {
+          const block = item[direction] ?? {};
+          const airline = item.airline?.iata ?? item.airline?.name ?? "CAI";
+          const number = item.flight?.number ?? item.flight?.iata ?? "--";
+          const city = direction === "arrival" ? item.departure?.airport ?? item.departure?.iata ?? "Inbound" : item.arrival?.airport ?? item.arrival?.iata ?? "Outbound";
+          const iso = block.estimated ?? block.scheduled ?? item.flight_date;
+          const time = iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
+          const delayed = block.delay != null && Number(block.delay) > 0;
+          return {
+            flight: `${airline}${number}`,
+            city,
+            time,
+            status: delayed ? { en: `Delayed +${block.delay}m`, ar: `متأخرة ${block.delay}د` } : { en: item.flight_status ?? "Scheduled", ar: item.flight_status ?? "مجدولة" },
+            tone: delayed ? "warn" : "info",
+            terminal: block.terminal ? `T${block.terminal}` : "TBD",
+            gate: block.gate ?? "--",
+          };
+        };
+        setData({
+          arrivals: (arrivalsJson.data ?? []).slice(0, 4).map((item) => mapFlight(item, "arrival")),
+          departures: (departuresJson.data ?? []).slice(0, 4).map((item) => mapFlight(item, "departure")),
+          lastUpdated: new Date(),
+          source: "Aviationstack live flight API",
+          simulated: false,
+        });
+      } catch {
+        if (active) setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, source: "Live API unavailable - showing simulated operational sample" }));
+      }
+    };
+
+    load();
+    const id = window.setInterval(load, 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(id);
+    };
+  }, []);
+
+  return data;
+}
+
 const SAFETY_CHECKS = [
   { icon: Flame, label: { en: "Fire suppression - T1/T2/T3", ar: "إطفاء الحريق - مباني 1/2/3" }, status: { en: "Operational", ar: "يعمل" }, tone: "ok" as Tone, last: { en: "Inspected 2h ago", ar: "فحص قبل ساعتين" } },
   { icon: Droplets, label: { en: "Runway water response", ar: "استجابة مياه المدرج" }, status: { en: "Standby", ar: "جاهز" }, tone: "info" as Tone, last: { en: "Last drill 6 days ago", ar: "آخر تدريب قبل 6 أيام" } },
@@ -269,7 +376,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-background/88 text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-4 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-4 px-4 lg:px-8">
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground">
             {c.skip}
           </a>
@@ -307,7 +414,7 @@ export function App() {
         </div>
       </header>
 
-      <main id="main-content" className="mx-auto w-full max-w-[1400px] p-4 lg:p-6">
+      <main id="main-content" className="mx-auto w-full max-w-[1600px] p-4 lg:p-6">
         {mode === "traveler" ? <TravelerDashboard language={language} /> : <ManagerDashboard language={language} />}
       </main>
 
@@ -599,6 +706,7 @@ function DirectionsCard({ language }: { language: Language }) {
 function ManagerDashboard({ language }: { language: Language }) {
   const [tab, setTab] = useState<ManagerTab>("operations");
   const c = copy[language];
+  const liveData = useLiveAirportData();
 
   return (
     <div className="space-y-5">
@@ -615,6 +723,7 @@ function ManagerDashboard({ language }: { language: Language }) {
 
       {tab === "operations" && (
         <div className="space-y-5">
+          <DataFreshnessBanner language={language} data={liveData} />
           <ManagerCommandSummary language={language} />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricCard label={language === "ar" ? "ركاب اليوم" : "Passengers today"} value="58,420" delta={language === "ar" ? "+4.1% عن أمس" : "+4.1% vs yesterday"} icon={Users} hint={language === "ar" ? "المعيار اليومي 85k" : "Daily benchmark 85k"} />
@@ -625,7 +734,11 @@ function ManagerDashboard({ language }: { language: Language }) {
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_1fr]">
             <SectionPanel title={c.passengerFlow}>
-              <Sparkline data={[42, 48, 55, 61, 70, 64, 72, 80, 76, 82, 78, 84]} />
+              <div className="mb-3">
+                <p className="text-sm font-semibold">{language === "ar" ? "يزداد التدفق قرب موجة الظهيرة" : "Passenger flow rises into the midday wave"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{language === "ar" ? "خط زمني مناسب لعرض الاتجاه عبر الوقت، وليس للمقارنة بين المحطات." : "A line chart is used here because the question is trend over time, not terminal comparison."}</p>
+              </div>
+              <Sparkline data={[42, 48, 55, 61, 70, 64, 72, 80, 76, 82, 78, 84]} height={70} />
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <FlowZone label={language === "ar" ? "تسجيل" : "Check-in"} percent={62} tone="ok" />
                 <FlowZone label={language === "ar" ? "الأمن" : "Security"} percent={84} tone="warn" />
@@ -634,20 +747,22 @@ function ManagerDashboard({ language }: { language: Language }) {
             </SectionPanel>
             <div className="space-y-5">
               <SectionPanel title={c.liveArrivals} action={<StatusPill tone="info" icon={<PlaneLanding className="h-3 w-3" />}>{c.nextHour}</StatusPill>} dense>
-                <FlightTable rows={ARRIVALS} directionLabel={c.fromCol} language={language} />
+                <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} />
               </SectionPanel>
               <SectionPanel title={c.liveDepartures} action={<StatusPill tone="info" icon={<PlaneTakeoff className="h-3 w-3" />}>{c.nextHour}</StatusPill>} dense>
-                <FlightTable rows={DEPARTURES} directionLabel={c.toCol} language={language} />
+                <FlightTable rows={liveData.departures} directionLabel={c.toCol} language={language} />
               </SectionPanel>
             </div>
           </div>
 
+          <QueueLoadChart language={language} />
+
           <SectionPanel title={c.parkingGates} action={<StatusPill tone="ok" icon={<ParkingSquare className="h-3 w-3" />}>2,180 free</StatusPill>}>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {[
-                { area: "T3 Pier F gates", plain: "Busy boarding bank", used: 86, free: "4 gates free", action: "Hold non-urgent gate swaps", tone: "warn" as Tone },
-                { area: "T2 Pier B gates", plain: "Healthy flow", used: 71, free: "7 gates free", action: "Keep current allocation", tone: "info" as Tone },
-                { area: "T1 parking / halls", plain: "Comfortable capacity", used: 54, free: "980 spaces free", action: "Route overflow here", tone: "ok" as Tone },
+                { area: "T3 Pier F gates", plain: "Busy boarding bank", used: 86, target: 75, limit: 90, free: "4 gates free", action: "Hold non-urgent gate swaps", tone: "warn" as Tone },
+                { area: "T2 Pier B gates", plain: "Healthy flow", used: 71, target: 75, limit: 90, free: "7 gates free", action: "Keep current allocation", tone: "info" as Tone },
+                { area: "T1 parking / halls", plain: "Comfortable capacity", used: 54, target: 80, limit: 92, free: "980 spaces free", action: "Route overflow here", tone: "ok" as Tone },
               ].map((row) => (
                 <article key={row.area} className="panel-inner p-3">
                   <div className="flex items-start justify-between gap-2">
@@ -657,7 +772,7 @@ function ManagerDashboard({ language }: { language: Language }) {
                     </div>
                     <StatusPill tone={row.tone}>{row.used}% used</StatusPill>
                   </div>
-                  <ProgressBar value={row.used} className="mt-3" color={row.used > 80 ? "var(--status-warn)" : "var(--cyan)"} />
+                  <BulletCapacityChart used={row.used} target={row.target} limit={row.limit} tone={row.tone} />
                   <div className="mt-3 flex items-center justify-between gap-2 text-xs">
                     <span className="font-medium text-foreground">{row.free}</span>
                     <span className="text-muted-foreground">{row.action}</span>
@@ -673,6 +788,7 @@ function ManagerDashboard({ language }: { language: Language }) {
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           <DecisionQueue language={language} />
           <SafetyControls language={language} />
+          <SafetyAgingBuckets language={language} />
           <SectionPanel title={c.safetyChecks}>
             <ul className="space-y-2">
               {SAFETY_CHECKS.map(({ icon: Icon, label, status, tone, last }) => (
@@ -725,6 +841,121 @@ function ManagerCommandSummary({ language }: { language: Language }) {
             </div>
           </article>
         ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function DataFreshnessBanner({ language, data }: { language: Language; data: LiveAirportData }) {
+  const isArabic = language === "ar";
+  const ageSeconds = Math.max(0, Math.round((Date.now() - data.lastUpdated.getTime()) / 1000));
+  const stale = ageSeconds > 120;
+
+  return (
+    <section className="panel flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p className="text-sm font-semibold">{isArabic ? "حالة البيانات" : "Data status"}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {data.simulated
+            ? isArabic ? "البيانات الحالية عينة تشغيلية. أضف VITE_AVIATIONSTACK_KEY لتفعيل الرحلات الحية." : "Current data is simulated. Add VITE_AVIATIONSTACK_KEY to enable live flights."
+            : isArabic ? "الرحلات تتحدث تلقائيا من مزود بيانات الرحلات." : "Flights auto-refresh from the configured flight data provider."}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusPill tone={data.simulated ? "warn" : "ok"}>{data.simulated ? (isArabic ? "محاكاة" : "Simulated") : (isArabic ? "مباشر" : "Live")}</StatusPill>
+        <StatusPill tone={stale ? "crit" : "info"}>{isArabic ? `آخر تحديث ${ageSeconds}ث` : `Updated ${ageSeconds}s ago`}</StatusPill>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{data.source}</span>
+      </div>
+    </section>
+  );
+}
+
+function QueueLoadChart({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const rows = [
+    { terminal: "T1", checkIn: 28, passport: 18, security: 22 },
+    { terminal: "T2", checkIn: 32, passport: 26, security: 31 },
+    { terminal: "T3", checkIn: 38, passport: 22, security: 24 },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "ضغط الطوابير حسب المبنى" : "Queue pressure by terminal"} action={<StatusPill tone="info">{isArabic ? "مكدس" : "Stacked bar"}</StatusPill>}>
+      <p className="mb-4 max-w-3xl text-xs text-muted-foreground">
+        {isArabic ? "المخطط الشريطي المكدس يوضح أين يتجمع الضغط، وأي خطوة تسبب الجزء الأكبر منه." : "A stacked bar shows where queue pressure is building and which process contributes most."}
+      </p>
+      <div className="space-y-3">
+        {rows.map((row) => {
+          const total = row.checkIn + row.passport + row.security;
+          return (
+            <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_48px] items-center gap-3">
+              <span className="font-mono text-xs font-semibold">{row.terminal}</span>
+              <div className="flex h-4 overflow-hidden rounded-full bg-secondary" aria-label={`${row.terminal} queue pressure ${total}%`}>
+                <div className="bg-cyan" style={{ width: `${row.checkIn}%` }} title="Check-in" />
+                <div className="bg-status-warn" style={{ width: `${row.passport}%` }} title="Passport" />
+                <div className="bg-magenta" style={{ width: `${row.security}%` }} title="Security" />
+              </div>
+              <span className="font-mono text-xs text-muted-foreground">{total}%</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan" />{isArabic ? "تسجيل" : "Check-in"}</span>
+        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-status-warn" />{isArabic ? "جوازات" : "Passport"}</span>
+        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-magenta" />{isArabic ? "أمن" : "Security"}</span>
+      </div>
+    </SectionPanel>
+  );
+}
+
+function BulletCapacityChart({ used, target, limit, tone }: { used: number; target: number; limit: number; tone: Tone }) {
+  const color = tone === "warn" ? "var(--status-warn)" : tone === "ok" ? "var(--status-ok)" : "var(--cyan)";
+
+  return (
+    <div className="mt-3">
+      <div className="relative h-5 overflow-hidden rounded-full bg-secondary" aria-label={`Capacity ${used} percent used, planning target ${target} percent, escalation limit ${limit} percent`}>
+        <div className="h-full rounded-full" style={{ width: `${used}%`, backgroundColor: color }} />
+        <span className="absolute top-0 h-full w-px bg-white/80" style={{ left: `${target}%` }} aria-hidden="true" />
+        <span className="absolute top-0 h-full w-px bg-status-crit" style={{ left: `${limit}%` }} aria-hidden="true" />
+      </div>
+      <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span>Used {used}%</span>
+        <span>Target {target}%</span>
+        <span>Escalate {limit}%</span>
+      </div>
+    </div>
+  );
+}
+
+function SafetyAgingBuckets({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const buckets = [
+    { label: isArabic ? "جديد" : "New", value: 5, tone: "info" as Tone },
+    { label: isArabic ? "30-90 د" : "30-90m", value: 4, tone: "ok" as Tone },
+    { label: isArabic ? "2-4 س" : "2-4h", value: 2, tone: "warn" as Tone },
+    { label: isArabic ? "متأخر" : "Overdue", value: 1, tone: "crit" as Tone },
+  ];
+  const max = Math.max(...buckets.map((bucket) => bucket.value));
+
+  return (
+    <SectionPanel title={isArabic ? "عمر تنبيهات السلامة" : "Safety alert age"} action={<StatusPill tone="warn">{isArabic ? "1 متأخر" : "1 overdue"}</StatusPill>}>
+      <p className="mb-4 text-xs text-muted-foreground">
+        {isArabic ? "الأعمدة توضح ما إذا كانت المشكلات تتراكم قبل أن تصبح حرجة." : "Aging buckets show whether issues are accumulating before they become critical."}
+      </p>
+      <div className="grid grid-cols-4 items-end gap-3">
+        {buckets.map((bucket) => {
+          const height = 36 + (bucket.value / max) * 56;
+          const bg = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
+          return (
+            <div key={bucket.label} className="text-center">
+              <div className="mx-auto flex h-28 w-full max-w-20 items-end rounded-md bg-secondary/70 p-1">
+                <div className={`w-full rounded ${bg}`} style={{ height }} aria-label={`${bucket.label}: ${bucket.value} alerts`} />
+              </div>
+              <p className="mt-2 font-mono text-sm font-semibold">{bucket.value}</p>
+              <p className="text-[11px] text-muted-foreground">{bucket.label}</p>
+            </div>
+          );
+        })}
       </div>
     </SectionPanel>
   );
@@ -807,7 +1038,7 @@ function Hero({ eyebrow, title, description }: { eyebrow: string; title: string;
   );
 }
 
-function FlightTable({ rows, directionLabel, language }: { rows: typeof ARRIVALS | typeof DEPARTURES; directionLabel: string; language: Language }) {
+function FlightTable({ rows, directionLabel, language }: { rows: readonly FlightRow[]; directionLabel: string; language: Language }) {
   const c = copy[language];
   return (
     <div className="-mx-1 overflow-x-auto">
@@ -894,6 +1125,7 @@ function AttentionTable({ language }: { language: Language }) {
             <th className="px-2 py-2 text-start">{c.type}</th>
             <th className="px-2 py-2 text-start">{c.events}</th>
             <th className="px-2 py-2 text-start">{c.mtbf}</th>
+            <th className="px-2 py-2 text-start">{language === "ar" ? "أبرز سبب" : "Top issue"}</th>
             <th className="px-2 py-2 text-start">{c.risk}</th>
           </tr>
         </thead>
@@ -906,6 +1138,7 @@ function AttentionTable({ language }: { language: Language }) {
                 <td className="px-2 py-2.5">{aircraft.type}</td>
                 <td className="px-2 py-2.5 font-mono">{aircraft.events}</td>
                 <td className="px-2 py-2.5 font-mono">{aircraft.mtbf}h</td>
+                <td className="px-2 py-2.5 text-muted-foreground">{aircraft.top}</td>
                 <td className="px-2 py-2.5">
                   <div className="flex items-center gap-2">
                     <ProgressBar value={aircraft.risk} color={color} className="min-w-24 flex-1" />

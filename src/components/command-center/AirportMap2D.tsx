@@ -272,7 +272,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         </div>
       </div>
 
-      <div className="grid gap-4 p-4 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
+      <div className="grid gap-4 p-4 xl:grid-cols-[180px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(760px,1fr)_300px]">
         <nav className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1" aria-label={copy.views}>
           {scenes.map((scene, index) => {
             const active = scene.id === activeScene.id;
@@ -334,7 +334,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
           </div>
         </div>
 
-        <aside className="space-y-3">
+        <aside className="space-y-3 xl:col-span-2 2xl:col-span-1">
           <div className="panel-inner p-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{copy.selected}</p>
             <h3 className="mt-2 text-lg font-semibold">{activeHotspot.title[language]}</h3>

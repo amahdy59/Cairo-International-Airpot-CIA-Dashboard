@@ -179,15 +179,23 @@
       0 0 24px -6px color-mix(in oklab, var(--cyan) 60%, transparent);
   }
   .panel {
-    background: linear-gradient(180deg,
-      color-mix(in oklab, var(--surface) 92%, transparent),
-      color-mix(in oklab, var(--surface-2) 92%, transparent));
+    background:
+      linear-gradient(color-mix(in oklab, var(--cyan) 10%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 10%, transparent) 1px, transparent 1px),
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--surface) 92%, transparent),
+        color-mix(in oklab, var(--surface-2) 92%, transparent));
+    background-size: 28px 28px, 28px 28px, auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     backdrop-filter: blur(8px);
   }
   .panel-inner {
-    background: color-mix(in oklab, var(--background) 70%, transparent);
+    background:
+      linear-gradient(color-mix(in oklab, var(--cyan) 8%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 8%, transparent) 1px, transparent 1px),
+      color-mix(in oklab, var(--background) 70%, transparent);
+    background-size: 24px 24px, 24px 24px, auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
   }
