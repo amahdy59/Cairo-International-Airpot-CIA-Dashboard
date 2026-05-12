@@ -3,8 +3,8 @@ import {
   BadgeInfo,
   Building2,
   Car,
-  CircleX,
   CircleDollarSign,
+  CircleX,
   Coffee,
   DoorOpen,
   Eye,
@@ -36,196 +36,154 @@ type Hotspot = {
 
 type Scene = {
   id: SceneId;
-  image: string;
-  title: LocalText;
-  subtitle: LocalText;
+  aiImage: string;
+  realImage: string;
   source: string;
   sourceLabel: string;
+  title: LocalText;
+  subtitle: LocalText;
   notes: LocalText[];
   hotspots: Hotspot[];
 };
 
-const t = (en: string, ar: string): LocalText => ({ en, ar });
-const image = (fileName: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
+const ar = (value: string) => value;
+const t = (en: string, arText: string): LocalText => ({ en, ar: arText });
+const commons = (fileName: string) => `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}`;
+const ai = (prompt: string, seed: number) =>
+  `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1600&height=900&seed=${seed}&nologo=true&enhance=true`;
 
 const ui = {
   en: {
-    eyebrow: "Photo-led airport explorer",
-    title: "Cairo Airport visual guide",
-    description: "Click an area on the image to see focused information, then open the detailed terminal or airside view without leaving the page.",
-    source: "Image source",
+    eyebrow: "Interactive airport image map",
+    title: "Cairo Airport visual command map",
+    description: "Use the AI-generated airport layout as the main interactive canvas. Click hotspots to inspect details, jump into terminal views, or open a real image overlay.",
+    source: "Real image source",
     selected: "Selected area",
     visit: "Open detailed view",
+    realImage: "View real image",
+    close: "Close image",
     views: "Airport image views",
-    layers: "Show on image",
+    layers: "Show on map",
     notes: "Useful context",
+    generated: "AI-generated layout",
   },
   ar: {
-    eyebrow: "دليل بصري بالصور",
-    title: "الدليل المرئي لمطار القاهرة",
-    description: "اضغط على أي منطقة في الصورة لعرض معلومات مركزة، ثم افتح العرض التفصيلي للمبنى أو منطقة التشغيل دون مغادرة الصفحة.",
-    source: "مصدر الصورة",
-    selected: "المنطقة المحددة",
-    visit: "فتح العرض التفصيلي",
-    views: "صور المطار",
-    layers: "إظهار على الصورة",
-    notes: "معلومات مفيدة",
+    eyebrow: ar("\u062e\u0631\u064a\u0637\u0629 \u0645\u0637\u0627\u0631 \u062a\u0641\u0627\u0639\u0644\u064a\u0629"),
+    title: ar("\u062e\u0631\u064a\u0637\u0629 \u0645\u0631\u0626\u064a\u0629 \u0644\u0645\u0637\u0627\u0631 \u0627\u0644\u0642\u0627\u0647\u0631\u0629"),
+    description: ar("\u0627\u0633\u062a\u062e\u062f\u0645 \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u062e\u0637\u0637 \u0627\u0644\u0645\u0648\u0644\u062f\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064a \u0643\u062e\u0631\u064a\u0637\u0629 \u062a\u0641\u0627\u0639\u0644\u064a\u0629\u060c \u0648\u0627\u0636\u063a\u0637 \u0639\u0644\u0649 \u0627\u0644\u0646\u0642\u0627\u0637 \u0644\u0644\u062a\u0641\u0627\u0635\u064a\u0644."),
+    source: ar("\u0645\u0635\u062f\u0631 \u0627\u0644\u0635\u0648\u0631\u0629 \u0627\u0644\u062d\u0642\u064a\u0642\u064a\u0629"),
+    selected: ar("\u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0645\u062d\u062f\u062f\u0629"),
+    visit: ar("\u0641\u062a\u062d \u0627\u0644\u0639\u0631\u0636 \u0627\u0644\u062a\u0641\u0635\u064a\u0644\u064a"),
+    realImage: ar("\u0639\u0631\u0636 \u0635\u0648\u0631\u0629 \u062d\u0642\u064a\u0642\u064a\u0629"),
+    close: ar("\u0625\u063a\u0644\u0627\u0642 \u0627\u0644\u0635\u0648\u0631\u0629"),
+    views: ar("\u0639\u0631\u0648\u0636 \u0627\u0644\u0645\u0637\u0627\u0631"),
+    layers: ar("\u0625\u0638\u0647\u0627\u0631 \u0639\u0644\u0649 \u0627\u0644\u062e\u0631\u064a\u0637\u0629"),
+    notes: ar("\u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0645\u0641\u064a\u062f\u0629"),
+    generated: ar("\u0645\u062e\u0637\u0637 \u0645\u0648\u0644\u062f \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064a"),
   },
 } as const;
 
 const layerText: Record<LayerId, LocalText> = {
-  restaurants: t("Restaurants", "المطاعم"),
-  services: t("Services", "الخدمات"),
-  parking: t("Parking", "المواقف"),
-  atms: t("ATMs", "الصراف الآلي"),
-  lounges: t("Lounges", "الصالات"),
-  gates: t("Gates", "البوابات"),
+  restaurants: t("Restaurants", ar("\u0627\u0644\u0645\u0637\u0627\u0639\u0645")),
+  services: t("Services", ar("\u0627\u0644\u062e\u062f\u0645\u0627\u062a")),
+  parking: t("Parking", ar("\u0627\u0644\u0645\u0648\u0627\u0642\u0641")),
+  atms: t("ATMs", ar("\u0627\u0644\u0635\u0631\u0627\u0641 \u0627\u0644\u0622\u0644\u064a")),
+  lounges: t("Lounges", ar("\u0627\u0644\u0635\u0627\u0644\u0627\u062a")),
+  gates: t("Gates", ar("\u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a")),
 };
+
+const basePrompt =
+  "premium Apple-style AI generated aerial airport layout illustration for Cairo International Airport, realistic 3D infographic, runway taxiway apron terminals parking palm trees desert city context, clean labels, soft daylight, high detail, no people closeups";
 
 const scenes: Scene[] = [
   {
     id: "overview",
-    image: image("Cairo Airport Terminal 3.jpg"),
+    aiImage: ai(`${basePrompt}, full airport overview with Terminal 1 left, Terminal 2 center, Terminal 3 right, main halls, parking, ground transport, control tower`, 59101),
+    realImage: commons("Cairo Airport Terminal 3.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:Cairo_Airport_Terminal_3.jpg",
     sourceLabel: "Wikimedia Commons / Alensha",
-    title: t("Airport overview", "نظرة عامة على المطار"),
-    subtitle: t("Terminals, parking, transfer and airside orientation", "المباني والمواقف والتنقل والمناطق الجوية"),
+    title: t("Airport overview", ar("\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629 \u0639\u0644\u0649 \u0627\u0644\u0645\u0637\u0627\u0631")),
+    subtitle: t("Terminals, parking, transfer and airside orientation", ar("\u0627\u0644\u0645\u0628\u0627\u0646\u064a \u0648\u0627\u0644\u0645\u0648\u0627\u0642\u0641 \u0648\u0627\u0644\u062a\u0646\u0642\u0644 \u0648\u0627\u0644\u0645\u0646\u0627\u0637\u0642 \u0627\u0644\u062c\u0648\u064a\u0629")),
     notes: [
-      t("CAI has three parallel 05/23 runways.", "يضم مطار القاهرة ثلاثة مدارج متوازية باتجاه 05/23."),
-      t("Terminal 1 is separate from the connected Terminal 2 and Terminal 3 complex.", "يقع مبنى 1 منفصلا عن مجمع مبنيي 2 و3 المتصلين."),
-      t("Official services include restaurants, lounges, banks/ATMs, car parking, medical facilities and APM transfer.", "تشمل الخدمات الرسمية المطاعم والصالات والبنوك والصراف الآلي والمواقف والخدمات الطبية وقطار التنقل الداخلي."),
+      t("CAI has three parallel 05/23 runways.", ar("\u064a\u0636\u0645 \u0645\u0637\u0627\u0631 \u0627\u0644\u0642\u0627\u0647\u0631\u0629 \u062b\u0644\u0627\u062b\u0629 \u0645\u062f\u0627\u0631\u062c \u0645\u062a\u0648\u0627\u0632\u064a\u0629 \u0628\u0627\u062a\u062c\u0627\u0647 05/23.")),
+      t("Terminal 1 is separate from the connected Terminal 2 and Terminal 3 complex.", ar("\u064a\u0642\u0639 \u0645\u0628\u0646\u0649 1 \u0645\u0646\u0641\u0635\u0644\u0627 \u0639\u0646 \u0645\u062c\u0645\u0639 \u0645\u0628\u0646\u064a\u064a 2 \u06483 \u0627\u0644\u0645\u062a\u0635\u0644\u064a\u0646.")),
+      t("Passenger services include restaurants, lounges, banks, ATMs, parking, medical support and terminal transfer.", ar("\u062a\u0634\u0645\u0644 \u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0631\u0643\u0627\u0628 \u0627\u0644\u0645\u0637\u0627\u0639\u0645 \u0648\u0627\u0644\u0635\u0627\u0644\u0627\u062a \u0648\u0627\u0644\u0628\u0646\u0648\u0643 \u0648\u0627\u0644\u0635\u0631\u0627\u0641 \u0648\u0627\u0644\u0645\u0648\u0627\u0642\u0641 \u0648\u0627\u0644\u062f\u0639\u0645 \u0627\u0644\u0637\u0628\u064a \u0648\u0627\u0644\u062a\u0646\u0642\u0644 \u0628\u064a\u0646 \u0627\u0644\u0645\u0628\u0627\u0646\u064a.")),
     ],
     hotspots: [
-      {
-        id: "overview-t1",
-        icon: Building2,
-        x: 25,
-        y: 50,
-        title: t("Terminal 1", "مبنى 1"),
-        summary: t("Older terminal complex serving domestic, regional and selected international operations.", "مجمع أقدم يخدم رحلات داخلية وإقليمية وبعض الرحلات الدولية."),
-        detailTarget: "terminal1",
-      },
-      {
-        id: "overview-t2",
-        icon: Building2,
-        x: 50,
-        y: 46,
-        title: t("Terminal 2", "مبنى 2"),
-        summary: t("Renovated international terminal connected directly to Terminal 3.", "مبنى دولي مطور ومتصل مباشرة بمبنى 3."),
-        detailTarget: "terminal2",
-      },
-      {
-        id: "overview-t3",
-        icon: Building2,
-        x: 74,
-        y: 48,
-        title: t("Terminal 3", "مبنى 3"),
-        summary: t("Primary EgyptAir hub and the largest passenger terminal at Cairo Airport.", "المركز الرئيسي لمصر للطيران وأكبر مباني الركاب في مطار القاهرة."),
-        detailTarget: "terminal3",
-      },
-      {
-        id: "overview-parking",
-        layer: "parking",
-        icon: Car,
-        x: 15,
-        y: 78,
-        title: t("Parking", "المواقف"),
-        summary: t("Car parking supports the terminal frontage, shuttle transfer and pick-up zones.", "مواقف السيارات تخدم واجهات المباني والتنقل الداخلي ومناطق الاستقبال."),
-      },
-      {
-        id: "overview-ground",
-        layer: "services",
-        icon: MapPin,
-        x: 56,
-        y: 80,
-        title: t("Ground transport", "النقل الأرضي"),
-        summary: t("Use this area for buses, taxis, car rental and terminal transfer planning.", "استخدم هذه المنطقة للحافلات وسيارات الأجرة وتأجير السيارات والتنقل بين المباني."),
-      },
-      {
-        id: "overview-airside",
-        icon: Plane,
-        x: 52,
-        y: 18,
-        title: t("Runway and apron", "المدارج والساحات"),
-        summary: t("Airside view covers runways, taxiways, apron stands, cargo and maintenance context.", "العرض الجوي يغطي المدارج والممرات وساحات الطائرات والشحن والصيانة."),
-        detailTarget: "airside",
-      },
+      { id: "overview-t1", icon: Building2, x: 25, y: 52, title: t("Terminal 1", ar("\u0645\u0628\u0646\u0649 1")), summary: t("Domestic, regional and selected international operations.", ar("\u0631\u062d\u0644\u0627\u062a \u062f\u0627\u062e\u0644\u064a\u0629 \u0648\u0625\u0642\u0644\u064a\u0645\u064a\u0629 \u0648\u0628\u0639\u0636 \u0627\u0644\u0631\u062d\u0644\u0627\u062a \u0627\u0644\u062f\u0648\u0644\u064a\u0629.")), detailTarget: "terminal1" },
+      { id: "overview-t2", icon: Building2, x: 50, y: 49, title: t("Terminal 2", ar("\u0645\u0628\u0646\u0649 2")), summary: t("Renovated international terminal connected directly to Terminal 3.", ar("\u0645\u0628\u0646\u0649 \u062f\u0648\u0644\u064a \u0645\u0637\u0648\u0631 \u0648\u0645\u062a\u0635\u0644 \u0645\u0628\u0627\u0634\u0631\u0629 \u0628\u0645\u0628\u0646\u0649 3.")), detailTarget: "terminal2" },
+      { id: "overview-t3", icon: Building2, x: 73, y: 52, title: t("Terminal 3", ar("\u0645\u0628\u0646\u0649 3")), summary: t("Primary EgyptAir hub and largest passenger terminal at CAI.", ar("\u0627\u0644\u0645\u0631\u0643\u0632 \u0627\u0644\u0631\u0626\u064a\u0633\u064a \u0644\u0645\u0635\u0631 \u0644\u0644\u0637\u064a\u0631\u0627\u0646 \u0648\u0623\u0643\u0628\u0631 \u0645\u0628\u0627\u0646\u064a \u0627\u0644\u0631\u0643\u0627\u0628.")), detailTarget: "terminal3" },
+      { id: "overview-parking", layer: "parking", icon: Car, x: 15, y: 77, title: t("Parking", ar("\u0627\u0644\u0645\u0648\u0627\u0642\u0641")), summary: t("Short-stay and pick-up areas near the passenger frontage.", ar("\u0645\u0648\u0627\u0642\u0641 \u0648\u0645\u0646\u0627\u0637\u0642 \u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0642\u0631\u0628 \u0648\u0627\u062c\u0647\u0629 \u0627\u0644\u0631\u0643\u0627\u0628.")) },
+      { id: "overview-ground", layer: "services", icon: MapPin, x: 55, y: 79, title: t("Ground transport", ar("\u0627\u0644\u0646\u0642\u0644 \u0627\u0644\u0623\u0631\u0636\u064a")), summary: t("Buses, taxis, car rental and terminal transfer planning.", ar("\u0627\u0644\u062d\u0627\u0641\u0644\u0627\u062a \u0648\u0633\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0623\u062c\u0631\u0629 \u0648\u062a\u0623\u062c\u064a\u0631 \u0627\u0644\u0633\u064a\u0627\u0631\u0627\u062a \u0648\u0627\u0644\u062a\u0646\u0642\u0644 \u0628\u064a\u0646 \u0627\u0644\u0645\u0628\u0627\u0646\u064a.")) },
+      { id: "overview-airside", icon: Plane, x: 52, y: 18, title: t("Runway and apron", ar("\u0627\u0644\u0645\u062f\u0627\u0631\u062c \u0648\u0627\u0644\u0633\u0627\u062d\u0627\u062a")), summary: t("Runways, taxiways, apron stands, cargo and maintenance context.", ar("\u0627\u0644\u0645\u062f\u0627\u0631\u062c \u0648\u0627\u0644\u0645\u0645\u0631\u0627\u062a \u0648\u0633\u0627\u062d\u0627\u062a \u0627\u0644\u0637\u0627\u0626\u0631\u0627\u062a \u0648\u0627\u0644\u0634\u062d\u0646 \u0648\u0627\u0644\u0635\u064a\u0627\u0646\u0629.")), detailTarget: "airside" },
     ],
   },
   {
     id: "terminal1",
-    image: image("CairoAirport-Terminal1.JPG"),
+    aiImage: ai(`${basePrompt}, detailed Terminal 1 cutaway with check-in halls, gates, restaurants, ATMs, parking, polished airport infographic`, 59102),
+    realImage: commons("CairoAirport-Terminal1.JPG"),
     source: "https://commons.wikimedia.org/wiki/File:CairoAirport-Terminal1.JPG",
     sourceLabel: "Wikimedia Commons / Beebah",
-    title: t("Terminal 1 detail", "تفاصيل مبنى 1"),
-    subtitle: t("Halls, check-in, services and gates", "الصالات وتسجيل السفر والخدمات والبوابات"),
-    notes: [
-      t("Terminal 1 includes multiple halls and compact passenger flows.", "يضم مبنى 1 عدة صالات ومسارات ركاب مدمجة."),
-      t("Use this view for check-in, banks/ATMs, restaurants, parking and gate orientation.", "استخدم هذا العرض لتسجيل السفر والبنوك والصراف الآلي والمطاعم والمواقف والبوابات."),
-    ],
+    title: t("Terminal 1 detail", ar("\u062a\u0641\u0627\u0635\u064a\u0644 \u0645\u0628\u0646\u0649 1")),
+    subtitle: t("Halls, check-in, services and gates", ar("\u0627\u0644\u0635\u0627\u0644\u0627\u062a \u0648\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0633\u0641\u0631 \u0648\u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0648\u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a")),
+    notes: [t("Use this view for check-in, banks/ATMs, restaurants, parking and gate orientation.", ar("\u0627\u0633\u062a\u062e\u062f\u0645 \u0647\u0630\u0627 \u0627\u0644\u0639\u0631\u0636 \u0644\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0633\u0641\u0631 \u0648\u0627\u0644\u0628\u0646\u0648\u0643 \u0648\u0627\u0644\u0645\u0637\u0627\u0639\u0645 \u0648\u0627\u0644\u0645\u0648\u0627\u0642\u0641 \u0648\u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a."))],
     hotspots: [
-      { id: "t1-checkin", layer: "services", icon: BadgeInfo, x: 30, y: 66, title: t("Check-in halls", "صالات تسجيل السفر"), summary: t("Departure counters, baggage wrapping and information support.", "كاونترات السفر وتغليف الحقائب ومكاتب المعلومات.") },
-      { id: "t1-gates", layer: "gates", icon: DoorOpen, x: 72, y: 44, title: t("Gate area", "منطقة البوابات"), summary: t("Compact boarding area for Terminal 1 flights.", "منطقة صعود مدمجة لرحلات مبنى 1.") },
-      { id: "t1-food", layer: "restaurants", icon: Utensils, x: 47, y: 56, title: t("Restaurants and cafes", "مطاعم ومقاهي"), summary: t("Food and drink points near the passenger hall spine.", "نقاط طعام وشراب قرب محور صالات الركاب.") },
-      { id: "t1-atm", layer: "atms", icon: CircleDollarSign, x: 58, y: 70, title: t("Banks and ATMs", "البنوك والصراف الآلي"), summary: t("Currency and cash services grouped with passenger facilities.", "خدمات العملة والنقد ضمن مرافق الركاب.") },
-      { id: "t1-parking", layer: "parking", icon: Car, x: 19, y: 82, title: t("Parking and pick-up", "المواقف والاستقبال"), summary: t("Landside access for drop-off, pick-up and parking.", "وصول أرضي للنزول والاستقبال والمواقف.") },
+      { id: "t1-checkin", layer: "services", icon: BadgeInfo, x: 31, y: 66, title: t("Check-in halls", ar("\u0635\u0627\u0644\u0627\u062a \u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0633\u0641\u0631")), summary: t("Departure counters, baggage wrapping and information support.", ar("\u0643\u0627\u0648\u0646\u062a\u0631\u0627\u062a \u0627\u0644\u0633\u0641\u0631 \u0648\u062a\u063a\u0644\u064a\u0641 \u0627\u0644\u062d\u0642\u0627\u0626\u0628 \u0648\u0645\u0643\u0627\u062a\u0628 \u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062a.")) },
+      { id: "t1-gates", layer: "gates", icon: DoorOpen, x: 72, y: 44, title: t("Gate area", ar("\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a")), summary: t("Compact boarding area for Terminal 1 flights.", ar("\u0645\u0646\u0637\u0642\u0629 \u0635\u0639\u0648\u062f \u0645\u062f\u0645\u062c\u0629 \u0644\u0631\u062d\u0644\u0627\u062a \u0645\u0628\u0646\u0649 1.")) },
+      { id: "t1-food", layer: "restaurants", icon: Utensils, x: 47, y: 56, title: t("Restaurants and cafes", ar("\u0645\u0637\u0627\u0639\u0645 \u0648\u0645\u0642\u0627\u0647\u064a")), summary: t("Food and drink points near the passenger hall spine.", ar("\u0646\u0642\u0627\u0637 \u0637\u0639\u0627\u0645 \u0648\u0634\u0631\u0627\u0628 \u0642\u0631\u0628 \u0645\u062d\u0648\u0631 \u0627\u0644\u0635\u0627\u0644\u0627\u062a.")) },
+      { id: "t1-atm", layer: "atms", icon: CircleDollarSign, x: 58, y: 70, title: t("Banks and ATMs", ar("\u0627\u0644\u0628\u0646\u0648\u0643 \u0648\u0627\u0644\u0635\u0631\u0627\u0641 \u0627\u0644\u0622\u0644\u064a")), summary: t("Currency and cash services grouped with passenger facilities.", ar("\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0629 \u0648\u0627\u0644\u0646\u0642\u062f \u0636\u0645\u0646 \u0645\u0631\u0627\u0641\u0642 \u0627\u0644\u0631\u0643\u0627\u0628.")) },
+      { id: "t1-parking", layer: "parking", icon: Car, x: 19, y: 82, title: t("Parking and pick-up", ar("\u0627\u0644\u0645\u0648\u0627\u0642\u0641 \u0648\u0627\u0644\u0627\u0633\u062a\u0642\u0628\u0627\u0644")), summary: t("Landside access for drop-off, pick-up and parking.", ar("\u0648\u0635\u0648\u0644 \u0623\u0631\u0636\u064a \u0644\u0644\u0646\u0632\u0648\u0644 \u0648\u0627\u0644\u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0648\u0627\u0644\u0645\u0648\u0627\u0642\u0641.")) },
     ],
   },
   {
     id: "terminal2",
-    image: image("CAI T2 20200110.jpg"),
+    aiImage: ai(`${basePrompt}, detailed Terminal 2 international concourse with passport control, lounges, duty free, pier gates, sleek Apple map UI`, 59103),
+    realImage: commons("CAI T2 20200110.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:CAI_T2_20200110.jpg",
     sourceLabel: "Wikimedia Commons",
-    title: t("Terminal 2 detail", "تفاصيل مبنى 2"),
-    subtitle: t("International processing and Terminal 3 connector", "إجراءات السفر الدولي والاتصال بمبنى 3"),
-    notes: [
-      t("Terminal 2 connects directly with Terminal 3.", "مبنى 2 متصل مباشرة بمبنى 3."),
-      t("The view prioritizes international flow: check-in, security, lounges, shops and gates.", "يركز العرض على مسار الرحلات الدولية: تسجيل السفر والأمن والصالات والمتاجر والبوابات."),
-    ],
+    title: t("Terminal 2 detail", ar("\u062a\u0641\u0627\u0635\u064a\u0644 \u0645\u0628\u0646\u0649 2")),
+    subtitle: t("International processing and Terminal 3 connector", ar("\u0625\u062c\u0631\u0627\u0621\u0627\u062a \u0627\u0644\u0633\u0641\u0631 \u0627\u0644\u062f\u0648\u0644\u064a \u0648\u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0645\u0628\u0646\u0649 3")),
+    notes: [t("Terminal 2 connects directly with Terminal 3 and prioritizes international processing.", ar("\u0645\u0628\u0646\u0649 2 \u0645\u062a\u0635\u0644 \u0645\u0628\u0627\u0634\u0631\u0629 \u0628\u0645\u0628\u0646\u0649 3 \u0648\u064a\u0631\u0643\u0632 \u0639\u0644\u0649 \u0625\u062c\u0631\u0627\u0621\u0627\u062a \u0627\u0644\u0633\u0641\u0631 \u0627\u0644\u062f\u0648\u0644\u064a."))],
     hotspots: [
-      { id: "t2-checkin", layer: "services", icon: BadgeInfo, x: 30, y: 68, title: t("Departure hall", "صالة المغادرة"), summary: t("Check-in and passenger preparation before security.", "تسجيل السفر وتجهيز الركاب قبل التفتيش.") },
-      { id: "t2-security", layer: "services", icon: ShieldCheck, x: 48, y: 54, title: t("Security and passport control", "الأمن والجوازات"), summary: t("International processing before airside entry.", "إجراءات دولية قبل دخول منطقة السفر الجوية.") },
-      { id: "t2-lounge", layer: "lounges", icon: Coffee, x: 62, y: 44, title: t("Lounges", "الصالات"), summary: t("Premium waiting areas near the secure concourse.", "مناطق انتظار مميزة قرب الممر المؤمن.") },
-      { id: "t2-retail", layer: "restaurants", icon: ShoppingBag, x: 62, y: 66, title: t("Duty free and food", "السوق الحرة والطعام"), summary: t("Retail, duty free, restaurants and cafeterias along the concourse.", "متاجر وسوق حرة ومطاعم ومقاه على امتداد الممر.") },
-      { id: "t2-gates", layer: "gates", icon: DoorOpen, x: 78, y: 50, title: t("Pier gates", "بوابات الرصيف"), summary: t("Airside gate bank connected to aircraft stands.", "مجموعة بوابات متصلة بمواقف الطائرات.") },
+      { id: "t2-checkin", layer: "services", icon: BadgeInfo, x: 30, y: 68, title: t("Departure hall", ar("\u0635\u0627\u0644\u0629 \u0627\u0644\u0645\u063a\u0627\u062f\u0631\u0629")), summary: t("Check-in and passenger preparation before security.", ar("\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0633\u0641\u0631 \u0648\u062a\u062c\u0647\u064a\u0632 \u0627\u0644\u0631\u0643\u0627\u0628 \u0642\u0628\u0644 \u0627\u0644\u062a\u0641\u062a\u064a\u0634.")) },
+      { id: "t2-security", layer: "services", icon: ShieldCheck, x: 48, y: 54, title: t("Security and passport control", ar("\u0627\u0644\u0623\u0645\u0646 \u0648\u0627\u0644\u062c\u0648\u0627\u0632\u0627\u062a")), summary: t("International processing before airside entry.", ar("\u0625\u062c\u0631\u0627\u0621\u0627\u062a \u062f\u0648\u0644\u064a\u0629 \u0642\u0628\u0644 \u062f\u062e\u0648\u0644 \u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0633\u0641\u0631.")) },
+      { id: "t2-lounge", layer: "lounges", icon: Coffee, x: 62, y: 44, title: t("Lounges", ar("\u0627\u0644\u0635\u0627\u0644\u0627\u062a")), summary: t("Premium waiting areas near the secure concourse.", ar("\u0645\u0646\u0627\u0637\u0642 \u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0645\u064a\u0632\u0629 \u0642\u0631\u0628 \u0627\u0644\u0645\u0645\u0631 \u0627\u0644\u0645\u0624\u0645\u0646.")) },
+      { id: "t2-retail", layer: "restaurants", icon: ShoppingBag, x: 62, y: 66, title: t("Duty free and food", ar("\u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u062d\u0631\u0629 \u0648\u0627\u0644\u0637\u0639\u0627\u0645")), summary: t("Retail, duty free, restaurants and cafeterias along the concourse.", ar("\u0645\u062a\u0627\u062c\u0631 \u0648\u0633\u0648\u0642 \u062d\u0631\u0629 \u0648\u0645\u0637\u0627\u0639\u0645 \u0639\u0644\u0649 \u0627\u0645\u062a\u062f\u0627\u062f \u0627\u0644\u0645\u0645\u0631.")) },
+      { id: "t2-gates", layer: "gates", icon: DoorOpen, x: 78, y: 50, title: t("Pier gates", ar("\u0628\u0648\u0627\u0628\u0627\u062a \u0627\u0644\u0631\u0635\u064a\u0641")), summary: t("Airside gate bank connected to aircraft stands.", ar("\u0645\u062c\u0645\u0648\u0639\u0629 \u0628\u0648\u0627\u0628\u0627\u062a \u0645\u062a\u0635\u0644\u0629 \u0628\u0645\u0648\u0627\u0642\u0641 \u0627\u0644\u0637\u0627\u0626\u0631\u0627\u062a.")) },
     ],
   },
   {
     id: "terminal3",
-    image: image("Gate at Terminal 3 Cairo International Airport - panoramio.jpg"),
+    aiImage: ai(`${basePrompt}, detailed Terminal 3 EgyptAir hub with check in, lounges, duty free, pier gates, parking, premium travel dashboard illustration`, 59104),
+    realImage: commons("Gate at Terminal 3 Cairo International Airport - panoramio.jpg"),
     source: "https://commons.wikimedia.org/wiki/File:Gate_at_Terminal_3_Cairo_International_Airport_-_panoramio.jpg",
     sourceLabel: "Wikimedia Commons / Panoramio",
-    title: t("Terminal 3 detail", "تفاصيل مبنى 3"),
-    subtitle: t("EgyptAir hub, check-in, lounges and pier gates", "مركز مصر للطيران وتسجيل السفر والصالات والبوابات"),
-    notes: [
-      t("Terminal 3 is the main EgyptAir hub.", "مبنى 3 هو المركز الرئيسي لمصر للطيران."),
-      t("Use this view for lounges, duty free, gate access and parking orientation.", "استخدم هذا العرض للصـالات والسوق الحرة والوصول إلى البوابات والمواقف."),
-    ],
+    title: t("Terminal 3 detail", ar("\u062a\u0641\u0627\u0635\u064a\u0644 \u0645\u0628\u0646\u0649 3")),
+    subtitle: t("EgyptAir hub, check-in, lounges and pier gates", ar("\u0645\u0631\u0643\u0632 \u0645\u0635\u0631 \u0644\u0644\u0637\u064a\u0631\u0627\u0646 \u0648\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u0633\u0641\u0631 \u0648\u0627\u0644\u0635\u0627\u0644\u0627\u062a \u0648\u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a")),
+    notes: [t("Terminal 3 is the main EgyptAir hub and the strongest passenger guidance opportunity.", ar("\u0645\u0628\u0646\u0649 3 \u0647\u0648 \u0627\u0644\u0645\u0631\u0643\u0632 \u0627\u0644\u0631\u0626\u064a\u0633\u064a \u0644\u0645\u0635\u0631 \u0644\u0644\u0637\u064a\u0631\u0627\u0646 \u0648\u0623\u0647\u0645 \u0646\u0642\u0637\u0629 \u0644\u0625\u0631\u0634\u0627\u062f \u0627\u0644\u0631\u0643\u0627\u0628."))],
     hotspots: [
-      { id: "t3-checkin", layer: "services", icon: BadgeInfo, x: 33, y: 64, title: t("EgyptAir check-in", "تسجيل مصر للطيران"), summary: t("Primary hub check-in and support area.", "منطقة تسجيل ودعم رئيسية للمركز.") },
-      { id: "t3-lounge", layer: "lounges", icon: Coffee, x: 55, y: 44, title: t("Lounges", "الصالات"), summary: t("Premium lounge and waiting areas near the secure concourse.", "صالات وانتظار مميز قرب منطقة السفر المؤمنة.") },
-      { id: "t3-dutyfree", layer: "restaurants", icon: ShoppingBag, x: 63, y: 63, title: t("Duty free and food", "السوق الحرة والطعام"), summary: t("Retail and dining options support passenger dwell time.", "متاجر وخيارات طعام تخدم وقت انتظار الركاب.") },
-      { id: "t3-gates", layer: "gates", icon: DoorOpen, x: 76, y: 48, title: t("Pier gates", "بوابات الرصيف"), summary: t("Gate pier supports boarding and aircraft stand access.", "رصيف البوابات يدعم الصعود والوصول إلى مواقف الطائرات.") },
-      { id: "t3-parking", layer: "parking", icon: Car, x: 22, y: 80, title: t("Parking and transfer", "المواقف والتنقل"), summary: t("Parking and terminal transfer connections sit on the landside edge.", "تقع المواقف وروابط التنقل بين المباني في الجهة الأرضية.") },
+      { id: "t3-checkin", layer: "services", icon: BadgeInfo, x: 33, y: 64, title: t("EgyptAir check-in", ar("\u062a\u0633\u062c\u064a\u0644 \u0645\u0635\u0631 \u0644\u0644\u0637\u064a\u0631\u0627\u0646")), summary: t("Primary hub check-in and support area.", ar("\u0645\u0646\u0637\u0642\u0629 \u062a\u0633\u062c\u064a\u0644 \u0648\u062f\u0639\u0645 \u0631\u0626\u064a\u0633\u064a\u0629.")) },
+      { id: "t3-lounge", layer: "lounges", icon: Coffee, x: 55, y: 44, title: t("Lounges", ar("\u0627\u0644\u0635\u0627\u0644\u0627\u062a")), summary: t("Premium lounge and waiting areas near the secure concourse.", ar("\u0635\u0627\u0644\u0627\u062a \u0648\u0627\u0646\u062a\u0638\u0627\u0631 \u0645\u0645\u064a\u0632 \u0642\u0631\u0628 \u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0645\u0624\u0645\u0646\u0629.")) },
+      { id: "t3-dutyfree", layer: "restaurants", icon: ShoppingBag, x: 63, y: 63, title: t("Duty free and food", ar("\u0627\u0644\u0633\u0648\u0642 \u0627\u0644\u062d\u0631\u0629 \u0648\u0627\u0644\u0637\u0639\u0627\u0645")), summary: t("Retail and dining options support passenger dwell time.", ar("\u0645\u062a\u0627\u062c\u0631 \u0648\u062e\u064a\u0627\u0631\u0627\u062a \u0637\u0639\u0627\u0645 \u062a\u062e\u062f\u0645 \u0648\u0642\u062a \u0627\u0646\u062a\u0638\u0627\u0631 \u0627\u0644\u0631\u0643\u0627\u0628.")) },
+      { id: "t3-gates", layer: "gates", icon: DoorOpen, x: 76, y: 48, title: t("Pier gates", ar("\u0628\u0648\u0627\u0628\u0627\u062a \u0627\u0644\u0631\u0635\u064a\u0641")), summary: t("Gate pier supports boarding and aircraft stand access.", ar("\u0631\u0635\u064a\u0641 \u0627\u0644\u0628\u0648\u0627\u0628\u0627\u062a \u064a\u062f\u0639\u0645 \u0627\u0644\u0635\u0639\u0648\u062f \u0648\u0627\u0644\u0648\u0635\u0648\u0644 \u0644\u0644\u0637\u0627\u0626\u0631\u0627\u062a.")) },
+      { id: "t3-parking", layer: "parking", icon: Car, x: 22, y: 80, title: t("Parking and transfer", ar("\u0627\u0644\u0645\u0648\u0627\u0642\u0641 \u0648\u0627\u0644\u062a\u0646\u0642\u0644")), summary: t("Parking and terminal transfer connections sit on the landside edge.", ar("\u0627\u0644\u0645\u0648\u0627\u0642\u0641 \u0648\u0631\u0648\u0627\u0628\u0637 \u0627\u0644\u062a\u0646\u0642\u0644 \u062a\u0642\u0639 \u0641\u064a \u0627\u0644\u062c\u0647\u0629 \u0627\u0644\u0623\u0631\u0636\u064a\u0629.")) },
     ],
   },
   {
     id: "airside",
-    image: image("Cairo International Airport 03.JPG"),
+    aiImage: ai(`${basePrompt}, detailed airside operations view with runways, taxiways, apron stands, cargo village, maintenance hangars, command center aesthetic`, 59105),
+    realImage: commons("Cairo International Airport 03.JPG"),
     source: "https://commons.wikimedia.org/wiki/File:Cairo_International_Airport_03.JPG",
     sourceLabel: "Wikimedia Commons / Ad Meskens",
-    title: t("Airside and operations", "المناطق الجوية والتشغيل"),
-    subtitle: t("Runways, apron, cargo and seasonal flow", "المدارج والساحات والشحن والمسار الموسمي"),
-    notes: [
-      t("Manager-critical items include runway status, apron safety, cargo and maintenance response.", "تشمل عناصر الإدارة المهمة حالة المدرج وسلامة الساحة والشحن والاستجابة للصيانة."),
-      t("Seasonal/Hajj flow is shown separately to reduce passenger map clutter.", "يظهر مسار الحج/الموسمي منفصلا لتقليل ازدحام خريطة الركاب."),
-    ],
+    title: t("Airside and operations", ar("\u0627\u0644\u0645\u0646\u0627\u0637\u0642 \u0627\u0644\u062c\u0648\u064a\u0629 \u0648\u0627\u0644\u062a\u0634\u063a\u064a\u0644")),
+    subtitle: t("Runways, apron, cargo and seasonal flow", ar("\u0627\u0644\u0645\u062f\u0627\u0631\u062c \u0648\u0627\u0644\u0633\u0627\u062d\u0627\u062a \u0648\u0627\u0644\u0634\u062d\u0646 \u0648\u0627\u0644\u0645\u0633\u0627\u0631 \u0627\u0644\u0645\u0648\u0633\u0645\u064a")),
+    notes: [t("Manager-critical items include runway status, apron safety, cargo and maintenance response.", ar("\u062a\u0634\u0645\u0644 \u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u0625\u062f\u0627\u0631\u0629 \u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u062f\u0631\u062c \u0648\u0633\u0644\u0627\u0645\u0629 \u0627\u0644\u0633\u0627\u062d\u0629 \u0648\u0627\u0644\u0634\u062d\u0646 \u0648\u0627\u0644\u0635\u064a\u0627\u0646\u0629."))],
     hotspots: [
-      { id: "air-runways", icon: Plane, x: 35, y: 38, title: t("Parallel runways", "مدارج متوازية"), summary: t("Three parallel 05/23 runways are represented for orientation.", "تمثيل لثلاثة مدارج متوازية باتجاه 05/23.") },
-      { id: "air-apron", icon: ShieldCheck, x: 56, y: 55, title: t("Apron and stands", "الساحة ومواقف الطائرات"), summary: t("Aircraft turnaround, ground support and safety checks happen here.", "تتم هنا خدمة الطائرات ومساندة الأرض وفحوص السلامة.") },
-      { id: "air-cargo", layer: "services", icon: Building2, x: 72, y: 38, title: t("Cargo Village", "قرية البضائع"), summary: t("Cargo and logistics are separated from passenger terminal flow.", "عمليات الشحن واللوجستيات منفصلة عن مسار الركاب.") },
-      { id: "air-seasonal", layer: "services", icon: Building2, x: 76, y: 72, title: t("Seasonal / Hajj terminal", "المبنى الموسمي / الحج"), summary: t("Seasonal terminal supports pilgrimage and overflow charter operations.", "يدعم المبنى الموسمي رحلات الحج والرحلات العارضة الإضافية.") },
-      { id: "air-maintenance", icon: ShieldCheck, x: 45, y: 72, title: t("Service / maintenance", "الخدمة والصيانة"), summary: t("Operational view highlights maintenance and safety response points.", "يعرض منظور التشغيل نقاط الصيانة والاستجابة للسلامة.") },
+      { id: "air-runways", icon: Plane, x: 35, y: 38, title: t("Parallel runways", ar("\u0645\u062f\u0627\u0631\u062c \u0645\u062a\u0648\u0627\u0632\u064a\u0629")), summary: t("Three parallel 05/23 runways are represented for orientation.", ar("\u062b\u0644\u0627\u062b\u0629 \u0645\u062f\u0627\u0631\u062c \u0645\u062a\u0648\u0627\u0632\u064a\u0629 \u0628\u0627\u062a\u062c\u0627\u0647 05/23.")) },
+      { id: "air-apron", icon: ShieldCheck, x: 56, y: 55, title: t("Apron and stands", ar("\u0627\u0644\u0633\u0627\u062d\u0629 \u0648\u0645\u0648\u0627\u0642\u0641 \u0627\u0644\u0637\u0627\u0626\u0631\u0627\u062a")), summary: t("Aircraft turnaround, ground support and safety checks happen here.", ar("\u062a\u062a\u0645 \u0647\u0646\u0627 \u062e\u062f\u0645\u0629 \u0627\u0644\u0637\u0627\u0626\u0631\u0627\u062a \u0648\u0645\u0633\u0627\u0646\u062f\u0629 \u0627\u0644\u0623\u0631\u0636 \u0648\u0641\u062d\u0648\u0635 \u0627\u0644\u0633\u0644\u0627\u0645\u0629.")) },
+      { id: "air-cargo", layer: "services", icon: Building2, x: 72, y: 38, title: t("Cargo Village", ar("\u0642\u0631\u064a\u0629 \u0627\u0644\u0628\u0636\u0627\u0626\u0639")), summary: t("Cargo and logistics are separated from passenger terminal flow.", ar("\u0627\u0644\u0634\u062d\u0646 \u0648\u0627\u0644\u0644\u0648\u062c\u0633\u062a\u064a\u0627\u062a \u0645\u0646\u0641\u0635\u0644\u0629 \u0639\u0646 \u0645\u0633\u0627\u0631 \u0627\u0644\u0631\u0643\u0627\u0628.")) },
+      { id: "air-seasonal", layer: "services", icon: Building2, x: 76, y: 72, title: t("Seasonal / Hajj terminal", ar("\u0627\u0644\u0645\u0628\u0646\u0649 \u0627\u0644\u0645\u0648\u0633\u0645\u064a / \u0627\u0644\u062d\u062c")), summary: t("Seasonal terminal supports pilgrimage and overflow charter operations.", ar("\u0627\u0644\u0645\u0628\u0646\u0649 \u0627\u0644\u0645\u0648\u0633\u0645\u064a \u064a\u062f\u0639\u0645 \u0631\u062d\u0644\u0627\u062a \u0627\u0644\u062d\u062c \u0648\u0627\u0644\u0631\u062d\u0644\u0627\u062a \u0627\u0644\u0639\u0627\u0631\u0636\u0629.")) },
+      { id: "air-maintenance", icon: ShieldCheck, x: 45, y: 72, title: t("Service / maintenance", ar("\u0627\u0644\u062e\u062f\u0645\u0629 \u0648\u0627\u0644\u0635\u064a\u0627\u0646\u0629")), summary: t("Operational view highlights maintenance and safety response points.", ar("\u064a\u0639\u0631\u0636 \u0645\u0646\u0638\u0648\u0631 \u0627\u0644\u062a\u0634\u063a\u064a\u0644 \u0646\u0642\u0627\u0637 \u0627\u0644\u0635\u064a\u0627\u0646\u0629 \u0648\u0627\u0644\u0627\u0633\u062a\u062c\u0627\u0628\u0629.")) },
     ],
   },
 ];
@@ -264,9 +222,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">{copy.eyebrow}</p>
         <div className="mt-1 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 id="airport-visual-title" className="text-2xl font-semibold tracking-tight">
-              {copy.title}
-            </h2>
+            <h2 id="airport-visual-title" className="text-2xl font-semibold tracking-tight">{copy.title}</h2>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{copy.description}</p>
           </div>
           <a href={activeScene.source} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs hover:bg-secondary">
@@ -281,15 +237,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
           {scenes.map((scene, index) => {
             const active = scene.id === activeScene.id;
             return (
-              <button
-                key={scene.id}
-                type="button"
-                onClick={() => selectScene(scene.id)}
-                aria-pressed={active}
-                className={`rounded-md border p-3 text-start transition-colors ${
-                  active ? "border-primary bg-primary/15 text-primary" : "border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
+              <button key={scene.id} type="button" onClick={() => selectScene(scene.id)} aria-pressed={active} className={`rounded-md border p-3 text-start transition-colors ${active ? "border-primary bg-primary/15 text-primary" : "border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                 <span className="block font-mono text-[10px] uppercase tracking-wider">0{index + 1}</span>
                 <span className="mt-1 block text-sm font-semibold">{scene.title[language]}</span>
                 <span className="mt-0.5 block text-[11px] leading-snug opacity-80">{scene.subtitle[language]}</span>
@@ -299,8 +247,14 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         </nav>
 
         <div>
-          <div className="relative overflow-hidden rounded-lg border border-border bg-[#dcecf2]">
-            <AirportDiagram sceneId={activeScene.id} title={activeScene.title[language]} subtitle={activeScene.subtitle[language]} />
+          <div className="relative overflow-hidden rounded-lg border border-border bg-background">
+            <img src={activeScene.aiImage} alt={activeScene.title[language]} className="aspect-[16/9] w-full object-cover" loading="eager" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-white/5" />
+            <div className="absolute start-4 top-4 max-w-[78%] rounded-md bg-background/85 p-3 backdrop-blur">
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary">{copy.generated}</p>
+              <h3 className="mt-1 text-lg font-semibold">{activeScene.title[language]}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{activeScene.subtitle[language]}</p>
+            </div>
             {visibleHotspots.map((hotspot, index) => {
               const Icon = hotspot.icon;
               const active = hotspot.id === activeHotspot.id;
@@ -310,8 +264,8 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
                   type="button"
                   onClick={() => setActiveHotspotId(hotspot.id)}
                   aria-label={hotspot.title[language]}
-                  className={`absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1.5 text-xs font-semibold shadow-lg transition ${
-                    active ? "border-white bg-primary text-primary-foreground" : "border-white/70 bg-background/90 text-foreground hover:bg-primary hover:text-primary-foreground"
+                  className={`absolute flex min-h-10 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold shadow-xl backdrop-blur transition hover:scale-[1.03] ${
+                    active ? "border-white bg-primary text-primary-foreground" : "border-white/80 bg-background/90 text-foreground hover:bg-primary hover:text-primary-foreground"
                   }`}
                   style={{ left: `${hotspot.x}%`, top: `${hotspot.y}%` }}
                 >
@@ -326,15 +280,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
             <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{copy.layers}</p>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(layerText) as LayerId[]).map((layer) => (
-                <button
-                  key={layer}
-                  type="button"
-                  onClick={() => setActiveLayers((current) => ({ ...current, [layer]: !current[layer] }))}
-                  aria-pressed={activeLayers[layer]}
-                  className={`h-8 rounded-md border px-3 text-xs transition-colors ${
-                    activeLayers[layer] ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
-                >
+                <button key={layer} type="button" onClick={() => setActiveLayers((current) => ({ ...current, [layer]: !current[layer] }))} aria-pressed={activeLayers[layer]} className={`h-8 rounded-md border px-3 text-xs transition-colors ${activeLayers[layer] ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                   {layerText[layer][language]}
                 </button>
               ))}
@@ -347,15 +293,17 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{copy.selected}</p>
             <h3 className="mt-2 text-lg font-semibold">{activeHotspot.title[language]}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activeHotspot.summary[language]}</p>
-            <button type="button" onClick={() => setPreviewOpen(true)} className="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary">
-              <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
-              {language === "ar" ? "عرض صورة حقيقية" : "View real image"}
-            </button>
-            {activeHotspot.detailTarget && (
-              <button type="button" onClick={() => selectScene(activeHotspot.detailTarget!)} className="mt-4 ms-2 inline-flex h-9 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90">
-                {copy.visit}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" onClick={() => setPreviewOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary">
+                <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
+                {copy.realImage}
               </button>
-            )}
+              {activeHotspot.detailTarget && (
+                <button type="button" onClick={() => selectScene(activeHotspot.detailTarget!)} className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:opacity-90">
+                  {copy.visit}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="panel-inner p-4">
@@ -380,11 +328,11 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
                 <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{activeScene.sourceLabel}</p>
                 <h3 id="airport-photo-title" className="text-lg font-semibold">{activeHotspot.title[language]}</h3>
               </div>
-              <button type="button" onClick={() => setPreviewOpen(false)} className="grid h-9 w-9 place-items-center rounded-md border border-border hover:bg-secondary" aria-label={language === "ar" ? "إغلاق الصورة" : "Close image"}>
+              <button type="button" onClick={() => setPreviewOpen(false)} className="grid h-10 w-10 place-items-center rounded-md border border-border hover:bg-secondary" aria-label={copy.close}>
                 <CircleX aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
-            <img src={activeScene.image} alt={activeHotspot.title[language]} className="max-h-[68vh] w-full object-cover" />
+            <img src={activeScene.realImage} alt={activeHotspot.title[language]} className="max-h-[68vh] w-full object-cover" />
             <div className="flex items-center justify-between gap-3 p-4 text-xs text-muted-foreground">
               <span>{activeScene.subtitle[language]}</span>
               <a href={activeScene.source} target="_blank" rel="noreferrer" className="text-primary hover:underline">{copy.source}</a>
@@ -393,122 +341,5 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         </div>
       )}
     </section>
-  );
-}
-
-function AirportDiagram({ sceneId, title, subtitle }: { sceneId: SceneId; title: string; subtitle: string }) {
-  const focus: Record<SceneId, { x: number; y: number; w: number; fill: string; label: string }> = {
-    overview: { x: 390, y: 335, w: 310, fill: "#2f8fbc", label: "CAI" },
-    terminal1: { x: 175, y: 350, w: 245, fill: "#15959f", label: "T1" },
-    terminal2: { x: 430, y: 330, w: 240, fill: "#176bc5", label: "T2" },
-    terminal3: { x: 680, y: 350, w: 245, fill: "#7747b8", label: "T3" },
-    airside: { x: 760, y: 170, w: 190, fill: "#5f514d", label: "OPS" },
-  };
-  const selected = focus[sceneId];
-
-  return (
-    <svg viewBox="0 0 1080 640" className="block aspect-[16/9] w-full" role="img" aria-label={`${title}. ${subtitle}`}>
-      <defs>
-        <pattern id="airport-grid" width="36" height="36" patternUnits="userSpaceOnUse">
-          <path d="M36 0H0V36" fill="none" stroke="#9db4bc" strokeOpacity="0.35" strokeWidth="1" />
-        </pattern>
-        <filter id="diagram-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#263238" floodOpacity="0.22" />
-        </filter>
-        <linearGradient id="terminal-roof" x1="0" x2="1">
-          <stop offset="0" stopColor="#f7fbfc" />
-          <stop offset="1" stopColor="#c9d8dc" />
-        </linearGradient>
-      </defs>
-
-      <rect width="1080" height="640" fill="#e8f3f7" />
-      <rect width="1080" height="640" fill="url(#airport-grid)" />
-      <path d="M30 560 C220 500 330 525 500 475 C690 420 815 455 1040 390" fill="none" stroke="#6f8b72" strokeWidth="54" strokeLinecap="round" opacity="0.22" />
-      <text x="44" y="58" fill="#17364b" fontFamily="Inter, Arial" fontSize="34" fontWeight="850">CAIRO INTERNATIONAL AIRPORT</text>
-      <text x="46" y="88" fill="#6c7a86" fontFamily="Inter, Arial" fontSize="16" letterSpacing="7">AIRPORT LAYOUT OVERVIEW</text>
-      <line x1="46" y1="104" x2="106" y2="104" stroke="#10aeca" strokeWidth="4" />
-      <text x="46" y="132" fill="#315166" fontFamily="Inter, Arial" fontSize="13" fontWeight="700">{title}</text>
-      <text x="46" y="152" fill="#627985" fontFamily="Inter, Arial" fontSize="12">{subtitle}</text>
-
-      <g transform="translate(70 170) rotate(-5)" filter="url(#diagram-shadow)">
-        {[0, 58, 116].map((offset) => (
-          <g key={offset} transform={`translate(0 ${offset})`}>
-            <rect width="880" height="38" rx="8" fill="#7f8e93" />
-            <line x1="40" y1="19" x2="830" y2="19" stroke="#fff" strokeWidth="3" strokeDasharray="28 18" opacity="0.95" />
-          </g>
-        ))}
-        <path d="M20 168 C240 108 430 134 700 82" fill="none" stroke="#e6b84c" strokeWidth="4" strokeDasharray="16 10" />
-        <path d="M90 206 C320 136 520 170 820 118" fill="none" stroke="#e6b84c" strokeWidth="3" />
-      </g>
-
-      <g filter="url(#diagram-shadow)">
-        <TerminalShape x={165} y={350} width={245} color="#15959f" label="TERMINAL 1" active={sceneId === "terminal1"} />
-        <TerminalShape x={420} y={330} width={255} color="#176bc5" label="TERMINAL 2" active={sceneId === "terminal2"} />
-        <TerminalShape x={680} y={350} width={245} color="#7747b8" label="TERMINAL 3" active={sceneId === "terminal3"} />
-        <path d="M300 470 C420 440 555 442 740 470" fill="none" stroke="#6e7f84" strokeWidth="42" strokeLinecap="round" />
-        <line x1="290" y1="470" x2="750" y2="470" stroke="#fff" strokeWidth="3" strokeDasharray="18 16" opacity="0.9" />
-        <rect x="430" y="472" width="220" height="52" rx="8" fill="#95b7bd" stroke="#fff" strokeWidth="3" />
-        <text x="540" y="504" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="18" fontWeight="800">MAIN HALLS</text>
-        <rect x="120" y="505" width="150" height="78" rx="8" fill="#6d8791" />
-        <rect x="810" y="505" width="150" height="78" rx="8" fill="#6d8791" />
-        <text x="195" y="550" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="18" fontWeight="800">PARKING</text>
-        <text x="885" y="550" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="18" fontWeight="800">PARKING</text>
-        <ControlTower />
-        <rect x="775" y="128" width="190" height="66" rx="8" fill={sceneId === "airside" ? "#5f514d" : "#87949a"} stroke="#fff" strokeWidth="3" />
-        <text x="870" y="168" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="16" fontWeight="800">SERVICE / MAINT.</text>
-      </g>
-
-      <g opacity="0.95">
-        <Callout x={260} y={280} color="#15959f" label="TERMINAL 1" />
-        <Callout x={535} y={268} color="#176bc5" label="TERMINAL 2" />
-        <Callout x={805} y={280} color="#7747b8" label="TERMINAL 3" />
-        <Callout x={245} y={155} color="#17364b" label="RUNWAY" />
-        <Callout x={540} y={170} color="#176bc5" label="TAXIWAY" />
-        <Callout x={795} y={170} color="#15959f" label="APRON" />
-      </g>
-
-      {sceneId !== "overview" && (
-        <g filter="url(#diagram-shadow)">
-          <rect x={selected.x - 18} y={selected.y - 22} width={selected.w + 36} height="142" rx="16" fill="none" stroke={selected.fill} strokeWidth="5" strokeDasharray="10 8" />
-          <rect x="42" y="565" width="250" height="42" rx="8" fill={selected.fill} />
-          <text x="167" y="592" textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="16" fontWeight="850">{selected.label} DETAILED VIEW</text>
-        </g>
-      )}
-    </svg>
-  );
-}
-
-function TerminalShape({ x, y, width, color, label, active }: { x: number; y: number; width: number; color: string; label: string; active: boolean }) {
-  return (
-    <g>
-      <path d={`M${x} ${y + 92} L${x + width} ${y + 34} L${x + width + 76} ${y + 72} L${x + 78} ${y + 132} Z`} fill="#eef5f7" stroke={active ? color : "#b4c2c7"} strokeWidth={active ? 5 : 2} />
-      <path d={`M${x + 34} ${y + 78} L${x + width - 15} ${y + 36} L${x + width - 15} ${y + 5} L${x + 34} ${y + 47} Z`} fill="url(#terminal-roof)" />
-      <path d={`M${x + 42} ${y + 82} L${x + width - 26} ${y + 43}`} stroke="#3b7184" strokeWidth="8" strokeDasharray="14 8" opacity="0.75" />
-      <rect x={x + width / 2 - 72} y={y + 55} width="146" height="38" rx="7" fill={color} />
-      <text x={x + width / 2} y={y + 80} textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="15" fontWeight="850">{label}</text>
-    </g>
-  );
-}
-
-function Callout({ x, y, color, label }: { x: number; y: number; color: string; label: string }) {
-  return (
-    <g>
-      <rect x={x - 68} y={y - 22} width="136" height="42" rx="8" fill={color} stroke="#fff" strokeWidth="2" />
-      <line x1={x} y1={y + 20} x2={x} y2={y + 82} stroke="#fff" strokeWidth="3" />
-      <circle cx={x} cy={y + 85} r="7" fill={color} stroke="#fff" strokeWidth="3" />
-      <text x={x} y={y + 5} textAnchor="middle" fill="#fff" fontFamily="Inter, Arial" fontSize="15" fontWeight="850">{label}</text>
-    </g>
-  );
-}
-
-function ControlTower() {
-  return (
-    <g>
-      <path d="M536 336 L584 336 L574 228 L546 228 Z" fill="#d9e5e8" stroke="#9aa9ad" strokeWidth="2" />
-      <ellipse cx="560" cy="226" rx="44" ry="16" fill="#edf5f7" stroke="#87959a" strokeWidth="2" />
-      <rect x="526" y="205" width="68" height="30" rx="6" fill="#3e6f7f" />
-      <rect x="536" y="212" width="48" height="12" fill="#9fd6e4" />
-      <text x="560" y="258" textAnchor="middle" fill="#44565d" fontFamily="Inter, Arial" fontSize="11" fontWeight="800">TOWER</text>
-    </g>
   );
 }

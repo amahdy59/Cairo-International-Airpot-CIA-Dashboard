@@ -347,14 +347,115 @@ function TravelerDashboard({ language }: { language: Language }) {
       />
 
       {tab === "explore" && (
-        <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
-          <AirportMap2D language={language} />
-          <TerminalFacts language={language} />
+        <div className="space-y-5">
+          <PassengerTripAssistant language={language} />
+          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
+            <AirportMap2D language={language} />
+            <div className="space-y-5">
+              <TerminalFacts language={language} />
+              <WaitTimePanel language={language} />
+            </div>
+          </div>
         </div>
       )}
       {tab === "directions" && <DirectionsCard language={language} />}
-      {tab === "services" && <PassengerLinks language={language} />}
+      {tab === "services" && (
+        <div className="space-y-5">
+          <ServiceFinder language={language} />
+          <PassengerLinks language={language} />
+        </div>
+      )}
     </div>
+  );
+}
+
+function PassengerTripAssistant({ language }: { language: Language }) {
+  const [flight, setFlight] = useState("MS777");
+  const isArabic = language === "ar";
+  const steps = [
+    { label: isArabic ? "تسجيل السفر" : "Check-in", meta: isArabic ? "T3 - Zone C" : "T3 - Zone C", tone: "ok" as Tone },
+    { label: isArabic ? "الجوازات" : "Passport control", meta: isArabic ? "11 دقيقة انتظار" : "11 min wait", tone: "info" as Tone },
+    { label: isArabic ? "البوابة F11" : "Gate F11", meta: isArabic ? "9 دقائق مشيا" : "9 min walk", tone: "warn" as Tone },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "رحلتي الآن" : "My trip now"} action={<StatusPill tone="info">{isArabic ? "اقتراح حي" : "Live guidance"}</StatusPill>}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)_260px]">
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{isArabic ? "رقم الرحلة" : "Flight number"}</span>
+          <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} className="mt-1.5 h-11 w-full rounded-md border border-border bg-background px-3 font-mono text-sm outline-none focus:border-primary" aria-label={isArabic ? "رقم الرحلة" : "Flight number"} />
+          <p className="mt-2 text-xs text-muted-foreground">{isArabic ? "مصر للطيران - لندن هيثرو - مغادرة 11:50" : "EgyptAir - London Heathrow - departure 11:50"}</p>
+        </label>
+        <ol className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          {steps.map((step, index) => (
+            <li key={step.label} className="panel-inner p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 font-mono text-xs text-primary">{index + 1}</span>
+                <StatusPill tone={step.tone}>{step.meta}</StatusPill>
+              </div>
+              <p className="mt-3 text-sm font-semibold">{step.label}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="panel-inner p-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{isArabic ? "الإجراء التالي" : "Next best action"}</p>
+          <p className="mt-2 text-sm font-semibold">{isArabic ? "اتجه إلى الجوازات الآن" : "Head to passport control now"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{isArabic ? "لديك وقت كاف للقهوة بعد الجوازات، وليس قبلها." : "You have enough time for coffee after passport control, not before it."}</p>
+        </div>
+      </div>
+    </SectionPanel>
+  );
+}
+
+function WaitTimePanel({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const rows = [
+    { label: isArabic ? "تسجيل T3" : "T3 check-in", value: 8, tone: "ok" as Tone },
+    { label: isArabic ? "الجوازات" : "Passport", value: 11, tone: "info" as Tone },
+    { label: isArabic ? "الأمن" : "Security", value: 17, tone: "warn" as Tone },
+    { label: isArabic ? "الأمتعة" : "Baggage", value: 14, tone: "info" as Tone },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "أوقات الانتظار" : "Wait times"} className="h-fit">
+      <ul className="space-y-3">
+        {rows.map((row) => (
+          <li key={row.label}>
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span>{row.label}</span>
+              <StatusPill tone={row.tone}>{row.value}m</StatusPill>
+            </div>
+            <ProgressBar value={row.value} max={25} color={row.tone === "warn" ? "var(--status-warn)" : "var(--cyan)"} />
+          </li>
+        ))}
+      </ul>
+    </SectionPanel>
+  );
+}
+
+function ServiceFinder({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const services = [
+    { icon: Coffee, title: isArabic ? "صالة قريبة" : "Nearest lounge", detail: isArabic ? "T3 - بعد الجوازات - 4 دقائق" : "T3 - after passport - 4 min" },
+    { icon: Utensils, title: isArabic ? "طعام سريع" : "Quick food", detail: isArabic ? "T3 Food Village - 6 دقائق" : "T3 Food Village - 6 min" },
+    { icon: CircleDollarSign, title: isArabic ? "صراف آلي" : "ATM", detail: isArabic ? "قبل الأمن - 2 دقيقة" : "Before security - 2 min" },
+    { icon: Accessibility, title: isArabic ? "مساعدة خاصة" : "Assistance", detail: isArabic ? "مكتب أهلا - المدخل الرئيسي" : "Ahlan desk - main entrance" },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "الخدمات الأقرب لك" : "Services near you"}>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {services.map(({ icon: Icon, title, detail }) => (
+          <article key={title} className="panel-inner p-4">
+            <div className="grid h-10 w-10 place-items-center rounded-md border border-primary/30 bg-primary/10">
+              <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="mt-3 text-sm font-semibold">{title}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+          </article>
+        ))}
+      </div>
+    </SectionPanel>
   );
 }
 
@@ -509,6 +610,7 @@ function ManagerDashboard({ language }: { language: Language }) {
 
       {tab === "operations" && (
         <div className="space-y-5">
+          <ManagerCommandSummary language={language} />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricCard label={language === "ar" ? "ركاب اليوم" : "Passengers today"} value="58,420" delta={language === "ar" ? "+4.1% عن أمس" : "+4.1% vs yesterday"} icon={Users} hint={language === "ar" ? "المعيار اليومي 85k" : "Daily benchmark 85k"} />
             <MetricCard label={language === "ar" ? "حركة الطائرات" : "Aircraft movements"} value="412" unit="/ 540" delta={language === "ar" ? "حسب الخطة" : "On schedule"} icon={Activity} />
@@ -557,6 +659,7 @@ function ManagerDashboard({ language }: { language: Language }) {
 
       {tab === "safety" && (
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <DecisionQueue language={language} />
           <SectionPanel title={c.safetyChecks}>
             <ul className="space-y-2">
               {SAFETY_CHECKS.map(({ icon: Icon, label, status, tone, last }) => (
@@ -584,6 +687,60 @@ function ManagerDashboard({ language }: { language: Language }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ManagerCommandSummary({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const items = [
+    { title: isArabic ? "طابور الأمن T2" : "T2 security queue", value: "17m", action: isArabic ? "افتح مسار إضافي" : "Open one more lane", tone: "warn" as Tone },
+    { title: isArabic ? "صعود بوابة F11" : "Gate F11 boarding", value: "72%", action: isArabic ? "أرسل موظف أرضي" : "Send floor agent", tone: "info" as Tone },
+    { title: isArabic ? "ماسح T2-B" : "T2-B scanner", value: "offline", action: isArabic ? "تصعيد للصيانة" : "Escalate maintenance", tone: "crit" as Tone },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "ما يحتاج قرارا الآن" : "Needs a decision now"} action={<StatusPill tone="warn">{isArabic ? "3 عناصر" : "3 items"}</StatusPill>}>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        {items.map((item) => (
+          <article key={item.title} className="panel-inner p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">{item.title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{item.action}</p>
+              </div>
+              <StatusPill tone={item.tone}>{item.value}</StatusPill>
+            </div>
+          </article>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function DecisionQueue({ language }: { language: Language }) {
+  const isArabic = language === "ar";
+  const decisions = [
+    { title: isArabic ? "إعادة توزيع موظفي الأمن" : "Rebalance security staff", impact: isArabic ? "-4 دقائق انتظار متوقعة" : "-4 min expected wait", owner: isArabic ? "العمليات" : "Ops" },
+    { title: isArabic ? "تحويل ركاب F11 إلى مسار أسرع" : "Fast-track F11 passengers", impact: isArabic ? "يحمي موعد الإقلاع" : "Protects departure time", owner: isArabic ? "البوابات" : "Gates" },
+    { title: isArabic ? "تأكيد قطع غيار SU-GBP" : "Confirm SU-GBP parts", impact: isArabic ? "يقلل مخاطر الغد" : "Reduces tomorrow risk", owner: isArabic ? "الصيانة" : "Maintenance" },
+  ];
+
+  return (
+    <SectionPanel title={isArabic ? "توصيات القرار" : "Decision recommendations"}>
+      <ul className="space-y-2">
+        {decisions.map((decision) => (
+          <li key={decision.title} className="panel-inner p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">{decision.title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{decision.impact}</p>
+              </div>
+              <StatusPill tone="neutral">{decision.owner}</StatusPill>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </SectionPanel>
   );
 }
 
