@@ -80,6 +80,39 @@ type AviationStackResponse = {
   data?: AviationStackFlight[];
 };
 
+function mapAviationStackFlight(item: AviationStackFlight, direction: "arrival" | "departure"): FlightRow {
+  const block = item[direction] ?? {};
+  const airline = item.airline?.iata ?? item.airline?.name ?? "CAI";
+  const number = item.flight?.number ?? item.flight?.iata ?? "--";
+  const city = direction === "arrival" ? item.departure?.airport ?? item.departure?.iata ?? "Inbound" : item.arrival?.airport ?? item.arrival?.iata ?? "Outbound";
+  const iso = block.estimated ?? block.scheduled ?? item.flight_date;
+  const time = iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
+  const delayed = block.delay != null && Number(block.delay) > 0;
+
+  return {
+    flight: `${airline}${number}`,
+    city,
+    time,
+    status: delayed ? { en: `Delayed +${block.delay}m`, ar: `متأخرة ${block.delay}د` } : { en: item.flight_status ?? "Scheduled", ar: item.flight_status ?? "مجدولة" },
+    tone: delayed ? "warn" : "info",
+    terminal: block.terminal ? `T${block.terminal}` : "TBD",
+    gate: block.gate ?? "--",
+  };
+}
+
+async function fetchFlightByNumber(flightCode: string): Promise<FlightRow | null> {
+  const aviationstackKey = import.meta.env.VITE_AVIATIONSTACK_KEY as string | undefined;
+  if (!aviationstackKey) return null;
+
+  const response = await fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&flight_iata=${encodeURIComponent(flightCode)}&limit=1`);
+  if (!response.ok) return null;
+  const json = (await response.json()) as AviationStackResponse;
+  const [item] = json.data ?? [];
+  if (!item) return null;
+  const direction = item.departure?.iata === "CAI" ? "departure" : "arrival";
+  return mapAviationStackFlight(item, direction);
+}
+
 function useHeaderClock() {
   const [now, setNow] = useState(() => new Date());
 
@@ -321,27 +354,9 @@ function useLiveAirportData(): LiveAirportData {
         ]);
         if (!active || !arrivalsResponse.ok || !departuresResponse.ok) return;
         const [arrivalsJson, departuresJson] = (await Promise.all([arrivalsResponse.json(), departuresResponse.json()])) as [AviationStackResponse, AviationStackResponse];
-        const mapFlight = (item: AviationStackFlight, direction: "arrival" | "departure"): FlightRow => {
-          const block = item[direction] ?? {};
-          const airline = item.airline?.iata ?? item.airline?.name ?? "CAI";
-          const number = item.flight?.number ?? item.flight?.iata ?? "--";
-          const city = direction === "arrival" ? item.departure?.airport ?? item.departure?.iata ?? "Inbound" : item.arrival?.airport ?? item.arrival?.iata ?? "Outbound";
-          const iso = block.estimated ?? block.scheduled ?? item.flight_date;
-          const time = iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
-          const delayed = block.delay != null && Number(block.delay) > 0;
-          return {
-            flight: `${airline}${number}`,
-            city,
-            time,
-            status: delayed ? { en: `Delayed +${block.delay}m`, ar: `متأخرة ${block.delay}د` } : { en: item.flight_status ?? "Scheduled", ar: item.flight_status ?? "مجدولة" },
-            tone: delayed ? "warn" : "info",
-            terminal: block.terminal ? `T${block.terminal}` : "TBD",
-            gate: block.gate ?? "--",
-          };
-        };
         setData({
-          arrivals: (arrivalsJson.data ?? []).slice(0, 4).map((item) => mapFlight(item, "arrival")),
-          departures: (departuresJson.data ?? []).slice(0, 4).map((item) => mapFlight(item, "departure")),
+          arrivals: (arrivalsJson.data ?? []).slice(0, 4).map((item) => mapAviationStackFlight(item, "arrival")),
+          departures: (departuresJson.data ?? []).slice(0, 4).map((item) => mapAviationStackFlight(item, "departure")),
           lastUpdated: new Date(),
           source: "Aviationstack live flight API",
           simulated: false,
@@ -523,17 +538,32 @@ function TravelerDashboard({ language }: { language: Language }) {
 function PassengerTripAssistant({ language }: { language: Language }) {
   const [flight, setFlight] = useState("MS777");
   const [flightModalOpen, setFlightModalOpen] = useState(false);
+  const [lookupFlight, setLookupFlight] = useState<FlightRow | null>(null);
+  const [lookupLive, setLookupLive] = useState(false);
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const liveData = useLiveAirportData();
   const isArabic = language === "ar";
   const normalizedFlight = flight.trim().toUpperCase() || "MS777";
-  const selectedFlight = [...ARRIVALS, ...DEPARTURES].find((row) => row.flight === normalizedFlight) ?? DEPARTURES[0];
+  const selectedFlight = lookupFlight ?? [...liveData.arrivals, ...liveData.departures, ...ARRIVALS, ...DEPARTURES].find((row) => row.flight === normalizedFlight) ?? DEPARTURES[0];
   const steps = [
     { label: isArabic ? "تسجيل السفر" : "Check-in", meta: isArabic ? "T3 - Zone C" : "T3 - Zone C", tone: "ok" as Tone },
     { label: isArabic ? "الجوازات" : "Passport control", meta: isArabic ? "11 دقيقة انتظار" : "11 min wait", tone: "info" as Tone },
     { label: isArabic ? "البوابة F11" : "Gate F11", meta: isArabic ? "9 دقائق مشيا" : "9 min walk", tone: "warn" as Tone },
   ];
-  const submitFlightSearch = (event: FormEvent<HTMLFormElement>) => {
+  const submitFlightSearch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFlight(normalizedFlight);
+    setLookupBusy(true);
+    try {
+      const liveFlight = await fetchFlightByNumber(normalizedFlight);
+      setLookupFlight(liveFlight);
+      setLookupLive(Boolean(liveFlight));
+    } catch {
+      setLookupFlight(null);
+      setLookupLive(false);
+    } finally {
+      setLookupBusy(false);
+    }
     setFlightModalOpen(true);
   };
 
@@ -544,7 +574,7 @@ function PassengerTripAssistant({ language }: { language: Language }) {
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{isArabic ? "رقم الرحلة" : "Flight number"}</span>
           <div className="mt-1.5 flex h-11 overflow-hidden rounded-md border border-border bg-background focus-within:border-primary">
             <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} className="min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none" aria-label={isArabic ? "Flight number" : "Flight number"} />
-            <button type="submit" className="grid w-11 place-items-center border-s border-border text-primary hover:bg-secondary" aria-label={isArabic ? "Search flight status" : "Search flight status"}>
+            <button type="submit" disabled={lookupBusy} className="grid w-11 place-items-center border-s border-border text-primary hover:bg-secondary disabled:cursor-wait disabled:opacity-60" aria-label={isArabic ? "Search flight status" : "Search flight status"}>
               <Search aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
@@ -568,13 +598,13 @@ function PassengerTripAssistant({ language }: { language: Language }) {
         </div>
       </div>
       {flightModalOpen && (
-        <FlightStatusModal flight={selectedFlight} requestedFlight={normalizedFlight} language={language} onClose={() => setFlightModalOpen(false)} />
+        <FlightStatusModal flight={selectedFlight} requestedFlight={normalizedFlight} language={language} live={lookupLive || !liveData.simulated} onClose={() => setFlightModalOpen(false)} />
       )}
     </SectionPanel>
   );
 }
 
-function FlightStatusModal({ flight, requestedFlight, language, onClose }: { flight: FlightRow; requestedFlight: string; language: Language; onClose: () => void }) {
+function FlightStatusModal({ flight, requestedFlight, language, live, onClose }: { flight: FlightRow; requestedFlight: string; language: Language; live: boolean; onClose: () => void }) {
   const found = flight.flight === requestedFlight;
   const rows = [
     { label: "Flight", value: found ? flight.flight : requestedFlight },
@@ -593,7 +623,7 @@ function FlightStatusModal({ flight, requestedFlight, language, onClose }: { fli
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Flight status</p>
             <h3 id="flight-status-title" className="mt-1 text-2xl font-semibold">{found ? flight.flight : requestedFlight}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {found ? "Quick summary of terminal, gate and next action." : "This flight is not in the current sample, so the closest operational example is shown."}
+              {found ? (live ? "Live Aviationstack result with terminal, gate and next action." : "Quick summary of terminal, gate and next action.") : "This flight was not found in the current live/sample feed, so the closest operational example is shown."}
             </p>
           </div>
           <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border hover:bg-secondary" aria-label="Close flight status">
@@ -614,7 +644,8 @@ function FlightStatusModal({ flight, requestedFlight, language, onClose }: { fli
             <p className="mt-2 text-sm font-semibold">
               {flight.tone === "warn" ? "Move now and monitor terminal screens." : "Stay comfortable and head toward the listed terminal."}
             </p>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-2">
+              <StatusPill tone={live ? "ok" : "warn"}>{live ? "Live API" : "Fallback"}</StatusPill>
               <StatusPill tone={flight.tone}>{flight.status[language]}</StatusPill>
             </div>
           </div>
