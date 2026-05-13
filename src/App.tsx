@@ -844,6 +844,7 @@ function WaitTimePanel({ language }: { language: Language }) {
 
   return (
     <SectionPanel title={isArabic ? "أوقات الانتظار" : "Wait times"} className="h-fit">
+      <ChartNote title="How to interpret" body="Horizontal bars compare current passenger waiting pain points. Longer bars mean passengers should allow more time and managers should consider adding capacity." className="mb-3 mt-0" />
       <ul className="space-y-3">
         {rows.map((row) => (
           <li key={row.label}>
@@ -1119,7 +1120,7 @@ function ManagerDashboard({ language, online }: { language: Language; online: bo
             <SectionPanel title={c.passengerFlow} action={<StatusPill tone="neutral">{language === "ar" ? "تقديري" : "Modelled"}</StatusPill>} className="h-fit">
               <div className="mb-3">
                 <p className="text-sm font-semibold">{language === "ar" ? "يزداد التدفق قرب موجة الظهيرة" : "Passenger flow rises into the midday wave"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{language === "ar" ? "خط زمني مناسب لعرض الاتجاه عبر الوقت، وليس للمقارنة بين المحطات." : "A line chart is used here because the question is trend over time, not terminal comparison."}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Line chart: best for trend over time. Read left to right to see whether passenger pressure is rising before the peak arrives.</p>
               </div>
               <Sparkline data={[42, 48, 55, 61, 70, 64, 72, 80, 76, 82, 78, 84]} height={58} />
               <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -1127,11 +1128,13 @@ function ManagerDashboard({ language, online }: { language: Language; online: bo
                 <span>{language === "ar" ? "مؤشر تدفق الركاب" : "Passenger throughput index"}</span>
                 <span>17:00</span>
               </div>
+              <ChartNote title="How to interpret" body="The upward slope tells managers to prepare staffing before the visible queue becomes a problem. This is a trend indicator, not an exact passenger count." />
               <div className="mt-3 grid grid-cols-1 gap-2 text-center sm:grid-cols-3">
                 <FlowZone label={language === "ar" ? "تسجيل" : "Check-in"} percent={62} tone="ok" />
                 <FlowZone label={language === "ar" ? "الأمن" : "Security"} percent={84} tone="warn" />
                 <FlowZone label={language === "ar" ? "الجوازات" : "Passport"} percent={71} tone="ok" />
               </div>
+              <ChartNote title="Process bars" body="The small bars convert current load into a simple capacity view. Security is highest, so it is the first process to watch." />
             </SectionPanel>
             <QueueLoadChart language={language} />
             </div>
@@ -1146,6 +1149,7 @@ function ManagerDashboard({ language, online }: { language: Language; online: bo
           </div>
 
           <SectionPanel title={c.parkingGates} action={<StatusPill tone="ok" icon={<ParkingSquare className="h-3 w-3" />}>2,180 free</StatusPill>}>
+            <ChartNote title="Why bullet bars" body="Each bar compares current use against two thresholds: target is the planned comfort level, escalate is the point where managers should intervene." className="mb-3 mt-0" />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               {[
                 { area: "T3 Pier F gates", plain: "Busy boarding bank", used: 86, target: 75, limit: 90, free: "4 gates free", action: "Hold non-urgent gate swaps", tone: "warn" as Tone },
@@ -1203,6 +1207,7 @@ function ManagerDashboard({ language, online }: { language: Language; online: bo
           </SectionPanel>
           </div>
           <SectionPanel title={c.attentionAircraft} action={<div className="flex items-center gap-2"><StatusPill tone="neutral">{language === "ar" ? "نموذج" : "Modelled"}</StatusPill><span className="font-mono text-[11px] text-muted-foreground">{c.sortedRisk}</span></div>} className="xl:col-span-2">
+            <ChartNote title="How to interpret" body="Horizontal risk bars rank named aircraft. Start at the top: longer red or yellow bars indicate the aircraft that need management attention first." className="mb-3 mt-0" />
             <AttentionTable language={language} />
           </SectionPanel>
         </div>
@@ -1310,9 +1315,10 @@ function QueueLoadChart({ language }: { language: Language }) {
 
   return (
     <SectionPanel title={isArabic ? "ضغط الطوابير حسب المبنى" : "Queue pressure by terminal"} action={<StatusPill tone="info">{isArabic ? "مكدس" : "Stacked bar"}</StatusPill>}>
-      <p className="mb-4 max-w-3xl text-xs text-muted-foreground">
+      <p className="mb-3 max-w-3xl text-xs text-muted-foreground">
         {isArabic ? "المخطط الشريطي المكدس يوضح أين يتجمع الضغط، وأي خطوة تسبب الجزء الأكبر منه." : "A stacked bar shows where queue pressure is building and which process contributes most."}
       </p>
+      <ChartNote title="How to interpret" body="Compare total bar length first to find the busiest terminal, then compare segment sizes to see whether check-in, passport or security is creating the pressure." className="mb-4 mt-0" />
       <div className="space-y-3">
         {rows.map((row) => {
           const total = row.checkIn + row.passport + row.security;
@@ -1349,7 +1355,7 @@ function BulletCapacityChart({ used, target, limit, tone }: { used: number; targ
         <span className="absolute top-0 h-full w-px bg-status-crit" style={{ left: `${limit}%` }} aria-hidden="true" />
       </div>
       <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-        <span>Used {used}%</span>
+        <span>Now {used}%</span>
         <span>Target {target}%</span>
         <span>Escalate {limit}%</span>
       </div>
@@ -1372,6 +1378,7 @@ function SafetyAgingBuckets({ language }: { language: Language }) {
       <p className="mb-4 text-xs text-muted-foreground">
         {isArabic ? "الأعمدة توضح ما إذا كانت المشكلات تتراكم قبل أن تصبح حرجة." : "Aging buckets show whether issues are accumulating before they become critical."}
       </p>
+      <ChartNote title="How to interpret" body="Column height is count of open alerts in each age bucket. The key signal is not the biggest bar; it is any overdue bar because overdue safety work can accumulate into critical risk." className="mb-4 mt-0" />
       <div className="grid grid-cols-4 items-end gap-3">
         {buckets.map((bucket) => {
           const height = 24 + (bucket.value / max) * 48;
@@ -1465,6 +1472,15 @@ function Hero({ eyebrow, title, description }: { eyebrow: string; title: string;
       <h2 className="mt-1 text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h2>
       <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
     </section>
+  );
+}
+
+function ChartNote({ title, body, className = "" }: { title: string; body: string; className?: string }) {
+  return (
+    <div className={`mt-3 rounded-md border border-primary/20 bg-primary/10 p-3 text-xs leading-relaxed ${className}`}>
+      <span className="font-semibold text-foreground">{title}: </span>
+      <span className="text-muted-foreground">{body}</span>
+    </div>
   );
 }
 
