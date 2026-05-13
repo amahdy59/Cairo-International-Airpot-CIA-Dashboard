@@ -36,6 +36,7 @@ import { AirportMap2D, type Language } from "@/components/command-center/Airport
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from "@/components/command-center/MetricWidgets";
 
 type Mode = "traveler" | "manager";
+type Page = "dashboard" | "resources";
 type TravelerTab = "explore" | "directions" | "services";
 type ManagerTab = "operations" | "safety";
 type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
@@ -278,6 +279,19 @@ const copy = {
   },
 } as const;
 
+const RESOURCE_LINKS = [
+  { title: "Cairo Airport terminal information", source: "Cairo Airport Company", href: "https://www.cairo-airport.com/en-us/Services/Passenger-Guide/Terminal-Information", usedFor: "Terminal/service orientation and passenger-facing airport context." },
+  { title: "Cairo Airport services and facilities", source: "Cairo Airport Company", href: "https://www.cairo-airport.com/en-us/Airport/Airport-Services-Facilities", usedFor: "Passenger services such as lounges, Ahlan service, medical/pharmacy, and airport facilities." },
+  { title: "Cairo Airport information", source: "Cairo Airport Company", href: "https://www.cairo-airport.com/en-us/Airport/Airport-Information", usedFor: "Airport identity, public facilities, and operational context." },
+  { title: "EgyptAir web check-in", source: "EgyptAir", href: "https://www.egyptair.com/en/fly/check-in/Pages/web-check-in.aspx", usedFor: "Passenger check-in guidance and online check-in timing." },
+  { title: "Egypt e-Visa portal", source: "Government of Egypt", href: "https://visa2egypt.gov.eg/eVisa/ar/Home", usedFor: "Official visa-link destination." },
+  { title: "Aviationstack API documentation", source: "Aviationstack", href: "https://aviationstack.com/documentation", usedFor: "Live flight status API fields, limitations, and endpoint behavior." },
+  { title: "Google Maps Embed API", source: "Google for Developers", href: "https://developers.google.com/maps/documentation/embed/embedding-map", usedFor: "Embedded map approach and external route handoff." },
+  { title: "WCAG 2.2", source: "W3C", href: "https://www.w3.org/TR/wcag/", usedFor: "Accessibility checks for focus, contrast, language, keyboard navigation, and responsive content." },
+  { title: "Apple Human Interface Guidelines: Materials", source: "Apple Developer", href: "https://developer.apple.com/design/human-interface-guidelines/materials", usedFor: "Light glass/translucency treatment while preserving readability." },
+  { title: "Air Travel Accessibility", source: "IATA", href: "https://www.iata.org/en/programs/passenger/accessibility/", usedFor: "Passenger accessibility and inclusive airport journey priorities." },
+] as const;
+
 const TERMINALS = [
   {
     code: "T1",
@@ -416,6 +430,7 @@ const ATTENTION_AIRCRAFT = [
 
 export function App() {
   const [mode, setMode] = useState<Mode>(() => (["/ops", "/safety"].includes(window.location.pathname) ? "manager" : "traveler"));
+  const [page, setPage] = useState<Page>(() => (window.location.hash === "#resources" ? "resources" : "dashboard"));
   const [highContrast, setHighContrast] = useState(false);
   const [language, setLanguage] = useState<Language>("en");
   const clock = useHeaderClock();
@@ -428,6 +443,12 @@ export function App() {
     root.lang = language;
     root.dir = language === "ar" ? "rtl" : "ltr";
   }, [highContrast, language]);
+
+  useEffect(() => {
+    const handleHashChange = () => setPage(window.location.hash === "#resources" ? "resources" : "dashboard");
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background/88 text-foreground">
@@ -463,8 +484,8 @@ export function App() {
               </div>
             </div>
             <div className="flex items-center rounded-lg border border-border bg-secondary/60 p-0.5" role="group" aria-label="Dashboard mode">
-              <ModeButton active={mode === "traveler"} onClick={() => setMode("traveler")} icon={<Users className="h-3.5 w-3.5" />} label={c.traveler} />
-              <ModeButton active={mode === "manager"} onClick={() => setMode("manager")} icon={<Briefcase className="h-3.5 w-3.5" />} label={c.manager} />
+              <ModeButton active={page === "dashboard" && mode === "traveler"} onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("traveler"); }} icon={<Users className="h-3.5 w-3.5" />} label={c.traveler} />
+              <ModeButton active={page === "dashboard" && mode === "manager"} onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("manager"); }} icon={<Briefcase className="h-3.5 w-3.5" />} label={c.manager} />
             </div>
             <IconButton pressed={highContrast} label={c.highContrast} onClick={() => setHighContrast((value) => !value)}>
               <Contrast className="h-4 w-4" />
@@ -483,10 +504,16 @@ export function App() {
       </header>
 
       <main id="main-content" className="mx-auto w-full max-w-[1600px] p-4 lg:p-6">
-        {mode === "traveler" ? <TravelerDashboard language={language} /> : <ManagerDashboard language={language} />}
+        {page === "resources" ? <ResourcesPage /> : mode === "traveler" ? <TravelerDashboard language={language} /> : <ManagerDashboard language={language} />}
       </main>
 
-      <footer className="border-t border-border px-6 py-4 text-center text-[11px] text-muted-foreground">{c.footer}</footer>
+      <footer className="border-t border-border px-6 py-4 text-center text-[11px] text-muted-foreground">
+        <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+          <span>{c.footer}</span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <a href="#resources" onClick={() => setPage("resources")} className="font-medium text-primary hover:underline">Resources and audit notes</a>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -505,6 +532,66 @@ function IconButton({ pressed, label, onClick, children }: { pressed: boolean; l
     <button type="button" aria-pressed={pressed} aria-label={label} title={label} onClick={onClick} className={`hidden h-9 w-9 place-items-center rounded-md border sm:grid ${pressed ? "border-primary bg-primary/15 text-primary" : "border-border hover:bg-secondary"}`}>
       {children}
     </button>
+  );
+}
+
+function ResourcesPage() {
+  const auditItems = [
+    { title: "Information accuracy", body: "Live flight data is sourced from Aviationstack when VITE_AVIATIONSTACK_KEY is configured. If the API is absent or omits gates, the interface labels the content as sample or asks passengers to confirm on airport screens." },
+    { title: "Accessibility", body: "Primary interactions are buttons or links, keyboard focus is visible, the app has skip-to-content, high contrast mode, semantic tables, modal dialog roles, and descriptive labels for icon-only controls." },
+    { title: "UX writing", body: "Passenger content now avoids false location awareness, avoids invented live gates, and labels sample/modelled operational cards so viewers understand what is live versus illustrative." },
+    { title: "Color use", body: "Green/yellow/red remain reserved for operational meaning. Composition charts avoid danger colors unless the chart is explicitly communicating risk or attention." },
+    { title: "Responsiveness", body: "Header clocks hide below desktop, dashboards stack at smaller breakpoints, cards use wrapping grids, and airport/map panels avoid fixed heights where content should hug." },
+    { title: "Code cleanup", body: "Unused legacy service UI was removed, resources are centralized, sample data is labelled, and the local API key remains in ignored .env.local rather than source control." },
+  ];
+  const recommendations = [
+    "Replace public API flight boards with an official airport FIDS/AODB integration if Cairo Airport Company can provide access.",
+    "Add photo-backed terminal hero strips: Terminal 3 exterior, check-in hall, arrivals hall, apron/runway, and lounge or services area.",
+    "Add a disruption mode for passengers: delayed flight, gate change, long passport queue, baggage delay, and service recovery guidance.",
+    "Add manager drill-downs for SLA breach age, unresolved work orders, queue wait trends, and runway/apron constraint summaries.",
+    "Add a small status timestamp to every live widget and an explicit data owner/source label for every modelled widget.",
+  ];
+
+  return (
+    <div className="space-y-5">
+      <Hero eyebrow="Source transparency" title="Resources and audit notes" description="References used for the Cairo Airport dashboard, plus the current accessibility, UX writing, contrast, responsiveness and data-integrity checks." />
+      <SectionPanel title="Source links">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {RESOURCE_LINKS.map((resource) => (
+            <a key={resource.href} href={resource.href} target="_blank" rel="noreferrer" className="panel-inner group flex items-start gap-3 p-4 transition-colors hover:border-primary/50">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
+                <ExternalLink aria-hidden="true" className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold group-hover:text-primary">{resource.title}</h2>
+                <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{resource.source}</p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{resource.usedFor}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </SectionPanel>
+      <SectionPanel title="Audit checkup">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {auditItems.map((item) => (
+            <article key={item.title} className="panel-inner p-4">
+              <h2 className="text-sm font-semibold">{item.title}</h2>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </SectionPanel>
+      <SectionPanel title="Recommended next additions">
+        <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {recommendations.map((item) => (
+            <li key={item} className="panel-inner flex gap-2 p-3 text-sm text-muted-foreground">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </SectionPanel>
+    </div>
   );
 }
 
