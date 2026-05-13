@@ -38,7 +38,7 @@ import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from "@/
 type Mode = "traveler" | "manager";
 type TravelerTab = "explore" | "directions" | "services";
 type ManagerTab = "operations" | "safety";
-type Tone = "ok" | "info" | "warn" | "high" | "crit";
+type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 type FlightRow = {
   flight: string;
   city: string;
@@ -95,8 +95,8 @@ function mapAviationStackFlight(item: AviationStackFlight, direction: "arrival" 
     time,
     status: delayed ? { en: `Delayed +${block.delay}m`, ar: `متأخرة ${block.delay}د` } : { en: item.flight_status ?? "Scheduled", ar: item.flight_status ?? "مجدولة" },
     tone: delayed ? "warn" : "info",
-    terminal: block.terminal ? `T${block.terminal}` : "TBD",
-    gate: block.gate ?? "--",
+    terminal: block.terminal ? `T${block.terminal}` : "",
+    gate: block.gate ?? "Check airport screens",
   };
 }
 
@@ -329,17 +329,17 @@ const TRAVEL_MODES = [
 ] as const;
 
 const ARRIVALS = [
-  { flight: "MS738", city: "Frankfurt (FRA)", time: "11:42", status: { en: "On time", ar: "في الموعد" }, tone: "ok" as Tone, terminal: "T3", gate: "F7" },
-  { flight: "TK694", city: "Istanbul (IST)", time: "11:55", status: { en: "Landing", ar: "تهبط الآن" }, tone: "info" as Tone, terminal: "T2", gate: "B12" },
-  { flight: "EK927", city: "Dubai (DXB)", time: "12:08", status: { en: "Delayed +18m", ar: "متأخرة 18د" }, tone: "warn" as Tone, terminal: "T2", gate: "B04" },
-  { flight: "MS841", city: "Jeddah (JED)", time: "12:20", status: { en: "On time", ar: "في الموعد" }, tone: "ok" as Tone, terminal: "T3", gate: "F2" },
+  { flight: "MS738", city: "Frankfurt (FRA)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
+  { flight: "TK694", city: "Istanbul (IST)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
+  { flight: "EK927", city: "Dubai (DXB)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
+  { flight: "MS841", city: "Jeddah (JED)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
 ] as const;
 
 const DEPARTURES = [
-  { flight: "MS777", city: "London (LHR)", time: "11:50", status: { en: "Boarding", ar: "صعود" }, tone: "info" as Tone, terminal: "T3", gate: "F11" },
-  { flight: "SV302", city: "Riyadh (RUH)", time: "12:05", status: { en: "On time", ar: "في الموعد" }, tone: "ok" as Tone, terminal: "T1", gate: "1-A" },
-  { flight: "AF551", city: "Paris (CDG)", time: "12:15", status: { en: "On time", ar: "في الموعد" }, tone: "ok" as Tone, terminal: "T2", gate: "B07" },
-  { flight: "MS717", city: "Luxor (LXR)", time: "12:30", status: { en: "Final call", ar: "النداء الأخير" }, tone: "warn" as Tone, terminal: "T1", gate: "3-D" },
+  { flight: "MS777", city: "London (LHR)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
+  { flight: "SV302", city: "Riyadh (RUH)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
+  { flight: "AF551", city: "Paris (CDG)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
+  { flight: "MS717", city: "Luxor (LXR)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
 ] as const;
 
 function useLiveAirportData(): LiveAirportData {
@@ -909,6 +909,15 @@ function ManagerDashboard({ language }: { language: Language }) {
   const [tab, setTab] = useState<ManagerTab>("operations");
   const c = copy[language];
   const liveData = useLiveAirportData();
+  const flightBoardTitle = {
+    arrivals: liveData.simulated ? (language === "ar" ? "عينة وصول للعرض" : "Arrivals sample") : c.liveArrivals,
+    departures: liveData.simulated ? (language === "ar" ? "عينة مغادرة للعرض" : "Departures sample") : c.liveDepartures,
+  };
+  const flightBoardPill = liveData.simulated ? (
+    <StatusPill tone="neutral">{language === "ar" ? "للعرض فقط" : "For display only"}</StatusPill>
+  ) : (
+    <StatusPill tone="ok">{language === "ar" ? "API مباشر" : "Live API"}</StatusPill>
+  );
 
   return (
     <div className="space-y-5">
@@ -953,11 +962,11 @@ function ManagerDashboard({ language }: { language: Language }) {
               </div>
             </SectionPanel>
             <div className="space-y-5">
-              <SectionPanel title={c.liveArrivals} action={<StatusPill tone="info" icon={<PlaneLanding className="h-3 w-3" />}>{c.nextHour}</StatusPill>} dense>
-                <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} />
+              <SectionPanel title={flightBoardTitle.arrivals} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneLanding className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
+                <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} simulated={liveData.simulated} />
               </SectionPanel>
-              <SectionPanel title={c.liveDepartures} action={<StatusPill tone="info" icon={<PlaneTakeoff className="h-3 w-3" />}>{c.nextHour}</StatusPill>} dense>
-                <FlightTable rows={liveData.departures} directionLabel={c.toCol} language={language} />
+              <SectionPanel title={flightBoardTitle.departures} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneTakeoff className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
+                <FlightTable rows={liveData.departures} directionLabel={c.toCol} language={language} simulated={liveData.simulated} />
               </SectionPanel>
             </div>
           </div>
@@ -1245,33 +1254,43 @@ function Hero({ eyebrow, title, description }: { eyebrow: string; title: string;
   );
 }
 
-function FlightTable({ rows, directionLabel, language }: { rows: readonly FlightRow[]; directionLabel: string; language: Language }) {
+function FlightTable({ rows, directionLabel, language, simulated = false }: { rows: readonly FlightRow[]; directionLabel: string; language: Language; simulated?: boolean }) {
   const c = copy[language];
   return (
-    <div className="-mx-1 overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          <tr>
-            <th className="px-1 py-1.5 text-start">{c.flight}</th>
-            <th className="px-1 py-1.5 text-start">{directionLabel}</th>
-            <th className="px-1 py-1.5 text-start">{c.time}</th>
-            <th className="px-1 py-1.5 text-start">{c.gate}</th>
-            <th className="px-1 py-1.5 text-start">{c.status}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.flight} className="border-t border-border/60">
-              <td className="px-1 py-2 font-mono font-medium">{row.flight}</td>
-              <td className="px-1 py-2 text-foreground/90">{row.city}</td>
-              <td className="px-1 py-2 font-mono">{row.time}</td>
-              <td className="px-1 py-2 font-mono text-muted-foreground">{row.terminal}/{row.gate}</td>
-              <td className="px-1 py-2"><StatusPill tone={row.tone}>{row.status[language]}</StatusPill></td>
+    <>
+      <div className="-mx-1 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th className="px-1 py-1.5 text-start">{c.flight}</th>
+              <th className="px-1 py-1.5 text-start">{directionLabel}</th>
+              <th className="px-1 py-1.5 text-start">{c.time}</th>
+              <th className="px-1 py-1.5 text-start">{c.gate}</th>
+              <th className="px-1 py-1.5 text-start">{c.status}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const gateText = row.terminal ? `${row.terminal}/${row.gate}` : row.gate;
+              return (
+                <tr key={row.flight} className="border-t border-border/60">
+                  <td className="px-1 py-2 font-mono font-medium">{row.flight}</td>
+                  <td className="px-1 py-2 text-foreground/90">{row.city}</td>
+                  <td className="px-1 py-2 font-mono">{row.time}</td>
+                  <td className="px-1 py-2 font-mono text-muted-foreground">{gateText}</td>
+                  <td className="px-1 py-2"><StatusPill tone={row.tone}>{row.status[language]}</StatusPill></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+        {simulated
+          ? language === "ar" ? "هذه بيانات عينة للعرض فقط. أضف VITE_AVIATIONSTACK_KEY في Vercel لعرض بيانات API." : "Sample rows for display only. Add VITE_AVIATIONSTACK_KEY in Vercel to show API data."
+          : language === "ar" ? "بيانات من Aviationstack. تأكد من البوابة والحالة النهائية من شاشات المطار." : "Data from Aviationstack. Confirm final gate and status on airport screens."}
+      </p>
+    </>
   );
 }
 
