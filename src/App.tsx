@@ -104,13 +104,27 @@ async function fetchFlightByNumber(flightCode: string): Promise<FlightRow | null
   const aviationstackKey = import.meta.env.VITE_AVIATIONSTACK_KEY as string | undefined;
   if (!aviationstackKey) return null;
 
-  const response = await fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&flight_iata=${encodeURIComponent(flightCode)}&limit=1`);
-  if (!response.ok) return null;
-  const json = (await response.json()) as AviationStackResponse;
-  const [item] = json.data ?? [];
-  if (!item) return null;
-  const direction = item.departure?.iata === "CAI" ? "departure" : "arrival";
-  return mapAviationStackFlight(item, direction);
+  const trimmed = flightCode.trim().toUpperCase();
+  const candidates = new Set([trimmed]);
+  const match = trimmed.match(/^([A-Z]{2,3})0+(\d+)$/);
+  if (match) candidates.add(`${match[1]}${match[2]}`);
+
+  for (const candidate of candidates) {
+    const response = await fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&flight_iata=${encodeURIComponent(candidate)}&limit=5`);
+    if (!response.ok) continue;
+    const json = (await response.json()) as AviationStackResponse;
+    const item = (json.data ?? []).find((flight) => flight.departure?.iata === "CAI" || flight.arrival?.iata === "CAI") ?? json.data?.[0];
+    if (item) {
+      const direction = item.departure?.iata === "CAI" ? "departure" : "arrival";
+      return mapAviationStackFlight(item, direction);
+    }
+  }
+
+  return null;
+}
+
+function normalizeFlightCodeForCompare(value: string) {
+  return value.trim().toUpperCase().replace(/^([A-Z]{2,3})0+(\d+)$/, "$1$2");
 }
 
 function useHeaderClock() {
@@ -605,7 +619,7 @@ function PassengerTripAssistant({ language }: { language: Language }) {
 }
 
 function FlightStatusModal({ flight, requestedFlight, language, live, onClose }: { flight: FlightRow; requestedFlight: string; language: Language; live: boolean; onClose: () => void }) {
-  const found = flight.flight === requestedFlight;
+  const found = normalizeFlightCodeForCompare(flight.flight) === normalizeFlightCodeForCompare(requestedFlight);
   const rows = [
     { label: "Flight", value: found ? flight.flight : requestedFlight },
     { label: "Route", value: flight.city },
@@ -616,7 +630,7 @@ function FlightStatusModal({ flight, requestedFlight, language, live, onClose }:
   ];
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="flight-status-title">
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="flight-status-title">
       <div className="panel w-full max-w-2xl overflow-hidden shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-border p-5">
           <div>
@@ -681,29 +695,81 @@ function WaitTimePanel({ language }: { language: Language }) {
   );
 }
 
+type ServiceGuideItem = {
+  icon: typeof Coffee;
+  title: string;
+  detail: string;
+  scope: string;
+  note: string;
+};
+
 function ServiceFinder({ language }: { language: Language }) {
   const isArabic = language === "ar";
-  const services = [
-    { icon: Coffee, title: isArabic ? "صالة قريبة" : "Nearest lounge", detail: isArabic ? "T3 - بعد الجوازات - 4 دقائق" : "T3 - after passport - 4 min" },
-    { icon: Utensils, title: isArabic ? "طعام سريع" : "Quick food", detail: isArabic ? "T3 Food Village - 6 دقائق" : "T3 Food Village - 6 min" },
-    { icon: CircleDollarSign, title: isArabic ? "صراف آلي" : "ATM", detail: isArabic ? "قبل الأمن - 2 دقيقة" : "Before security - 2 min" },
-    { icon: Accessibility, title: isArabic ? "مساعدة خاصة" : "Assistance", detail: isArabic ? "مكتب أهلا - المدخل الرئيسي" : "Ahlan desk - main entrance" },
+  const [selectedService, setSelectedService] = useState<ServiceGuideItem | null>(null);
+  const services: ServiceGuideItem[] = [
+    { icon: Coffee, title: isArabic ? "الصالات" : "Lounges", detail: isArabic ? "صالات شركات الطيران وخدمات كبار الزوار حسب المبنى." : "Airline and meet-and-assist lounges vary by terminal.", scope: "T2 and T3 airside, selected T1 areas", note: "Check access rules with your airline or card provider before security." },
+    { icon: Utensils, title: isArabic ? "المطاعم والمقاهي" : "Restaurants and cafes", detail: isArabic ? "خيارات طعام قبل وبعد إجراءات السفر." : "Food options are available before and after formalities.", scope: "Public halls and airside concourses", note: "Allow extra time during peak banks because queues can build quickly." },
+    { icon: CircleDollarSign, title: isArabic ? "البنوك والصراف الآلي" : "Banks and ATMs", detail: isArabic ? "خدمات نقدية وصرافة في مناطق الركاب الرئيسية." : "Cash, banking and exchange services in main passenger zones.", scope: "Arrival halls, departure halls and public areas", note: "Use official bank/exchange counters for currency services." },
+    { icon: Accessibility, title: isArabic ? "المساعدة الخاصة" : "Special assistance", detail: isArabic ? "دعم الحركة والاستقبال يمكن ترتيبه قبل السفر." : "Mobility and meet-and-assist support can be arranged before travel.", scope: "Terminal entrances, check-in and arrivals", note: "Request assistance early through the airline or airport service desk." },
   ];
 
   return (
-    <SectionPanel title={isArabic ? "الخدمات الأقرب لك" : "Services near you"}>
+    <SectionPanel title={isArabic ? "دليل خدمات الركاب" : "Passenger service guide"} action={<StatusPill tone="neutral">{isArabic ? "معلومات عامة" : "General info"}</StatusPill>}>
+      <p className="mb-3 text-xs text-muted-foreground">{isArabic ? "هذه معلومات عامة عن الخدمات وليست مبنية على موقعك الحالي." : "These are general airport services, not location-based recommendations."}</p>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {services.map(({ icon: Icon, title, detail }) => (
-          <article key={title} className="panel-inner p-4">
-            <div className="grid h-10 w-10 place-items-center rounded-md border border-primary/30 bg-primary/10">
-              <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-          </article>
-        ))}
+        {services.map((service) => {
+          const Icon = service.icon;
+          return (
+            <button key={service.title} type="button" onClick={() => setSelectedService(service)} className="panel-inner p-4 text-start transition-colors hover:border-primary/50">
+              <div className="grid h-10 w-10 place-items-center rounded-md border border-primary/30 bg-primary/10">
+                <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+              </div>
+              <h3 className="mt-3 text-sm font-semibold">{service.title}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{service.detail}</p>
+            </button>
+          );
+        })}
       </div>
+      {selectedService && <ServiceDetailModal service={selectedService} onClose={() => setSelectedService(null)} />}
     </SectionPanel>
+  );
+}
+
+function ServiceDetailModal({ service, onClose }: { service: ServiceGuideItem; onClose: () => void }) {
+  const Icon = service.icon;
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="service-detail-title">
+      <div className="panel w-full max-w-xl overflow-hidden shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-border p-5">
+          <div className="flex items-start gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-primary/30 bg-primary/10">
+              <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Passenger service</p>
+              <h3 id="service-detail-title" className="mt-1 text-xl font-semibold">{service.title}</h3>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border hover:bg-secondary" aria-label="Close service details">
+            <CircleX aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="grid gap-3 p-5">
+          <div className="panel-inner p-3">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">What to expect</p>
+            <p className="mt-1 text-sm">{service.detail}</p>
+          </div>
+          <div className="panel-inner p-3">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Typical locations</p>
+            <p className="mt-1 text-sm">{service.scope}</p>
+          </div>
+          <div className="panel-inner p-3">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Traveler note</p>
+            <p className="mt-1 text-sm">{service.note}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -742,7 +808,7 @@ function PassengerLinks({ language }: { language: Language }) {
     <SectionPanel title={copy[language].passengerLinks}>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
         {QUICK_LINKS.map(({ icon: Icon, label, desc, href }) => (
-          <a key={label.en} href={href} target="_blank" rel="noreferrer" className="group flex min-h-20 items-start gap-3 panel-inner p-3 transition-colors hover:border-primary/40">
+          <a key={label.en} href={href} target="_blank" rel="noreferrer" className="group flex items-center gap-3 panel-inner p-3 transition-colors hover:border-primary/40">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
               <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
             </div>
@@ -869,12 +935,17 @@ function ManagerDashboard({ language }: { language: Language }) {
           </div>
 
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_1fr]">
-            <SectionPanel title={c.passengerFlow}>
+            <SectionPanel title={c.passengerFlow} action={<StatusPill tone="neutral">{language === "ar" ? "تقديري" : "Modelled"}</StatusPill>} className="h-fit self-start">
               <div className="mb-3">
                 <p className="text-sm font-semibold">{language === "ar" ? "يزداد التدفق قرب موجة الظهيرة" : "Passenger flow rises into the midday wave"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{language === "ar" ? "خط زمني مناسب لعرض الاتجاه عبر الوقت، وليس للمقارنة بين المحطات." : "A line chart is used here because the question is trend over time, not terminal comparison."}</p>
               </div>
-              <Sparkline data={[42, 48, 55, 61, 70, 64, 72, 80, 76, 82, 78, 84]} height={70} />
+              <Sparkline data={[42, 48, 55, 61, 70, 64, 72, 80, 76, 82, 78, 84]} height={58} />
+              <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span>06:00</span>
+                <span>{language === "ar" ? "مؤشر تدفق الركاب" : "Passenger throughput index"}</span>
+                <span>17:00</span>
+              </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <FlowZone label={language === "ar" ? "تسجيل" : "Check-in"} percent={62} tone="ok" />
                 <FlowZone label={language === "ar" ? "الأمن" : "Security"} percent={84} tone="warn" />
@@ -943,10 +1014,10 @@ function ManagerDashboard({ language }: { language: Language }) {
               ))}
             </ul>
           </SectionPanel>
-          <SectionPanel title={c.recentMaintenance}>
+          <SectionPanel title={c.recentMaintenance} action={<StatusPill tone="neutral">{language === "ar" ? "للعرض" : "Viewing sample"}</StatusPill>} className="h-fit self-start">
             <MaintenanceTable language={language} />
           </SectionPanel>
-          <SectionPanel title={c.attentionAircraft} action={<span className="font-mono text-[11px] text-muted-foreground">{c.sortedRisk}</span>} className="xl:col-span-2">
+          <SectionPanel title={c.attentionAircraft} action={<div className="flex items-center gap-2"><StatusPill tone="neutral">{language === "ar" ? "نموذج" : "Modelled"}</StatusPill><span className="font-mono text-[11px] text-muted-foreground">{c.sortedRisk}</span></div>} className="xl:col-span-2">
             <AttentionTable language={language} />
           </SectionPanel>
         </div>
@@ -1074,17 +1145,17 @@ function SafetyAgingBuckets({ language }: { language: Language }) {
   const max = Math.max(...buckets.map((bucket) => bucket.value));
 
   return (
-    <SectionPanel title={isArabic ? "عمر تنبيهات السلامة" : "Safety alert age"} action={<StatusPill tone="warn">{isArabic ? "1 متأخر" : "1 overdue"}</StatusPill>}>
+    <SectionPanel title={isArabic ? "عمر تنبيهات السلامة" : "Safety alert age"} action={<div className="flex items-center gap-2"><StatusPill tone="neutral">{isArabic ? "عينة" : "Sample"}</StatusPill><StatusPill tone="warn">{isArabic ? "1 متأخر" : "1 overdue"}</StatusPill></div>} className="h-fit self-start">
       <p className="mb-4 text-xs text-muted-foreground">
         {isArabic ? "الأعمدة توضح ما إذا كانت المشكلات تتراكم قبل أن تصبح حرجة." : "Aging buckets show whether issues are accumulating before they become critical."}
       </p>
       <div className="grid grid-cols-4 items-end gap-3">
         {buckets.map((bucket) => {
-          const height = 36 + (bucket.value / max) * 56;
+          const height = 24 + (bucket.value / max) * 48;
           const bg = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
           return (
             <div key={bucket.label} className="text-center">
-              <div className="mx-auto flex h-28 w-full max-w-20 items-end rounded-md bg-secondary/70 p-1">
+              <div className="mx-auto flex h-20 w-full max-w-16 items-end rounded-md bg-secondary/70 p-1">
                 <div className={`w-full rounded ${bg}`} style={{ height }} aria-label={`${bucket.label}: ${bucket.value} alerts`} />
               </div>
               <p className="mt-2 font-mono text-sm font-semibold">{bucket.value}</p>
