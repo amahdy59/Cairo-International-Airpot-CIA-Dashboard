@@ -205,6 +205,17 @@
     background-size: 32px 32px;
     background-position: -1px -1px;
   }
+  .skeleton-line {
+    display: block;
+    height: 0.75rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+      color-mix(in oklab, var(--muted) 68%, transparent),
+      color-mix(in oklab, var(--primary) 18%, transparent),
+      color-mix(in oklab, var(--muted) 68%, transparent));
+    background-size: 220% 100%;
+    animation: skeleton-sweep 1.2s ease-in-out infinite;
+  }
   .sr-only {
     position: absolute;
     width: 1px;
@@ -222,3 +233,15 @@
   to { stroke-dashoffset: -40; }
 }
 .flow-line { animation: flow-dash 2s linear infinite; }
+
+@keyframes skeleton-sweep {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .flow-line {
+    animation: none;
+  }
+}

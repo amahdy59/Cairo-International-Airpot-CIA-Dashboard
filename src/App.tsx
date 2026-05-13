@@ -56,6 +56,9 @@ type LiveAirportData = {
   lastUpdated: Date;
   source: string;
   simulated: boolean;
+  loading: boolean;
+  confidence: "sample" | "public-api" | "official-ready";
+  error?: string;
 };
 
 type AviationStackFlight = {
@@ -150,6 +153,22 @@ function useHeaderClock() {
       timeZoneName: "short",
     }).format(now),
   };
+}
+
+function useOnlineStatus() {
+  const [online, setOnline] = useState(() => navigator.onLine);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
+  return online;
 }
 
 const copy = {
@@ -363,6 +382,8 @@ function useLiveAirportData(): LiveAirportData {
     lastUpdated: new Date(),
     source: "Static operational sample",
     simulated: true,
+    loading: true,
+    confidence: "sample",
   }));
 
   useEffect(() => {
@@ -371,7 +392,7 @@ function useLiveAirportData(): LiveAirportData {
 
     const load = async () => {
       if (!aviationstackKey) {
-        setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, source: "Simulated until VITE_AVIATIONSTACK_KEY is configured" }));
+        setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, loading: false, confidence: "sample", source: "Sample until VITE_AVIATIONSTACK_KEY is configured" }));
         return;
       }
 
@@ -386,11 +407,13 @@ function useLiveAirportData(): LiveAirportData {
           arrivals: (arrivalsJson.data ?? []).slice(0, 4).map((item) => mapAviationStackFlight(item, "arrival")),
           departures: (departuresJson.data ?? []).slice(0, 4).map((item) => mapAviationStackFlight(item, "departure")),
           lastUpdated: new Date(),
-          source: "Aviationstack live flight API",
+          source: "Aviationstack public flight API",
           simulated: false,
+          loading: false,
+          confidence: "public-api",
         });
       } catch {
-        if (active) setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, source: "Live API unavailable - showing simulated operational sample" }));
+        if (active) setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, loading: false, confidence: "sample", source: "Live API unavailable - showing sample", error: "Flight provider unavailable" }));
       }
     };
 
@@ -433,6 +456,7 @@ export function App() {
   const [page, setPage] = useState<Page>(() => (window.location.hash === "#resources" ? "resources" : "dashboard"));
   const [highContrast, setHighContrast] = useState(false);
   const [language, setLanguage] = useState<Language>("en");
+  const online = useOnlineStatus();
   const clock = useHeaderClock();
   const c = copy[language];
 
@@ -502,13 +526,13 @@ export function App() {
       </header>
 
       <main id="main-content" className="mx-auto w-full max-w-[1600px] p-4 lg:p-6">
-        {page === "resources" ? <ResourcesPage /> : mode === "traveler" ? <TravelerDashboard language={language} /> : <ManagerDashboard language={language} />}
+        {page === "resources" ? <ResourcesPage /> : mode === "traveler" ? <TravelerDashboard language={language} online={online} /> : <ManagerDashboard language={language} online={online} />}
       </main>
 
       <footer className="border-t border-border px-6 py-4 text-center text-[11px] text-muted-foreground">
         <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
           <span>{c.footer}</span>
-          <span className="hidden sm:inline" aria-hidden="true">�</span>
+          <span className="hidden sm:inline" aria-hidden="true">·</span>
           <a href="#resources" onClick={() => setPage("resources")} className="font-medium text-primary hover:underline">Resources and audit notes</a>
         </div>
       </footer>
@@ -549,6 +573,8 @@ function ResourcesPage() {
     "Add manager drill-downs for work-order aging, queue wait trends, unresolved safety items, and escalation owners.",
     "Add visible last-updated timestamps to every live or data-driven widget, plus a clear source label for modelled or sample information.",
     "Add confidence labels when API fields are partial, such as live flight found but gate unavailable.",
+    "Move from polling to push updates after an official FIDS/AODB source exists; WebSockets only help when the upstream data is authoritative.",
+    "Add a natural-language flight assistant after data trust is solved, scoped to flight lookup, terminal guidance, disruption advice, Arabic and English.",
     "Add multilingual QA for Arabic layout, line length, terminology, and right-to-left table behavior before presentation.",
     "Add lightweight user testing tasks for passengers and managers to validate whether the dashboard reduces time-to-answer.",
   ];
@@ -592,17 +618,41 @@ function ResourcesPage() {
           ))}
         </ul>
       </SectionPanel>
+      <SectionPanel title="Implementation roadmap">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
+          {[
+            { step: "1", title: "Separate modes", body: "Passenger mode remains task-first; manager mode remains escalation-first." },
+            { step: "2", title: "Trust every widget", body: "Each card should show live, sample, modelled, source and last-updated state." },
+            { step: "3", title: "Official data path", body: "Use Cairo Airport FIDS/AODB for operational-grade gates, status and timestamps." },
+            { step: "4", title: "AI after trust", body: "Layer natural-language help only after the flight data source is reliable." },
+          ].map((item) => (
+            <article key={item.step} className="panel-inner p-4">
+              <span className="grid h-8 w-8 place-items-center rounded-md border border-primary/30 bg-primary/10 font-mono text-xs text-primary">{item.step}</span>
+              <h2 className="mt-3 text-sm font-semibold">{item.title}</h2>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </SectionPanel>
     </div>
   );
 }
 
-function TravelerDashboard({ language }: { language: Language }) {
+function TravelerDashboard({ language, online }: { language: Language; online: boolean }) {
   const [tab, setTab] = useState<TravelerTab>("explore");
   const c = copy[language];
 
   return (
     <div className="space-y-5">
       <Hero eyebrow={c.travelerHero.eyebrow} title={c.travelerHero.title} description={c.travelerHero.description} />
+      <ModeTrustStrip
+        language={language}
+        online={online}
+        mode="traveler"
+        title="Passenger mode is intentionally simple"
+        body="This mode prioritizes fast wayfinding: flight lookup, directions, services and terminal context. Any uncertain data is labelled clearly."
+      />
+      <TravelerQuickActions active={tab} onChange={setTab} />
       <Tabs
         ariaLabel="Traveler sections"
         active={tab}
@@ -634,6 +684,32 @@ function TravelerDashboard({ language }: { language: Language }) {
         </div>
       )}
     </div>
+  );
+}
+
+function TravelerQuickActions({ active, onChange }: { active: TravelerTab; onChange: (tab: TravelerTab) => void }) {
+  const actions = [
+    { id: "explore" as TravelerTab, title: "Check my flight", body: "Start with flight lookup, then move to the right terminal.", icon: Search },
+    { id: "directions" as TravelerTab, title: "Get directions", body: "Use the embedded map without leaving the app.", icon: Navigation },
+    { id: "services" as TravelerTab, title: "Find services", body: "Restaurants, lounges, banks, assistance and contact info.", icon: BadgeInfo },
+  ];
+
+  return (
+    <section className="grid grid-cols-1 gap-3 md:grid-cols-3" aria-label="Passenger quick actions">
+      {actions.map(({ id, title, body, icon: Icon }) => (
+        <button key={id} type="button" onClick={() => onChange(id)} aria-pressed={active === id} className={`panel-inner p-4 text-start transition-colors hover:border-primary/50 ${active === id ? "border-primary/60 bg-primary/10" : ""}`}>
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
+              <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold">{title}</h2>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</p>
+            </div>
+          </div>
+        </button>
+      ))}
+    </section>
   );
 }
 
@@ -993,7 +1069,7 @@ function DirectionsCard({ language }: { language: Language }) {
   );
 }
 
-function ManagerDashboard({ language }: { language: Language }) {
+function ManagerDashboard({ language, online }: { language: Language; online: boolean }) {
   const [tab, setTab] = useState<ManagerTab>("operations");
   const c = copy[language];
   const liveData = useLiveAirportData();
@@ -1010,6 +1086,13 @@ function ManagerDashboard({ language }: { language: Language }) {
   return (
     <div className="space-y-5">
       <Hero eyebrow={c.managerHero.eyebrow} title={c.managerHero.title} description={c.managerHero.description} />
+      <ModeTrustStrip
+        language={language}
+        online={online}
+        mode="manager"
+        title="Manager mode is a decision console"
+        body="It prioritizes flow, risk accumulation and escalation signals. Maintenance and safety cards remain modelled unless a live source label says otherwise."
+      />
       <Tabs
         ariaLabel="Manager sections"
         active={tab}
@@ -1054,10 +1137,10 @@ function ManagerDashboard({ language }: { language: Language }) {
             </div>
             <div className="space-y-5">
               <SectionPanel title={flightBoardTitle.arrivals} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneLanding className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
-                <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} simulated={liveData.simulated} />
+                <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} simulated={liveData.simulated} loading={liveData.loading} />
               </SectionPanel>
               <SectionPanel title={flightBoardTitle.departures} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneTakeoff className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
-                <FlightTable rows={liveData.departures} directionLabel={c.toCol} language={language} simulated={liveData.simulated} />
+                <FlightTable rows={liveData.departures} directionLabel={c.toCol} language={language} simulated={liveData.simulated} loading={liveData.loading} />
               </SectionPanel>
             </div>
           </div>
@@ -1159,26 +1242,64 @@ function DataFreshnessBanner({ language, data }: { language: Language; data: Liv
   const isArabic = language === "ar";
   const ageSeconds = Math.max(0, Math.round((Date.now() - data.lastUpdated.getTime()) / 1000));
   const stale = ageSeconds > 120;
+  const confidenceLabel = {
+    sample: "Sample",
+    "public-api": "Public API",
+    "official-ready": "Official-ready",
+  }[data.confidence];
+  const statusText = data.loading
+    ? "Refreshing flight data..."
+    : data.simulated
+      ? "Current data is sample/modelled. Add VITE_AVIATIONSTACK_KEY to enable public flight data."
+      : "Flights auto-refresh from the public flight data provider. Gate and status fields may be incomplete.";
 
   return (
-    <section className="panel flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+    <section className="panel flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between" role="status" aria-live="polite">
       <div>
-        <p className="text-sm font-semibold">{isArabic ? "حالة البيانات" : "Data status"}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {data.simulated
-            ? isArabic ? "البيانات الحالية عينة تشغيلية. أضف VITE_AVIATIONSTACK_KEY لتفعيل الرحلات الحية." : "Current data is simulated. Add VITE_AVIATIONSTACK_KEY to enable live flights."
-            : isArabic ? "الرحلات تتحدث تلقائيا من مزود بيانات الرحلات." : "Flights auto-refresh from the configured flight data provider."}
-        </p>
+        <p className="text-sm font-semibold">{isArabic ? "Data status" : "Data status"}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{statusText}</p>
+        {data.error && <p className="mt-1 text-xs text-status-warn">{data.error}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <StatusPill tone={data.simulated ? "warn" : "ok"}>{data.simulated ? (isArabic ? "محاكاة" : "Simulated") : (isArabic ? "مباشر" : "Live")}</StatusPill>
-        <StatusPill tone={stale ? "crit" : "info"}>{isArabic ? `آخر تحديث ${ageSeconds}ث` : `Updated ${ageSeconds}s ago`}</StatusPill>
+        <StatusPill tone="neutral">{confidenceLabel}</StatusPill>
+        <StatusPill tone={data.simulated ? "warn" : "ok"}>{data.simulated ? (isArabic ? "Simulated" : "Simulated") : (isArabic ? "Live" : "Live")}</StatusPill>
+        <StatusPill tone={stale ? "crit" : "info"}>{isArabic ? `Updated ${ageSeconds}s ago` : `Updated ${ageSeconds}s ago`}</StatusPill>
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{data.source}</span>
       </div>
     </section>
   );
 }
 
+function ModeTrustStrip({ online, mode, title, body }: { language: Language; online: boolean; mode: Mode; title: string; body: string }) {
+  const items = mode === "traveler"
+    ? [
+        { label: "Mobile first", value: "Few steps", tone: "info" as Tone },
+        { label: "Data trust", value: "Labelled", tone: "ok" as Tone },
+        { label: "Connection", value: online ? "Online" : "Offline", tone: online ? "ok" as Tone : "warn" as Tone },
+      ]
+    : [
+        { label: "Focus", value: "Escalation", tone: "warn" as Tone },
+        { label: "Safety", value: "Issue aging", tone: "info" as Tone },
+        { label: "Source", value: "Explicit", tone: "ok" as Tone },
+      ];
+
+  return (
+    <section className="panel grid grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto]" aria-label="Mode and data trust context">
+      <div>
+        <h2 className="text-sm font-semibold">{title}</h2>
+        <p className="mt-1 max-w-4xl text-xs leading-relaxed text-muted-foreground">{body}</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {items.map((item) => (
+          <div key={item.label} className="panel-inner min-w-24 p-3 text-center">
+            <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{item.label}</p>
+            <div className="mt-1 flex justify-center"><StatusPill tone={item.tone}>{item.value}</StatusPill></div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 function QueueLoadChart({ language }: { language: Language }) {
   const isArabic = language === "ar";
   const rows = [
@@ -1347,8 +1468,9 @@ function Hero({ eyebrow, title, description }: { eyebrow: string; title: string;
   );
 }
 
-function FlightTable({ rows, directionLabel, language, simulated = false }: { rows: readonly FlightRow[]; directionLabel: string; language: Language; simulated?: boolean }) {
+function FlightTable({ rows, directionLabel, language, simulated = false, loading = false }: { rows: readonly FlightRow[]; directionLabel: string; language: Language; simulated?: boolean; loading?: boolean }) {
   const c = copy[language];
+  const displayRows = loading ? rows.slice(0, 4) : rows;
   return (
     <>
       <div className="-mx-1 overflow-x-auto">
@@ -1363,15 +1485,27 @@ function FlightTable({ rows, directionLabel, language, simulated = false }: { ro
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
+            {displayRows.map((row) => {
               const gateText = row.terminal ? `${row.terminal}/${row.gate}` : row.gate;
               return (
                 <tr key={row.flight} className="border-t border-border/60">
-                  <td className="px-1 py-2 font-mono font-medium">{row.flight}</td>
-                  <td className="px-1 py-2 text-foreground/90">{row.city}</td>
-                  <td className="px-1 py-2 font-mono">{row.time}</td>
-                  <td className="px-1 py-2 font-mono text-muted-foreground">{gateText}</td>
-                  <td className="px-1 py-2"><StatusPill tone={row.tone}>{row.status[language]}</StatusPill></td>
+                  {loading ? (
+                    <>
+                      <td className="px-1 py-2"><span className="skeleton-line w-12" /></td>
+                      <td className="px-1 py-2"><span className="skeleton-line w-28" /></td>
+                      <td className="px-1 py-2"><span className="skeleton-line w-10" /></td>
+                      <td className="px-1 py-2"><span className="skeleton-line w-16" /></td>
+                      <td className="px-1 py-2"><span className="skeleton-line w-20" /></td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-1 py-2 font-mono font-medium">{row.flight}</td>
+                      <td className="px-1 py-2 text-foreground/90">{row.city}</td>
+                      <td className="px-1 py-2 font-mono">{row.time}</td>
+                      <td className="px-1 py-2 font-mono text-muted-foreground">{gateText}</td>
+                      <td className="px-1 py-2"><StatusPill tone={row.tone}>{row.status[language]}</StatusPill></td>
+                    </>
+                  )}
                 </tr>
               );
             })}
