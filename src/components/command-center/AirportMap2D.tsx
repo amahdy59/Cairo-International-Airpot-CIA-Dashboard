@@ -272,7 +272,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
         </div>
       </div>
 
-      <div className="grid gap-4 p-4 xl:grid-cols-[180px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(760px,1fr)_300px]">
+      <div className="grid gap-4 p-4 xl:grid-cols-[180px_minmax(0,1fr)]">
         <nav className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1" aria-label={copy.views}>
           {scenes.map((scene, index) => {
             const active = scene.id === activeScene.id;
@@ -334,12 +334,15 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
           </div>
         </div>
 
-        <aside className="space-y-3 xl:col-span-2 2xl:col-span-1">
+        <aside className="grid gap-3 xl:col-span-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="panel-inner p-4">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{copy.selected}</p>
-            <h3 className="mt-2 text-lg font-semibold">{activeHotspot.title[language]}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activeHotspot.summary[language]}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold">{activeHotspot.title[language]}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{activeHotspot.summary[language]}</p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
               <button type="button" onClick={() => setPreviewOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs font-medium hover:bg-secondary">
                 <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
                 {copy.realImage}
@@ -349,6 +352,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
                   {copy.visit}
                 </button>
               )}
+              </div>
             </div>
           </div>
 
@@ -367,7 +371,7 @@ export function AirportMap2D({ className = "", language = "en" }: { className?: 
       </div>
 
       {previewOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="airport-photo-title">
+        <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="airport-photo-title">
           <div className="panel max-h-[90vh] w-full max-w-4xl overflow-hidden">
             <div className="flex items-center justify-between gap-3 border-b border-border p-4">
               <div>

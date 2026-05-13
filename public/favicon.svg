@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CAI Command Hub">
+  <rect width="64" height="64" rx="16" fill="#07121f"/>
+  <path d="M12 36.5 52 13l-15.2 39.2-7.4-16.1L12 36.5Z" fill="#51d3ee"/>
+  <path d="m29.4 36.1 22.6-23-15.2 39.1-7.4-16.1Z" fill="#ffffff" opacity=".82"/>
+  <path d="M12 36.5 52 13 24.6 43.8l-1.9 8.2-4.8-11.4L12 36.5Z" fill="none" stroke="#51d3ee" stroke-width="3" stroke-linejoin="round"/>
+</svg>

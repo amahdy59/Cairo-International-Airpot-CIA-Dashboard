@@ -457,31 +457,29 @@ export function App() {
           <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground">
             {c.skip}
           </a>
-          <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("traveler"); }}
+            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg text-start outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Go to dashboard home"
+          >
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan" aria-hidden="true">
-              <div className="leading-none text-center">
-                <div className="font-mono text-[13px] font-black tracking-tight text-primary">CAI</div>
-                <Plane className="mx-auto mt-0.5 h-3 w-3 text-primary" strokeWidth={2.4} />
-              </div>
+              <Plane className="h-5 w-5 text-primary" strokeWidth={2.4} />
             </div>
             <div className="min-w-0 leading-tight">
               <p className="truncate font-mono text-[10px] tracking-[0.22em] text-primary">CAI - CAIRO INTL</p>
               <h1 className="truncate text-sm font-semibold">{c.brand}</h1>
             </div>
-          </div>
+          </button>
 
           <div className="ms-auto flex items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-lg border border-border bg-secondary/45 px-3 py-2 xl:flex" aria-label="Current time">
+            <div className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-secondary/45 px-3 xl:flex" aria-label="Current time">
               <Clock aria-hidden="true" className="h-4 w-4 text-primary" />
-              <div className="leading-tight">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Cairo</p>
-                <p className="font-mono text-xs font-semibold">{clock.cairo}</p>
-              </div>
-              <span className="h-7 w-px bg-border" aria-hidden="true" />
-              <div className="leading-tight">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">UTC</p>
-                <p className="font-mono text-xs font-semibold">{clock.utc}</p>
-              </div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Cairo</span>
+              <span className="font-mono text-xs font-semibold">{clock.cairo}</span>
+              <span className="h-4 w-px bg-border" aria-hidden="true" />
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">UTC</span>
+              <span className="font-mono text-xs font-semibold">{clock.utc}</span>
             </div>
             <div className="flex items-center rounded-lg border border-border bg-secondary/60 p-0.5" role="group" aria-label="Dashboard mode">
               <ModeButton active={page === "dashboard" && mode === "traveler"} onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("traveler"); }} icon={<Users className="h-3.5 w-3.5" />} label={c.traveler} />
@@ -510,7 +508,7 @@ export function App() {
       <footer className="border-t border-border px-6 py-4 text-center text-[11px] text-muted-foreground">
         <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
           <span>{c.footer}</span>
-          <span className="hidden sm:inline" aria-hidden="true">·</span>
+          <span className="hidden sm:inline" aria-hidden="true">�</span>
           <a href="#resources" onClick={() => setPage("resources")} className="font-medium text-primary hover:underline">Resources and audit notes</a>
         </div>
       </footer>
@@ -545,11 +543,14 @@ function ResourcesPage() {
     { title: "Code cleanup", body: "Unused legacy service UI was removed, resources are centralized, sample data is labelled, and the local API key remains in ignored .env.local rather than source control." },
   ];
   const recommendations = [
-    "Replace public API flight boards with an official airport FIDS/AODB integration if Cairo Airport Company can provide access.",
-    "Add photo-backed terminal hero strips: Terminal 3 exterior, check-in hall, arrivals hall, apron/runway, and lounge or services area.",
-    "Add a disruption mode for passengers: delayed flight, gate change, long passport queue, baggage delay, and service recovery guidance.",
-    "Add manager drill-downs for SLA breach age, unresolved work orders, queue wait trends, and runway/apron constraint summaries.",
-    "Add a small status timestamp to every live widget and an explicit data owner/source label for every modelled widget.",
+    "Add official FIDS/AODB data if Cairo Airport Company can provide access. Public Aviationstack is useful, but gate and status fields may be incomplete.",
+    "Add real photo strips for Terminal 3 exterior, check-in hall, arrivals hall, apron/runway, and lounge or services areas.",
+    "Add passenger disruption guidance for delayed flights, gate changes, baggage delays, long queues, missed connections, and reduced-mobility support.",
+    "Add manager drill-downs for work-order aging, queue wait trends, unresolved safety items, and escalation owners.",
+    "Add visible last-updated timestamps to every live or data-driven widget, plus a clear source label for modelled or sample information.",
+    "Add confidence labels when API fields are partial, such as live flight found but gate unavailable.",
+    "Add multilingual QA for Arabic layout, line length, terminology, and right-to-left table behavior before presentation.",
+    "Add lightweight user testing tasks for passengers and managers to validate whether the dashboard reduces time-to-answer.",
   ];
 
   return (
@@ -669,17 +670,17 @@ function PassengerTripAssistant({ language }: { language: Language }) {
   };
 
   return (
-    <SectionPanel title={isArabic ? "رحلتي الآن" : "My trip now"} action={<StatusPill tone="info">{isArabic ? "اقتراح حي" : "Live guidance"}</StatusPill>}>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)_260px]">
+    <SectionPanel title={isArabic ? "رحلتي الآن" : "My trip now"} action={<StatusPill tone="info">{isArabic ? "بحث مباشر" : "Live flight lookup"}</StatusPill>}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)_260px]">
         <form className="relative block" onSubmit={submitFlightSearch}>
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{isArabic ? "رقم الرحلة" : "Flight number"}</span>
-          <div className="mt-1.5 flex h-11 overflow-hidden rounded-md border border-border bg-background focus-within:border-primary">
-            <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} className="min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none" aria-label={isArabic ? "Flight number" : "Flight number"} />
-            <button type="submit" disabled={lookupBusy} className="grid w-11 place-items-center border-s border-border text-primary hover:bg-secondary disabled:cursor-wait disabled:opacity-60" aria-label={isArabic ? "Search flight status" : "Search flight status"}>
+          <div className="mt-1.5 flex h-12 overflow-hidden rounded-lg border border-primary/55 bg-background shadow-[0_0_24px_rgba(81,211,238,.12)] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/25">
+            <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} placeholder="SM27, MS777" className="min-w-0 flex-1 bg-transparent px-4 font-mono text-base outline-none" aria-label={isArabic ? "Flight number" : "Flight number"} />
+            <button type="submit" disabled={lookupBusy} className="grid w-12 cursor-pointer place-items-center border-s border-primary/35 bg-primary text-primary-foreground hover:opacity-90 disabled:cursor-wait disabled:opacity-60" aria-label={isArabic ? "Search flight status" : "Search flight status"}>
               <Search aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{isArabic ? "مصر للطيران - لندن هيثرو - مغادرة 11:50" : "EgyptAir - London Heathrow - departure 11:50"}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{isArabic ? "ابحث برقم الرحلة. إذا لم تتوفر البوابة فتأكد من شاشات المطار." : "Search by flight number. If gate data is unavailable, confirm on airport screens."}</p>
         </form>
         <ol className="grid grid-cols-1 gap-2 md:grid-cols-3">
           {steps.map((step, index) => (
@@ -724,7 +725,7 @@ function FlightStatusModal({ flight, requestedFlight, language, live, onClose }:
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Flight status</p>
             <h3 id="flight-status-title" className="mt-1 text-2xl font-semibold">{found ? flight.flight : requestedFlight}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {found ? (live ? "Live Aviationstack result with terminal, gate and next action." : "Quick summary of terminal, gate and next action.") : "This flight was not found in the current live/sample feed, so the closest operational example is shown."}
+              {found ? (live ? "Live Aviationstack result where available. Confirm missing gate or status fields on airport screens." : "Sample summary for presentation only. Confirm flight details on airport screens.") : "This flight was not found in the current live/sample feed, so the closest operational example is shown."}
             </p>
           </div>
           <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border hover:bg-secondary" aria-label="Close flight status">
@@ -1030,8 +1031,9 @@ function ManagerDashboard({ language }: { language: Language }) {
             <MetricCard label={language === "ar" ? "تنبيهات نشطة" : "Active alerts"} value="3" delta={language === "ar" ? "2 متوسط، 1 عال" : "2 medium, 1 high"} deltaTone="warn" icon={AlertTriangle} accent="warn" />
           </div>
 
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_1fr]">
-            <SectionPanel title={c.passengerFlow} action={<StatusPill tone="neutral">{language === "ar" ? "تقديري" : "Modelled"}</StatusPill>} className="h-fit self-start">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_1fr] xl:items-start">
+            <div className="space-y-5">
+            <SectionPanel title={c.passengerFlow} action={<StatusPill tone="neutral">{language === "ar" ? "تقديري" : "Modelled"}</StatusPill>} className="h-fit">
               <div className="mb-3">
                 <p className="text-sm font-semibold">{language === "ar" ? "يزداد التدفق قرب موجة الظهيرة" : "Passenger flow rises into the midday wave"}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{language === "ar" ? "خط زمني مناسب لعرض الاتجاه عبر الوقت، وليس للمقارنة بين المحطات." : "A line chart is used here because the question is trend over time, not terminal comparison."}</p>
@@ -1042,12 +1044,14 @@ function ManagerDashboard({ language }: { language: Language }) {
                 <span>{language === "ar" ? "مؤشر تدفق الركاب" : "Passenger throughput index"}</span>
                 <span>17:00</span>
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="mt-3 grid grid-cols-1 gap-2 text-center sm:grid-cols-3">
                 <FlowZone label={language === "ar" ? "تسجيل" : "Check-in"} percent={62} tone="ok" />
                 <FlowZone label={language === "ar" ? "الأمن" : "Security"} percent={84} tone="warn" />
                 <FlowZone label={language === "ar" ? "الجوازات" : "Passport"} percent={71} tone="ok" />
               </div>
             </SectionPanel>
+            <QueueLoadChart language={language} />
+            </div>
             <div className="space-y-5">
               <SectionPanel title={flightBoardTitle.arrivals} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneLanding className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
                 <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} simulated={liveData.simulated} />
@@ -1057,8 +1061,6 @@ function ManagerDashboard({ language }: { language: Language }) {
               </SectionPanel>
             </div>
           </div>
-
-          <QueueLoadChart language={language} />
 
           <SectionPanel title={c.parkingGates} action={<StatusPill tone="ok" icon={<ParkingSquare className="h-3 w-3" />}>2,180 free</StatusPill>}>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -1088,10 +1090,16 @@ function ManagerDashboard({ language }: { language: Language }) {
       )}
 
       {tab === "safety" && (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-start">
+          <div className="space-y-5">
           <DecisionQueue language={language} />
-          <SafetyControls language={language} />
           <SafetyAgingBuckets language={language} />
+          <SectionPanel title={c.recentMaintenance} action={<StatusPill tone="neutral">{language === "ar" ? "للعرض" : "Viewing sample"}</StatusPill>} className="h-fit">
+            <MaintenanceTable language={language} />
+          </SectionPanel>
+          </div>
+          <div className="space-y-5">
+          <SafetyControls language={language} />
           <SectionPanel title={c.safetyChecks}>
             <ul className="space-y-2">
               {SAFETY_CHECKS.map(({ icon: Icon, label, status, tone, last }) => (
@@ -1110,9 +1118,7 @@ function ManagerDashboard({ language }: { language: Language }) {
               ))}
             </ul>
           </SectionPanel>
-          <SectionPanel title={c.recentMaintenance} action={<StatusPill tone="neutral">{language === "ar" ? "للعرض" : "Viewing sample"}</StatusPill>} className="h-fit self-start">
-            <MaintenanceTable language={language} />
-          </SectionPanel>
+          </div>
           <SectionPanel title={c.attentionAircraft} action={<div className="flex items-center gap-2"><StatusPill tone="neutral">{language === "ar" ? "نموذج" : "Modelled"}</StatusPill><span className="font-mono text-[11px] text-muted-foreground">{c.sortedRisk}</span></div>} className="xl:col-span-2">
             <AttentionTable language={language} />
           </SectionPanel>
