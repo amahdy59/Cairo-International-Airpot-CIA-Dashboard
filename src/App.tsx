@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
   Accessibility,
   Activity,
@@ -8,6 +8,7 @@ import {
   Building2,
   Car,
   Clock,
+  CircleX,
   CircleDollarSign,
   Coffee,
   Contrast,
@@ -25,6 +26,7 @@ import {
   PlaneLanding,
   PlaneTakeoff,
   Radio,
+  Search,
   ShieldCheck,
   Train,
   Utensils,
@@ -520,21 +522,34 @@ function TravelerDashboard({ language }: { language: Language }) {
 
 function PassengerTripAssistant({ language }: { language: Language }) {
   const [flight, setFlight] = useState("MS777");
+  const [flightModalOpen, setFlightModalOpen] = useState(false);
   const isArabic = language === "ar";
+  const normalizedFlight = flight.trim().toUpperCase() || "MS777";
+  const selectedFlight = [...ARRIVALS, ...DEPARTURES].find((row) => row.flight === normalizedFlight) ?? DEPARTURES[0];
   const steps = [
     { label: isArabic ? "تسجيل السفر" : "Check-in", meta: isArabic ? "T3 - Zone C" : "T3 - Zone C", tone: "ok" as Tone },
     { label: isArabic ? "الجوازات" : "Passport control", meta: isArabic ? "11 دقيقة انتظار" : "11 min wait", tone: "info" as Tone },
     { label: isArabic ? "البوابة F11" : "Gate F11", meta: isArabic ? "9 دقائق مشيا" : "9 min walk", tone: "warn" as Tone },
   ];
+  const submitFlightSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFlight(normalizedFlight);
+    setFlightModalOpen(true);
+  };
 
   return (
     <SectionPanel title={isArabic ? "رحلتي الآن" : "My trip now"} action={<StatusPill tone="info">{isArabic ? "اقتراح حي" : "Live guidance"}</StatusPill>}>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)_260px]">
-        <label className="block">
+        <form className="relative block" onSubmit={submitFlightSearch}>
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{isArabic ? "رقم الرحلة" : "Flight number"}</span>
-          <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} className="mt-1.5 h-11 w-full rounded-md border border-border bg-background px-3 font-mono text-sm outline-none focus:border-primary" aria-label={isArabic ? "رقم الرحلة" : "Flight number"} />
+          <div className="mt-1.5 flex h-11 overflow-hidden rounded-md border border-border bg-background focus-within:border-primary">
+            <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} className="min-w-0 flex-1 bg-transparent px-3 font-mono text-sm outline-none" aria-label={isArabic ? "Flight number" : "Flight number"} />
+            <button type="submit" className="grid w-11 place-items-center border-s border-border text-primary hover:bg-secondary" aria-label={isArabic ? "Search flight status" : "Search flight status"}>
+              <Search aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
           <p className="mt-2 text-xs text-muted-foreground">{isArabic ? "مصر للطيران - لندن هيثرو - مغادرة 11:50" : "EgyptAir - London Heathrow - departure 11:50"}</p>
-        </label>
+        </form>
         <ol className="grid grid-cols-1 gap-2 md:grid-cols-3">
           {steps.map((step, index) => (
             <li key={step.label} className="panel-inner p-3">
@@ -552,7 +567,60 @@ function PassengerTripAssistant({ language }: { language: Language }) {
           <p className="mt-1 text-xs text-muted-foreground">{isArabic ? "لديك وقت كاف للقهوة بعد الجوازات، وليس قبلها." : "You have enough time for coffee after passport control, not before it."}</p>
         </div>
       </div>
+      {flightModalOpen && (
+        <FlightStatusModal flight={selectedFlight} requestedFlight={normalizedFlight} language={language} onClose={() => setFlightModalOpen(false)} />
+      )}
     </SectionPanel>
+  );
+}
+
+function FlightStatusModal({ flight, requestedFlight, language, onClose }: { flight: FlightRow; requestedFlight: string; language: Language; onClose: () => void }) {
+  const found = flight.flight === requestedFlight;
+  const rows = [
+    { label: "Flight", value: found ? flight.flight : requestedFlight },
+    { label: "Route", value: flight.city },
+    { label: "Time", value: flight.time },
+    { label: "Terminal", value: flight.terminal },
+    { label: "Gate", value: flight.gate },
+    { label: "Status", value: flight.status[language] },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby="flight-status-title">
+      <div className="panel w-full max-w-2xl overflow-hidden shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-border p-5">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Flight status</p>
+            <h3 id="flight-status-title" className="mt-1 text-2xl font-semibold">{found ? flight.flight : requestedFlight}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {found ? "Quick summary of terminal, gate and next action." : "This flight is not in the current sample, so the closest operational example is shown."}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border hover:bg-secondary" aria-label="Close flight status">
+            <CircleX aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="grid gap-4 p-5 md:grid-cols-[1fr_220px]">
+          <div className="grid grid-cols-2 gap-3">
+            {rows.map((row) => (
+              <div key={row.label} className="panel-inner p-3">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{row.label}</p>
+                <p className="mt-1 text-sm font-semibold">{row.value}</p>
+              </div>
+            ))}
+          </div>
+          <div className="panel-inner p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Recommended action</p>
+            <p className="mt-2 text-sm font-semibold">
+              {flight.tone === "warn" ? "Move now and monitor terminal screens." : "Stay comfortable and head toward the listed terminal."}
+            </p>
+            <div className="mt-4">
+              <StatusPill tone={flight.tone}>{flight.status[language]}</StatusPill>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -927,9 +995,9 @@ function QueueLoadChart({ language }: { language: Language }) {
             <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_48px] items-center gap-3">
               <span className="font-mono text-xs font-semibold">{row.terminal}</span>
               <div className="flex h-4 overflow-hidden rounded-full bg-secondary" aria-label={`${row.terminal} queue pressure ${total}%`}>
-                <div className="bg-cyan" style={{ width: `${row.checkIn}%` }} title="Check-in" />
-                <div className="bg-status-warn" style={{ width: `${row.passport}%` }} title="Passport" />
-                <div className="bg-magenta" style={{ width: `${row.security}%` }} title="Security" />
+                <div className="bg-cyan/95" style={{ width: `${row.checkIn}%` }} title="Check-in" />
+                <div className="bg-cyan/65" style={{ width: `${row.passport}%` }} title="Passport" />
+                <div className="bg-cyan/35" style={{ width: `${row.security}%` }} title="Security" />
               </div>
               <span className="font-mono text-xs text-muted-foreground">{total}%</span>
             </div>
@@ -937,9 +1005,9 @@ function QueueLoadChart({ language }: { language: Language }) {
         })}
       </div>
       <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan" />{isArabic ? "تسجيل" : "Check-in"}</span>
-        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-status-warn" />{isArabic ? "جوازات" : "Passport"}</span>
-        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-magenta" />{isArabic ? "أمن" : "Security"}</span>
+        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan/95" />{isArabic ? "تسجيل" : "Check-in"}</span>
+        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan/65" />{isArabic ? "جوازات" : "Passport"}</span>
+        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan/35" />{isArabic ? "أمن" : "Security"}</span>
       </div>
     </SectionPanel>
   );
