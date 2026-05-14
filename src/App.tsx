@@ -1,960 +1,414 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  Accessibility,
   Activity,
   AlertTriangle,
-  BadgeInfo,
-  Briefcase,
-  Building2,
-  Car,
-  Clock,
-  CircleX,
-  CircleDollarSign,
-  Coffee,
+  Clock3,
   Contrast,
-  Droplets,
-  ExternalLink,
+  Eye,
   Flame,
-  HardHat,
   Languages,
-  Luggage,
-  MapPin,
-  Navigation,
-  ParkingSquare,
-  Phone,
   Plane,
-  PlaneLanding,
-  PlaneTakeoff,
-  Radio,
-  Search,
+  Radar,
   ShieldCheck,
-  Train,
-  Utensils,
   Users,
+  Wrench,
+  X,
 } from "lucide-react";
-import { AirportMap2D, type Language } from "@/components/command-center/AirportMap2D";
+import type { LucideIcon } from "lucide-react";
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from "@/components/command-center/MetricWidgets";
 
-type Mode = "traveler" | "manager";
-type Page = "dashboard" | "resources";
-type TravelerTab = "explore" | "directions" | "services";
-type ManagerTab = "operations" | "safety";
+type ManagerTab = "digital" | "operations" | "safety";
 type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
+type Language = "en" | "ar";
+
 type FlightRow = {
   flight: string;
   city: string;
   time: string;
-  status: { en: string; ar: string };
-  tone: Tone;
-  terminal: string;
   gate: string;
+  status: string;
+  tone: Tone;
 };
 
-type LiveAirportData = {
-  arrivals: readonly FlightRow[];
-  departures: readonly FlightRow[];
-  lastUpdated: Date;
-  source: string;
-  simulated: boolean;
-  loading: boolean;
-  confidence: "sample" | "public-api" | "official-ready";
-  error?: string;
+type AirportScene = {
+  id: "overview" | "t1" | "t2" | "t3";
+  label: string;
+  title: string;
+  summary: string;
+  objectPosition: string;
 };
 
-type AviationStackFlight = {
-  flight_date?: string;
-  flight_status?: string;
-  airline?: { iata?: string; name?: string };
-  flight?: { number?: string; iata?: string };
-  departure?: AviationStackFlightPoint;
-  arrival?: AviationStackFlightPoint;
-};
-
-type AviationStackFlightPoint = {
-  airport?: string;
-  iata?: string;
-  estimated?: string;
-  scheduled?: string;
-  delay?: number;
-  terminal?: string;
-  gate?: string;
-};
-
-type AviationStackResponse = {
-  data?: AviationStackFlight[];
-};
-
-function mapAviationStackFlight(item: AviationStackFlight, direction: "arrival" | "departure"): FlightRow {
-  const block = item[direction] ?? {};
-  const airline = item.airline?.iata ?? item.airline?.name ?? "CAI";
-  const number = item.flight?.number ?? item.flight?.iata ?? "--";
-  const city = direction === "arrival" ? item.departure?.airport ?? item.departure?.iata ?? "Inbound" : item.arrival?.airport ?? item.arrival?.iata ?? "Outbound";
-  const iso = block.estimated ?? block.scheduled ?? item.flight_date;
-  const time = iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
-  const delayed = block.delay != null && Number(block.delay) > 0;
-
-  return {
-    flight: `${airline}${number}`,
-    city,
-    time,
-    status: delayed ? { en: `Delayed +${block.delay}m`, ar: `متأخرة ${block.delay}د` } : { en: item.flight_status ?? "Scheduled", ar: item.flight_status ?? "مجدولة" },
-    tone: delayed ? "warn" : "info",
-    terminal: block.terminal ? `T${block.terminal}` : "",
-    gate: block.gate ?? "Check airport screens",
-  };
-}
-
-async function fetchFlightByNumber(flightCode: string): Promise<FlightRow | null> {
-  const aviationstackKey = import.meta.env.VITE_AVIATIONSTACK_KEY as string | undefined;
-  if (!aviationstackKey) return null;
-
-  const trimmed = flightCode.trim().toUpperCase();
-  const candidates = new Set([trimmed]);
-  const match = trimmed.match(/^([A-Z]{2,3})0+(\d+)$/);
-  if (match) candidates.add(`${match[1]}${match[2]}`);
-
-  for (const candidate of candidates) {
-    const response = await fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&flight_iata=${encodeURIComponent(candidate)}&limit=5`);
-    if (!response.ok) continue;
-    const json = (await response.json()) as AviationStackResponse;
-    const item = (json.data ?? []).find((flight) => flight.departure?.iata === "CAI" || flight.arrival?.iata === "CAI") ?? json.data?.[0];
-    if (item) {
-      const direction = item.departure?.iata === "CAI" ? "departure" : "arrival";
-      return mapAviationStackFlight(item, direction);
-    }
-  }
-
-  return null;
-}
-
-function normalizeFlightCodeForCompare(value: string) {
-  return value.trim().toUpperCase().replace(/^([A-Z]{2,3})0+(\d+)$/, "$1$2");
-}
-
-function useHeaderClock() {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  return {
-    cairo: new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Africa/Cairo",
-      timeZoneName: "short",
-    }).format(now),
-    utc: new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "UTC",
-      timeZoneName: "short",
-    }).format(now),
-  };
-}
-
-function useOnlineStatus() {
-  const [online, setOnline] = useState(() => navigator.onLine);
-
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
-    return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
-    };
-  }, []);
-
-  return online;
-}
+const ASSET = "/manager-assets/digital-twin-reference.png";
 
 const copy = {
   en: {
-    skip: "Skip to content",
+    airport: "Cairo International Airport",
     brand: "CAI Command Hub",
-    traveler: "Traveler",
-    manager: "Manager",
-    highContrast: "High contrast",
-    toggleLanguage: "Switch language",
+    manager: "Manager view",
+    heroTitle: "Operations and safety overview",
+    heroBody: "A focused management surface for live flow, flight movement, safety checks and maintenance attention.",
+    digital: "Digital Twin",
+    operations: "Operations",
+    safety: "Safety",
+    resources: "Resources and audit notes",
     footer: "Cairo International Airport - Operated by Cairo Airport Company - IATA: CAI - ICAO: HECA",
-    travelerHero: {
-      eyebrow: "Passenger view",
-      title: "Navigate Cairo Airport with fewer clicks",
-      description: "Explore five clickable airport views, switch service layers on the image, get directions inside the page and open terminal details only when you need them.",
-    },
-    managerHero: {
-      eyebrow: "Manager view",
-      title: "Operations and safety overview",
-      description: "A focused management surface for live flow, flight movement, safety checks and maintenance attention.",
-    },
-    tabs: {
-      explore: "Explore",
-      directions: "Directions",
-      services: "Services",
-      operations: "Operations",
-      safety: "Safety",
-    },
-    terminals: "Terminal quick facts",
-    passengerLinks: "Passenger links",
-    directions: "Directions",
-    from: "From",
-    fromPlaceholder: "e.g. Minya, Egypt",
-    myLocation: "My location",
-    toTerminal: "To terminal",
-    travelMode: "Travel mode",
-    openRoute: "Open route",
-    mapPreview: "Embedded Google map",
-    routeTipTitle: "Tip - pick the right terminal",
-    routeTip: "EgyptAir and Star Alliance with EgyptAir use T3. Many international partners use T2. Domestic, regional and charter flights often use T1 or the seasonal terminal.",
-    passengerFlow: "Passenger flow",
-    safetyChecks: "Safety checks",
-    liveArrivals: "Live arrivals",
-    liveDepartures: "Live departures",
-    parkingGates: "Parking and gates",
-    recentMaintenance: "Recent aircraft maintenance",
-    attentionAircraft: "Aircraft requiring attention",
-    nextHour: "Next 60 min",
-    sortedRisk: "30-day risk score",
-    flight: "Flight",
-    fromCol: "From",
-    toCol: "To",
-    time: "Time",
-    gate: "Gate",
-    status: "Status",
-    ac: "A/C",
-    task: "Task",
-    date: "Date",
-    dur: "Dur",
-    registration: "Registration",
-    type: "Type",
-    events: "Events",
-    mtbf: "MTBF",
-    risk: "Risk",
+    contrast: "Toggle high contrast",
+    language: "Switch language",
   },
   ar: {
-    skip: "تخطي إلى المحتوى",
+    airport: "مطار القاهرة الدولي",
     brand: "مركز قيادة مطار القاهرة",
-    traveler: "المسافر",
-    manager: "المدير",
-    highContrast: "تباين عال",
-    toggleLanguage: "تغيير اللغة",
+    manager: "عرض المدير",
+    heroTitle: "نظرة تشغيلية وسلامة مركزة",
+    heroBody: "سطح إداري لمتابعة تدفق الركاب، حركة الرحلات، فحوص السلامة، وأولويات الصيانة.",
+    digital: "التوأم الرقمي",
+    operations: "التشغيل",
+    safety: "السلامة",
+    resources: "المصادر وملاحظات التدقيق",
     footer: "مطار القاهرة الدولي - تديره شركة ميناء القاهرة الجوي - IATA: CAI - ICAO: HECA",
-    travelerHero: {
-      eyebrow: "عرض المسافر",
-      title: "تنقل في مطار القاهرة بخطوات أقل",
-      description: "استكشف خمس صور تفاعلية للمطار، وأظهر طبقات الخدمات على الصورة، واحصل على الاتجاهات داخل الصفحة، وافتح تفاصيل المبنى عند الحاجة فقط.",
-    },
-    managerHero: {
-      eyebrow: "عرض المدير",
-      title: "نظرة تشغيلية وسلامة مركزة",
-      description: "واجهة إدارية مختصرة لمتابعة تدفق الركاب وحركة الرحلات وفحوص السلامة والصيانة.",
-    },
-    tabs: {
-      explore: "استكشاف",
-      directions: "الاتجاهات",
-      services: "الخدمات",
-      operations: "التشغيل",
-      safety: "السلامة",
-    },
-    terminals: "معلومات سريعة عن المباني",
-    passengerLinks: "روابط المسافر",
-    directions: "الاتجاهات",
-    from: "من",
-    fromPlaceholder: "مثال: المنيا، مصر",
-    myLocation: "موقعي",
-    toTerminal: "إلى المبنى",
-    travelMode: "وسيلة التنقل",
-    openRoute: "فتح المسار",
-    mapPreview: "خريطة Google مدمجة",
-    routeTipTitle: "نصيحة - اختر المبنى الصحيح",
-    routeTip: "مصر للطيران وشركاؤها في تحالف ستار يستخدمون غالبا مبنى 3. كثير من الشركاء الدوليين يستخدمون مبنى 2. الرحلات الداخلية والإقليمية والعارضة غالبا في مبنى 1 أو المبنى الموسمي.",
-    passengerFlow: "تدفق الركاب",
-    safetyChecks: "فحوص السلامة",
-    liveArrivals: "الوصول المباشر",
-    liveDepartures: "المغادرة المباشرة",
-    parkingGates: "المواقف والبوابات",
-    recentMaintenance: "صيانة الطائرات الأخيرة",
-    attentionAircraft: "طائرات تحتاج إلى متابعة",
-    nextHour: "الساعة القادمة",
-    sortedRisk: "مؤشر مخاطر 30 يوما",
-    flight: "الرحلة",
-    fromCol: "من",
-    toCol: "إلى",
-    time: "الوقت",
-    gate: "البوابة",
-    status: "الحالة",
-    ac: "الطائرة",
-    task: "المهمة",
-    date: "التاريخ",
-    dur: "المدة",
-    registration: "التسجيل",
-    type: "النوع",
-    events: "الأحداث",
-    mtbf: "MTBF",
-    risk: "المخاطر",
+    contrast: "تبديل التباين العالي",
+    language: "تبديل اللغة",
   },
 } as const;
 
-const RESOURCE_LINKS = [
-  { title: "Cairo Airport terminal information", source: "Cairo Airport Company", href: "https://www.cairo-airport.com/en-us/Services/Passenger-Guide/Terminal-Information", usedFor: "Terminal/service orientation and passenger-facing airport context." },
-  { title: "Cairo Airport services and facilities", source: "Cairo Airport Company", href: "https://www.cairo-airport.com/en-us/Airport/Airport-Services-Facilities", usedFor: "Passenger services such as lounges, Ahlan service, medical/pharmacy, and airport facilities." },
-  { title: "Cairo Airport information", source: "Cairo Airport Company", href: "https://www.cairo-airport.com/en-us/Airport/Airport-Information", usedFor: "Airport identity, public facilities, and operational context." },
-  { title: "EgyptAir web check-in", source: "EgyptAir", href: "https://www.egyptair.com/en/fly/check-in/Pages/web-check-in.aspx", usedFor: "Passenger check-in guidance and online check-in timing." },
-  { title: "Egypt e-Visa portal", source: "Government of Egypt", href: "https://visa2egypt.gov.eg/eVisa/ar/Home", usedFor: "Official visa-link destination." },
-  { title: "Aviationstack API documentation", source: "Aviationstack", href: "https://aviationstack.com/documentation", usedFor: "Live flight status API fields, limitations, and endpoint behavior." },
-  { title: "Google Maps Embed API", source: "Google for Developers", href: "https://developers.google.com/maps/documentation/embed/embedding-map", usedFor: "Embedded map approach and external route handoff." },
-  { title: "WCAG 2.2", source: "W3C", href: "https://www.w3.org/TR/wcag/", usedFor: "Accessibility checks for focus, contrast, language, keyboard navigation, and responsive content." },
-  { title: "Apple Human Interface Guidelines: Materials", source: "Apple Developer", href: "https://developer.apple.com/design/human-interface-guidelines/materials", usedFor: "Light glass/translucency treatment while preserving readability." },
-  { title: "Air Travel Accessibility", source: "IATA", href: "https://www.iata.org/en/programs/passenger/accessibility/", usedFor: "Passenger accessibility and inclusive airport journey priorities." },
-] as const;
+const scenes: AirportScene[] = [
+  {
+    id: "overview",
+    label: "Airport overview",
+    title: "Airport overview",
+    summary: "High-level airport map showing terminals, roads, parking, airside zones, runways, and transfer connections.",
+    objectPosition: "top center",
+  },
+  {
+    id: "t1",
+    label: "Terminal 1",
+    title: "Terminal 1",
+    summary: "Separate terminal area serving selected domestic, regional and international operations.",
+    objectPosition: "center 29%",
+  },
+  {
+    id: "t2",
+    label: "Terminal 2",
+    title: "Terminal 2",
+    summary: "International terminal connected operationally with the Terminal 3 side of the airport.",
+    objectPosition: "center 58%",
+  },
+  {
+    id: "t3",
+    label: "Terminal 3",
+    title: "Terminal 3",
+    summary: "Major passenger terminal and hub-style area with large concourse and gate capacity.",
+    objectPosition: "center 88%",
+  },
+];
 
-const TERMINALS = [
+const terminalFacts = [
   {
     code: "T1",
-    color: "oklch(0.78 0.15 150)",
-    name: { en: "Terminal 1", ar: "مبنى 1" },
-    summary: { en: "Domestic, regional and selected international operations", ar: "رحلات داخلية وإقليمية وبعض الرحلات الدولية" },
-    halls: { en: "Hall 1 - Hall 2 - Hall 3", ar: "صالة 1 - صالة 2 - صالة 3" },
+    title: "Terminal 1",
+    body: "Domestic, regional and selected international operations",
+    detail: "Hall 1 - Hall 2 - Hall 3",
     airlines: ["Air Arabia Egypt", "Nile Air", "Flynas", "Domestic carriers"],
+    tone: "ok" as Tone,
   },
   {
     code: "T2",
-    color: "oklch(0.82 0.15 210)",
-    name: { en: "Terminal 2", ar: "مبنى 2" },
-    summary: { en: "Renovated international terminal connected to Terminal 3", ar: "مبنى دولي مطور ومتصل بمبنى 3" },
-    halls: { en: "International concourse", ar: "ممر الرحلات الدولية" },
+    title: "Terminal 2",
+    body: "Renovated international terminal connected to Terminal 3",
+    detail: "International concourse",
     airlines: ["Emirates", "British Airways", "Air France", "Qatar Airways"],
+    tone: "info" as Tone,
   },
   {
     code: "T3",
-    color: "oklch(0.72 0.20 330)",
-    name: { en: "Terminal 3", ar: "مبنى 3" },
-    summary: { en: "EgyptAir hub and largest passenger terminal", ar: "مركز مصر للطيران وأكبر مباني الركاب" },
-    halls: { en: "Main concourse and pier", ar: "الممر الرئيسي ورصيف البوابات" },
+    title: "Terminal 3",
+    body: "EgyptAir hub and largest passenger terminal",
+    detail: "Main concourse and pier",
     airlines: ["EgyptAir", "Star Alliance partners", "Turkish Airlines"],
+    tone: "high" as Tone,
   },
-] as const;
+];
 
-const QUICK_LINKS = [
-  { icon: Plane, label: { en: "Book a flight", ar: "حجز رحلة" }, desc: { en: "EgyptAir official booking", ar: "الحجز الرسمي لمصر للطيران" }, href: "https://www.egyptair.com/" },
-  { icon: ShieldCheck, label: { en: "Check-in / Manage", ar: "تسجيل / إدارة الحجز" }, desc: { en: "Online check-in and ticket confirmation", ar: "تسجيل السفر وتأكيد التذكرة" }, href: "https://www.egyptair.com/en/Pages/managemybooking.aspx" },
-  { icon: Building2, label: { en: "Visa info", ar: "معلومات التأشيرة" }, desc: { en: "Visa on arrival and e-visa", ar: "تأشيرة الوصول والتأشيرة الإلكترونية" }, href: "https://visa2egypt.gov.eg/" },
-  { icon: Luggage, label: { en: "Lost and found", ar: "المفقودات" }, desc: { en: "Report lost baggage", ar: "الإبلاغ عن الحقائب المفقودة" }, href: "https://cairo-airport.com/" },
-  { icon: Phone, label: { en: "Airport contact", ar: "اتصال بالمطار" }, desc: { en: "+20 2 2696 6300", ar: "+20 2 2696 6300" }, href: "tel:+20226966300" },
-  { icon: Accessibility, label: { en: "Special assistance", ar: "مساعدة خاصة" }, desc: { en: "Ahlan Meet and Assist", ar: "خدمة أهلا للاستقبال والمساعدة" }, href: "https://cairo-airport.com/" },
-  { icon: Coffee, label: { en: "Lounges and shops", ar: "الصالات والمتاجر" }, desc: { en: "Duty free, restaurants and lounges", ar: "السوق الحرة والمطاعم والصالات" }, href: "https://www.cairo-airport.com/en-us/Airport/Airport-Services-Facilities" },
-] as const;
+const waitTimes = [
+  { label: "T3 check-in", value: 8, tone: "ok" as Tone },
+  { label: "Passport", value: 11, tone: "info" as Tone },
+  { label: "Security", value: 17, tone: "warn" as Tone },
+  { label: "Baggage", value: 14, tone: "info" as Tone },
+];
 
-const TERMINAL_DESTINATIONS = [
-  { id: "T1", label: { en: "Terminal 1", ar: "مبنى 1" }, query: "Cairo International Airport Terminal 1" },
-  { id: "T2", label: { en: "Terminal 2", ar: "مبنى 2" }, query: "Cairo International Airport Terminal 2" },
-  { id: "T3", label: { en: "Terminal 3", ar: "مبنى 3" }, query: "Cairo International Airport Terminal 3" },
-  { id: "ST", label: { en: "Seasonal / Hajj Terminal", ar: "المبنى الموسمي / الحج" }, query: "Cairo International Airport Seasonal Terminal" },
-] as const;
+const decisions = [
+  { title: "T2 security queue", detail: "Open one more lane", badge: "17m", tone: "warn" as Tone },
+  { title: "Gate F11 boarding", detail: "Send floor agent", badge: "72%", tone: "info" as Tone },
+  { title: "T2-B scanner", detail: "Escalate maintenance", badge: "Offline", tone: "crit" as Tone },
+];
 
-const TRAVEL_MODES = [
-  { id: "driving", label: { en: "Driving", ar: "سيارة" }, icon: Car },
-  { id: "transit", label: { en: "Transit", ar: "مواصلات" }, icon: Train },
-  { id: "walking", label: { en: "Walking", ar: "مشي" }, icon: Navigation },
-] as const;
+const departures: FlightRow[] = [
+  { flight: "MS777", city: "London (LHR)", time: "14:45", gate: "D3", status: "Sample only", tone: "neutral" },
+  { flight: "SV302", city: "Riyadh (RUH)", time: "15:30", gate: "A15", status: "Sample only", tone: "neutral" },
+  { flight: "AF551", city: "Paris (CDG)", time: "15:55", gate: "S1", status: "Sample only", tone: "neutral" },
+  { flight: "MS717", city: "Luxor (LXR)", time: "16:20", gate: "F9", status: "Sample only", tone: "neutral" },
+];
 
-const ARRIVALS = [
-  { flight: "MS738", city: "Frankfurt (FRA)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-  { flight: "TK694", city: "Istanbul (IST)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-  { flight: "EK927", city: "Dubai (DXB)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-  { flight: "MS841", city: "Jeddah (JED)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-] as const;
+const arrivals: FlightRow[] = [
+  { flight: "MS738", city: "Frankfurt (FRA)", time: "15:00", gate: "C3", status: "Sample only", tone: "neutral" },
+  { flight: "TK694", city: "Istanbul (IST)", time: "16:15", gate: "A2", status: "Sample only", tone: "neutral" },
+  { flight: "EK927", city: "Dubai (DXB)", time: "13:45", gate: "B12", status: "Sample only", tone: "neutral" },
+  { flight: "MS841", city: "Jeddah (JED)", time: "12:30", gate: "D9", status: "Sample only", tone: "neutral" },
+];
 
-const DEPARTURES = [
-  { flight: "MS777", city: "London (LHR)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-  { flight: "SV302", city: "Riyadh (RUH)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-  { flight: "AF551", city: "Paris (CDG)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-  { flight: "MS717", city: "Luxor (LXR)", time: "--", status: { en: "Sample only", ar: "عينة فقط" }, tone: "neutral" as Tone, terminal: "", gate: "For layout only" },
-] as const;
+const queueRows = [
+  { terminal: "T1", checkIn: 30, passport: 25, security: 25, total: 68 },
+  { terminal: "T2", checkIn: 34, passport: 30, security: 31, total: 89 },
+  { terminal: "T3", checkIn: 38, passport: 25, security: 27, total: 84 },
+];
 
-function useLiveAirportData(): LiveAirportData {
-  const [data, setData] = useState<LiveAirportData>(() => ({
-    arrivals: ARRIVALS,
-    departures: DEPARTURES,
-    lastUpdated: new Date(),
-    source: "Static operational sample",
-    simulated: true,
-    loading: true,
-    confidence: "sample",
-  }));
+const safetyChecks = [
+  { icon: Flame, title: "Fire suppression - T1/T2/T3", detail: "Inspected 2h ago", badge: "Operational", tone: "ok" as Tone },
+  { icon: Wrench, title: "Runway water response", detail: "Last drill 6 days ago", badge: "Standby", tone: "info" as Tone },
+  { icon: Activity, title: "ATC backup comms", detail: "Heartbeat OK", badge: "Operational", tone: "ok" as Tone },
+  { icon: ShieldCheck, title: "Apron worker PPE compliance", detail: "12 audits today", badge: "98% compliant", tone: "ok" as Tone },
+  { icon: ShieldCheck, title: "Security checkpoint scanners", detail: "Tech dispatched", badge: "1 offline (T2-B)", tone: "warn" as Tone },
+];
 
-  useEffect(() => {
-    const aviationstackKey = import.meta.env.VITE_AVIATIONSTACK_KEY as string | undefined;
-    let active = true;
+const maintenanceRows = [
+  { reg: "SU-GDR", type: "B777-300ER", task: "A-check completed", date: "12 May 2026", duration: "32h", status: "Released", tone: "ok" as Tone },
+  { reg: "SU-GEU", type: "B787-9", task: "Engine #2 borescope", date: "11 May 2026", duration: "8h", status: "Released", tone: "ok" as Tone },
+  { reg: "SU-GCS", type: "A330-300", task: "Hydraulic line repair", date: "11 May 2026", duration: "14h", status: "Released", tone: "ok" as Tone },
+  { reg: "SU-GDM", type: "B737-800", task: "Tire and brake change", date: "10 May 2026", duration: "4h", status: "Released", tone: "ok" as Tone },
+  { reg: "SU-GBP", type: "A320", task: "Cabin pressurisation test", date: "10 May 2026", duration: "6h", status: "Awaiting parts", tone: "warn" as Tone },
+];
 
-    const load = async () => {
-      if (!aviationstackKey) {
-        setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, loading: false, confidence: "sample", source: "Sample until VITE_AVIATIONSTACK_KEY is configured" }));
-        return;
-      }
-
-      try {
-        const [arrivalsResponse, departuresResponse] = await Promise.all([
-          fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&arr_iata=CAI&limit=4`),
-          fetch(`https://api.aviationstack.com/v1/flights?access_key=${aviationstackKey}&dep_iata=CAI&limit=4`),
-        ]);
-        if (!active || !arrivalsResponse.ok || !departuresResponse.ok) return;
-        const [arrivalsJson, departuresJson] = (await Promise.all([arrivalsResponse.json(), departuresResponse.json()])) as [AviationStackResponse, AviationStackResponse];
-        setData({
-          arrivals: (arrivalsJson.data ?? []).slice(0, 4).map((item) => mapAviationStackFlight(item, "arrival")),
-          departures: (departuresJson.data ?? []).slice(0, 4).map((item) => mapAviationStackFlight(item, "departure")),
-          lastUpdated: new Date(),
-          source: "Aviationstack public flight API",
-          simulated: false,
-          loading: false,
-          confidence: "public-api",
-        });
-      } catch {
-        if (active) setData((current) => ({ ...current, lastUpdated: new Date(), simulated: true, loading: false, confidence: "sample", source: "Live API unavailable - showing sample", error: "Flight provider unavailable" }));
-      }
-    };
-
-    load();
-    const id = window.setInterval(load, 60_000);
-    return () => {
-      active = false;
-      window.clearInterval(id);
-    };
-  }, []);
-
-  return data;
-}
-
-const SAFETY_CHECKS = [
-  { icon: Flame, label: { en: "Fire suppression - T1/T2/T3", ar: "إطفاء الحريق - مباني 1/2/3" }, status: { en: "Operational", ar: "يعمل" }, tone: "ok" as Tone, last: { en: "Inspected 2h ago", ar: "فحص قبل ساعتين" } },
-  { icon: Droplets, label: { en: "Runway water response", ar: "استجابة مياه المدرج" }, status: { en: "Standby", ar: "جاهز" }, tone: "info" as Tone, last: { en: "Last drill 6 days ago", ar: "آخر تدريب قبل 6 أيام" } },
-  { icon: Radio, label: { en: "ATC backup comms", ar: "اتصالات احتياطية للبرج" }, status: { en: "Operational", ar: "يعمل" }, tone: "ok" as Tone, last: { en: "Heartbeat OK", ar: "الاتصال مستقر" } },
-  { icon: HardHat, label: { en: "Apron worker PPE compliance", ar: "التزام معدات الوقاية في الساحة" }, status: { en: "98% compliant", ar: "98% ملتزم" }, tone: "ok" as Tone, last: { en: "12 audits today", ar: "12 مراجعة اليوم" } },
-  { icon: ShieldCheck, label: { en: "Security checkpoint scanners", ar: "ماسحات نقاط الأمن" }, status: { en: "1 offline (T2-B)", ar: "وحدة متوقفة (T2-B)" }, tone: "warn" as Tone, last: { en: "Tech dispatched", ar: "تم إرسال الفني" } },
-] as const;
-
-const RECENT_MAINTENANCE = [
-  { reg: "SU-GDR", type: "B777-300ER", airline: "EgyptAir", task: { en: "A-check completed", ar: "اكتمل فحص A" }, date: "12 May 2026", duration: "32h", status: { en: "Released", ar: "جاهزة" }, tone: "ok" as Tone },
-  { reg: "SU-GEU", type: "B787-9", airline: "EgyptAir", task: { en: "Engine #2 borescope", ar: "فحص منظار للمحرك 2" }, date: "11 May 2026", duration: "8h", status: { en: "Released", ar: "جاهزة" }, tone: "ok" as Tone },
-  { reg: "SU-GCS", type: "A330-300", airline: "EgyptAir", task: { en: "Hydraulic line repair", ar: "إصلاح خط هيدروليك" }, date: "11 May 2026", duration: "14h", status: { en: "Released", ar: "جاهزة" }, tone: "ok" as Tone },
-  { reg: "SU-GDM", type: "B737-800", airline: "EgyptAir", task: { en: "Tire and brake change", ar: "تغيير إطار وفرامل" }, date: "10 May 2026", duration: "4h", status: { en: "Released", ar: "جاهزة" }, tone: "ok" as Tone },
-  { reg: "SU-GBP", type: "A320", airline: "Air Arabia Egypt", task: { en: "Cabin pressure test", ar: "اختبار ضغط المقصورة" }, date: "10 May 2026", duration: "6h", status: { en: "Awaiting parts", ar: "بانتظار قطع" }, tone: "warn" as Tone },
-] as const;
-
-const ATTENTION_AIRCRAFT = [
-  { reg: "SU-GBP", type: "A320", events: 7, mtbf: 142, risk: 78, top: "Pressurisation, APU starts" },
-  { reg: "SU-GDC", type: "B737-800", events: 6, mtbf: 168, risk: 65, top: "Brake wear, nose gear" },
-  { reg: "SU-GCH", type: "A330-200", events: 5, mtbf: 210, risk: 54, top: "Galley power, IFE" },
-  { reg: "SU-GEK", type: "B787-9", events: 3, mtbf: 320, risk: 38, top: "Cabin sensors" },
-] as const;
+const aircraftRiskRows = [
+  { reg: "SU-GBP", type: "A320", events: 7, mtbf: "142h", issue: "Pressurisation, APU starts", risk: 78 },
+  { reg: "SU-GDC", type: "B737-800", events: 6, mtbf: "168h", issue: "Brake wear, nose gear", risk: 65 },
+  { reg: "SU-GCH", type: "A330-200", events: 5, mtbf: "210h", issue: "Galley power, IFE", risk: 54 },
+  { reg: "SU-GEK", type: "B787-9", events: 3, mtbf: "320h", issue: "Cabin sensors", risk: 38 },
+];
 
 export function App() {
-  const [mode, setMode] = useState<Mode>(() => (["/ops", "/safety"].includes(window.location.pathname) ? "manager" : "traveler"));
-  const [page, setPage] = useState<Page>(() => (window.location.hash === "#resources" ? "resources" : "dashboard"));
-  const [highContrast, setHighContrast] = useState(false);
+  const [activeTab, setActiveTab] = useState<ManagerTab>("digital");
   const [language, setLanguage] = useState<Language>("en");
-  const online = useOnlineStatus();
-  const clock = useHeaderClock();
+  const [highContrast, setHighContrast] = useState(false);
+  const times = useHeaderClock();
   const c = copy[language];
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.add("dark");
-    root.classList.toggle("hc", highContrast);
-    root.lang = language;
-    root.dir = language === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    document.documentElement.classList.toggle("hc", highContrast);
   }, [highContrast, language]);
 
-  useEffect(() => {
-    const handleHashChange = () => setPage(window.location.hash === "#resources" ? "resources" : "dashboard");
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-background/88 text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-4 px-4 lg:px-8">
-          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground">
-            {c.skip}
-          </a>
-          <button
-            type="button"
-            onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("traveler"); }}
-            className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg text-start outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            aria-label="Go to dashboard home"
-          >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan" aria-hidden="true">
-              <Plane className="h-5 w-5 text-primary" strokeWidth={2.4} />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p className="truncate font-mono text-[10px] tracking-[0.22em] text-primary">CAI - CAIRO INTL</p>
-              <h1 className="truncate text-sm font-semibold">{c.brand}</h1>
-            </div>
-          </button>
-
-          <div className="ms-auto flex items-center gap-2">
-            <div className="hidden h-9 items-center gap-2 rounded-lg border border-border bg-secondary/45 px-3 xl:flex" aria-label="Current time">
-              <Clock aria-hidden="true" className="h-4 w-4 text-primary" />
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Cairo</span>
-              <span className="font-mono text-xs font-semibold">{clock.cairo}</span>
-              <span className="h-4 w-px bg-border" aria-hidden="true" />
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">UTC</span>
-              <span className="font-mono text-xs font-semibold">{clock.utc}</span>
-            </div>
-            <div className="flex items-center rounded-lg border border-border bg-secondary/60 p-0.5" role="group" aria-label="Dashboard mode">
-              <ModeButton active={page === "dashboard" && mode === "traveler"} onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("traveler"); }} icon={<Users className="h-3.5 w-3.5" />} label={c.traveler} />
-              <ModeButton active={page === "dashboard" && mode === "manager"} onClick={() => { window.location.hash = ""; setPage("dashboard"); setMode("manager"); }} icon={<Briefcase className="h-3.5 w-3.5" />} label={c.manager} />
-            </div>
-            <IconButton pressed={highContrast} label={c.highContrast} onClick={() => setHighContrast((value) => !value)}>
-              <Contrast className="h-4 w-4" />
-            </IconButton>
-            <button
-              type="button"
-              onClick={() => setLanguage((value) => (value === "en" ? "ar" : "en"))}
-              className="hidden h-9 items-center gap-1.5 rounded-md border border-border px-3 text-xs hover:bg-secondary sm:flex"
-              aria-label={c.toggleLanguage}
-            >
-              <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
-              <span className="font-mono">{language === "en" ? "AR" : "EN"}</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main id="main-content" className="mx-auto w-full max-w-[1600px] p-4 lg:p-6">
-        {page === "resources" ? <ResourcesPage /> : mode === "traveler" ? <TravelerDashboard language={language} online={online} /> : <ManagerDashboard language={language} online={online} />}
+    <div className="min-h-screen">
+      <Header language={language} setLanguage={setLanguage} highContrast={highContrast} setHighContrast={setHighContrast} times={times} />
+      <main id="main" className="mx-auto grid w-full max-w-[1620px] gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <Hero activeTab={activeTab} setActiveTab={setActiveTab} language={language} />
+        {activeTab === "digital" && <DigitalTwinView />}
+        {activeTab === "operations" && <OperationsView />}
+        {activeTab === "safety" && <SafetyView />}
       </main>
-
-      <footer className="border-t border-border px-6 py-4 text-center text-[11px] text-muted-foreground">
-        <div className="mx-auto flex max-w-[1600px] flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
-          <span>{c.footer}</span>
-          <span className="hidden sm:inline" aria-hidden="true">·</span>
-          <a href="#resources" onClick={() => setPage("resources")} className="font-medium text-primary hover:underline">Resources and audit notes</a>
-        </div>
+      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+        {c.footer}
+        <span className="mx-3 text-muted-foreground/60">♦</span>
+        <a className="font-medium text-primary hover:underline" href="https://www.cairo-airport.com/en-us/Airport/Airport-Information" target="_blank" rel="noreferrer">
+          {c.resources}
+        </a>
       </footer>
     </div>
   );
 }
 
-function ModeButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: ReactNode; label: string }) {
-  return (
-    <button type="button" aria-pressed={active} onClick={onClick} className={`flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-    </button>
-  );
-}
-
-function IconButton({ pressed, label, onClick, children }: { pressed: boolean; label: string; onClick: () => void; children: ReactNode }) {
-  return (
-    <button type="button" aria-pressed={pressed} aria-label={label} title={label} onClick={onClick} className={`hidden h-9 w-9 place-items-center rounded-md border sm:grid ${pressed ? "border-primary bg-primary/15 text-primary" : "border-border hover:bg-secondary"}`}>
-      {children}
-    </button>
-  );
-}
-
-function ResourcesPage() {
-  const auditItems = [
-    { title: "Information accuracy", body: "Live flight data is sourced from Aviationstack when VITE_AVIATIONSTACK_KEY is configured. If the API is absent or omits gates, the interface labels the content as sample or asks passengers to confirm on airport screens." },
-    { title: "Accessibility", body: "Primary interactions are buttons or links, keyboard focus is visible, the app has skip-to-content, high contrast mode, semantic tables, modal dialog roles, and descriptive labels for icon-only controls." },
-    { title: "UX writing", body: "Passenger content now avoids false location awareness, avoids invented live gates, and labels sample/modelled operational cards so viewers understand what is live versus illustrative." },
-    { title: "Color use", body: "Green/yellow/red remain reserved for operational meaning. Composition charts avoid danger colors unless the chart is explicitly communicating risk or attention." },
-    { title: "Responsiveness", body: "Header clocks hide below desktop, dashboards stack at smaller breakpoints, cards use wrapping grids, and airport/map panels avoid fixed heights where content should hug." },
-    { title: "Code cleanup", body: "Unused legacy service UI was removed, resources are centralized, sample data is labelled, and the local API key remains in ignored .env.local rather than source control." },
-  ];
-  const recommendations = [
-    "Add official FIDS/AODB data if Cairo Airport Company can provide access. Public Aviationstack is useful, but gate and status fields may be incomplete.",
-    "Add real photo strips for Terminal 3 exterior, check-in hall, arrivals hall, apron/runway, and lounge or services areas.",
-    "Add passenger disruption guidance for delayed flights, gate changes, baggage delays, long queues, missed connections, and reduced-mobility support.",
-    "Add manager drill-downs for work-order aging, queue wait trends, unresolved safety items, and escalation owners.",
-    "Add visible last-updated timestamps to every live or data-driven widget, plus a clear source label for modelled or sample information.",
-    "Add confidence labels when API fields are partial, such as live flight found but gate unavailable.",
-    "Move from polling to push updates after an official FIDS/AODB source exists; WebSockets only help when the upstream data is authoritative.",
-    "Add a natural-language flight assistant after data trust is solved, scoped to flight lookup, terminal guidance, disruption advice, Arabic and English.",
-    "Add multilingual QA for Arabic layout, line length, terminology, and right-to-left table behavior before presentation.",
-    "Add lightweight user testing tasks for passengers and managers to validate whether the dashboard reduces time-to-answer.",
-  ];
-
-  return (
-    <div className="space-y-5">
-      <Hero eyebrow="Source transparency" title="Resources and audit notes" description="References used for the Cairo Airport dashboard, plus the current accessibility, UX writing, contrast, responsiveness and data-integrity checks." />
-      <SectionPanel title="Source links">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {RESOURCE_LINKS.map((resource) => (
-            <a key={resource.href} href={resource.href} target="_blank" rel="noreferrer" className="panel-inner group flex items-start gap-3 p-4 transition-colors hover:border-primary/50">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
-                <ExternalLink aria-hidden="true" className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold group-hover:text-primary">{resource.title}</h2>
-                <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{resource.source}</p>
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{resource.usedFor}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-      </SectionPanel>
-      <SectionPanel title="Audit checkup">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {auditItems.map((item) => (
-            <article key={item.title} className="panel-inner p-4">
-              <h2 className="text-sm font-semibold">{item.title}</h2>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      </SectionPanel>
-      <SectionPanel title="Recommended next additions">
-        <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          {recommendations.map((item) => (
-            <li key={item} className="panel-inner flex gap-2 p-3 text-sm text-muted-foreground">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </SectionPanel>
-      <SectionPanel title="Implementation roadmap">
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-          {[
-            { step: "1", title: "Separate modes", body: "Passenger mode remains task-first; manager mode remains escalation-first." },
-            { step: "2", title: "Trust every widget", body: "Each card should show live, sample, modelled, source and last-updated state." },
-            { step: "3", title: "Official data path", body: "Use Cairo Airport FIDS/AODB for operational-grade gates, status and timestamps." },
-            { step: "4", title: "AI after trust", body: "Layer natural-language help only after the flight data source is reliable." },
-          ].map((item) => (
-            <article key={item.step} className="panel-inner p-4">
-              <span className="grid h-8 w-8 place-items-center rounded-md border border-primary/30 bg-primary/10 font-mono text-xs text-primary">{item.step}</span>
-              <h2 className="mt-3 text-sm font-semibold">{item.title}</h2>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      </SectionPanel>
-    </div>
-  );
-}
-
-function TravelerDashboard({ language, online }: { language: Language; online: boolean }) {
-  const [tab, setTab] = useState<TravelerTab>("explore");
+function Header({
+  language,
+  setLanguage,
+  highContrast,
+  setHighContrast,
+  times,
+}: {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  highContrast: boolean;
+  setHighContrast: (value: boolean) => void;
+  times: { cairo: string; utc: string };
+}) {
   const c = copy[language];
-
   return (
-    <div className="space-y-5">
-      <Hero eyebrow={c.travelerHero.eyebrow} title={c.travelerHero.title} description={c.travelerHero.description} />
-      <ModeTrustStrip
-        language={language}
-        online={online}
-        mode="traveler"
-        title="Passenger mode is intentionally simple"
-        body="This mode prioritizes fast wayfinding: flight lookup, directions, services and terminal context. Any uncertain data is labelled clearly."
-      />
-      <TravelerQuickActions active={tab} onChange={setTab} />
-      <Tabs
-        ariaLabel="Traveler sections"
-        active={tab}
-        onChange={(value) => setTab(value as TravelerTab)}
-        items={[
-          { id: "explore", label: c.tabs.explore, icon: <MapPin className="h-4 w-4" /> },
-          { id: "directions", label: c.tabs.directions, icon: <Navigation className="h-4 w-4" /> },
-          { id: "services", label: c.tabs.services, icon: <BadgeInfo className="h-4 w-4" /> },
-        ]}
-      />
-
-      {tab === "explore" && (
-        <div className="space-y-5">
-          <PassengerTripAssistant language={language} />
-          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
-            <AirportMap2D language={language} />
-            <div className="space-y-5">
-              <TerminalFacts language={language} />
-              <WaitTimePanel language={language} />
-            </div>
+    <header className="sticky top-0 z-50 border-b border-border bg-background/82 backdrop-blur-xl">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
+        Skip to content
+      </a>
+      <div className="mx-auto flex h-16 max-w-[1620px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <a href="#main" className="flex min-w-0 items-center gap-3 rounded-md" aria-label="Go to dashboard">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
+            <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.airport}</span>
+            <span className="block truncate text-sm font-semibold">{c.brand}</span>
+          </span>
+        </a>
+        <div className="flex items-center gap-2">
+          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 md:flex">
+            <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
+            <TimeChip label="Cairo" value={times.cairo} />
+            <span className="h-5 w-px bg-border" />
+            <TimeChip label="UTC" value={times.utc} />
           </div>
+          <button type="button" onClick={() => setHighContrast(!highContrast)} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast}>
+            <Contrast aria-hidden="true" className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 text-sm hover:bg-secondary" aria-label={c.language}>
+            <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
+            {language === "en" ? "AR" : "EN"}
+          </button>
         </div>
-      )}
-      {tab === "directions" && <DirectionsCard language={language} />}
-      {tab === "services" && (
-        <div className="space-y-5">
-          <ServiceFinder language={language} />
-          <PassengerLinks language={language} />
-        </div>
-      )}
-    </div>
+      </div>
+    </header>
   );
 }
 
-function TravelerQuickActions({ active, onChange }: { active: TravelerTab; onChange: (tab: TravelerTab) => void }) {
-  const actions = [
-    { id: "explore" as TravelerTab, title: "Check my flight", body: "Start with flight lookup, then move to the right terminal.", icon: Search },
-    { id: "directions" as TravelerTab, title: "Get directions", body: "Use the embedded map without leaving the app.", icon: Navigation },
-    { id: "services" as TravelerTab, title: "Find services", body: "Restaurants, lounges, banks, assistance and contact info.", icon: BadgeInfo },
+function TimeChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="font-mono text-xs font-semibold">{value}</span>
+    </span>
+  );
+}
+
+function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; setActiveTab: (tab: ManagerTab) => void; language: Language }) {
+  const c = copy[language];
+  const tabs: { id: ManagerTab; label: string; icon: LucideIcon }[] = [
+    { id: "digital", label: c.digital, icon: Radar },
+    { id: "operations", label: c.operations, icon: Activity },
+    { id: "safety", label: c.safety, icon: ShieldCheck },
   ];
 
   return (
-    <section className="grid grid-cols-1 gap-3 md:grid-cols-3" aria-label="Passenger quick actions">
-      {actions.map(({ id, title, body, icon: Icon }) => (
-        <button key={id} type="button" onClick={() => onChange(id)} aria-pressed={active === id} className={`panel-inner p-4 text-start transition-colors hover:border-primary/50 ${active === id ? "border-primary/60 bg-primary/10" : ""}`}>
-          <div className="flex items-start gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
-              <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold">{title}</h2>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</p>
-            </div>
-          </div>
-        </button>
-      ))}
+    <section className="manager-hero panel overflow-hidden p-5 sm:p-6">
+      <div className="relative z-10">
+        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
+        <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">{c.heroTitle}</h1>
+        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground sm:text-base">{c.heroBody}</p>
+        <div className="mt-6 inline-flex max-w-full flex-wrap gap-2 rounded-xl border border-border bg-background/45 p-2 backdrop-blur-md" role="tablist" aria-label="Manager dashboard sections">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex h-12 items-center gap-2 rounded-lg px-5 text-sm font-semibold transition ${activeTab === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+              >
+                <Icon aria-hidden="true" className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
 
-function PassengerTripAssistant({ language }: { language: Language }) {
-  const [flight, setFlight] = useState("MS777");
-  const [flightModalOpen, setFlightModalOpen] = useState(false);
-  const [lookupFlight, setLookupFlight] = useState<FlightRow | null>(null);
-  const [lookupLive, setLookupLive] = useState(false);
-  const [lookupBusy, setLookupBusy] = useState(false);
-  const liveData = useLiveAirportData();
-  const isArabic = language === "ar";
-  const normalizedFlight = flight.trim().toUpperCase() || "MS777";
-  const selectedFlight = lookupFlight ?? [...liveData.arrivals, ...liveData.departures, ...ARRIVALS, ...DEPARTURES].find((row) => row.flight === normalizedFlight) ?? DEPARTURES[0];
-  const steps = [
-    { label: isArabic ? "تسجيل السفر" : "Check-in", meta: isArabic ? "T3 - Zone C" : "T3 - Zone C", tone: "ok" as Tone },
-    { label: isArabic ? "الجوازات" : "Passport control", meta: isArabic ? "11 دقيقة انتظار" : "11 min wait", tone: "info" as Tone },
-    { label: isArabic ? "البوابة F11" : "Gate F11", meta: isArabic ? "9 دقائق مشيا" : "9 min walk", tone: "warn" as Tone },
-  ];
-  const submitFlightSearch = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setFlight(normalizedFlight);
-    setLookupBusy(true);
-    try {
-      const liveFlight = await fetchFlightByNumber(normalizedFlight);
-      setLookupFlight(liveFlight);
-      setLookupLive(Boolean(liveFlight));
-    } catch {
-      setLookupFlight(null);
-      setLookupLive(false);
-    } finally {
-      setLookupBusy(false);
-    }
-    setFlightModalOpen(true);
-  };
+function DigitalTwinView() {
+  const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("overview");
+  const [imageOpen, setImageOpen] = useState(false);
+  const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
 
   return (
-    <SectionPanel title={isArabic ? "رحلتي الآن" : "My trip now"} action={<StatusPill tone="info">{isArabic ? "بحث مباشر" : "Live flight lookup"}</StatusPill>}>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)_260px]">
-        <form className="relative block" onSubmit={submitFlightSearch}>
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{isArabic ? "رقم الرحلة" : "Flight number"}</span>
-          <div className="mt-1.5 flex h-12 overflow-hidden rounded-lg border border-primary/55 bg-background shadow-[0_0_24px_rgba(81,211,238,.12)] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/25">
-            <input value={flight} onChange={(event) => setFlight(event.target.value.toUpperCase())} placeholder="SM27, MS777" className="min-w-0 flex-1 bg-transparent px-4 font-mono text-base outline-none" aria-label={isArabic ? "Flight number" : "Flight number"} />
-            <button type="submit" disabled={lookupBusy} className="grid w-12 cursor-pointer place-items-center border-s border-primary/35 bg-primary text-primary-foreground hover:opacity-90 disabled:cursor-wait disabled:opacity-60" aria-label={isArabic ? "Search flight status" : "Search flight status"}>
-              <Search aria-hidden="true" className="h-4 w-4" />
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">{isArabic ? "ابحث برقم الرحلة. إذا لم تتوفر البوابة فتأكد من شاشات المطار." : "Search by flight number. If gate data is unavailable, confirm on airport screens."}</p>
-        </form>
-        <ol className="grid grid-cols-1 gap-2 md:grid-cols-3">
-          {steps.map((step, index) => (
-            <li key={step.label} className="panel-inner p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 font-mono text-xs text-primary">{index + 1}</span>
-                <StatusPill tone={step.tone}>{step.meta}</StatusPill>
-              </div>
-              <p className="mt-3 text-sm font-semibold">{step.label}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="panel-inner p-3">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{isArabic ? "الإجراء التالي" : "Next best action"}</p>
-          <p className="mt-2 text-sm font-semibold">{isArabic ? "اتجه إلى الجوازات الآن" : "Head to passport control now"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{isArabic ? "لديك وقت كاف للقهوة بعد الجوازات، وليس قبلها." : "You have enough time for coffee after passport control, not before it."}</p>
-        </div>
-      </div>
-      {flightModalOpen && (
-        <FlightStatusModal flight={selectedFlight} requestedFlight={normalizedFlight} language={language} live={lookupLive || !liveData.simulated} onClose={() => setFlightModalOpen(false)} />
-      )}
-    </SectionPanel>
-  );
-}
-
-function FlightStatusModal({ flight, requestedFlight, language, live, onClose }: { flight: FlightRow; requestedFlight: string; language: Language; live: boolean; onClose: () => void }) {
-  const found = normalizeFlightCodeForCompare(flight.flight) === normalizeFlightCodeForCompare(requestedFlight);
-  const rows = [
-    { label: "Flight", value: found ? flight.flight : requestedFlight },
-    { label: "Route", value: flight.city },
-    { label: "Time", value: flight.time },
-    { label: "Terminal", value: flight.terminal },
-    { label: "Gate", value: flight.gate },
-    { label: "Status", value: flight.status[language] },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="flight-status-title">
-      <div className="panel w-full max-w-2xl overflow-hidden shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-border p-5">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Flight status</p>
-            <h3 id="flight-status-title" className="mt-1 text-2xl font-semibold">{found ? flight.flight : requestedFlight}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {found ? (live ? "Live Aviationstack result where available. Confirm missing gate or status fields on airport screens." : "Sample summary for presentation only. Confirm flight details on airport screens.") : "This flight was not found in the current live/sample feed, so the closest operational example is shown."}
-            </p>
-          </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border hover:bg-secondary" aria-label="Close flight status">
-            <CircleX aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="grid gap-4 p-5 md:grid-cols-[1fr_220px]">
-          <div className="grid grid-cols-2 gap-3">
-            {rows.map((row) => (
-              <div key={row.label} className="panel-inner p-3">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{row.label}</p>
-                <p className="mt-1 text-sm font-semibold">{row.value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="panel-inner p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Recommended action</p>
-            <p className="mt-2 text-sm font-semibold">
-              {flight.tone === "warn" ? "Move now and monitor terminal screens." : "Stay comfortable and head toward the listed terminal."}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <StatusPill tone={live ? "ok" : "warn"}>{live ? "Live API" : "Fallback"}</StatusPill>
-              <StatusPill tone={flight.tone}>{flight.status[language]}</StatusPill>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function WaitTimePanel({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const rows = [
-    { label: isArabic ? "تسجيل T3" : "T3 check-in", value: 8, tone: "ok" as Tone },
-    { label: isArabic ? "الجوازات" : "Passport", value: 11, tone: "info" as Tone },
-    { label: isArabic ? "الأمن" : "Security", value: 17, tone: "warn" as Tone },
-    { label: isArabic ? "الأمتعة" : "Baggage", value: 14, tone: "info" as Tone },
-  ];
-
-  return (
-    <SectionPanel title={isArabic ? "أوقات الانتظار" : "Wait times"} className="h-fit">
-      <ChartNote title="How to interpret" body="Horizontal bars compare current passenger waiting pain points. Longer bars mean passengers should allow more time and managers should consider adding capacity." className="mb-3 mt-0" />
-      <ul className="space-y-3">
-        {rows.map((row) => (
-          <li key={row.label}>
-            <div className="mb-1 flex items-center justify-between text-xs">
-              <span>{row.label}</span>
-              <StatusPill tone={row.tone}>{row.value}m</StatusPill>
-            </div>
-            <ProgressBar value={row.value} max={25} color={row.tone === "warn" ? "var(--status-warn)" : "var(--cyan)"} />
-          </li>
-        ))}
-      </ul>
-    </SectionPanel>
-  );
-}
-
-type ServiceGuideItem = {
-  icon: typeof Coffee;
-  title: string;
-  detail: string;
-  scope: string;
-  note: string;
-};
-
-function ServiceFinder({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const [selectedService, setSelectedService] = useState<ServiceGuideItem | null>(null);
-  const services: ServiceGuideItem[] = [
-    { icon: Coffee, title: isArabic ? "الصالات" : "Lounges", detail: isArabic ? "صالات شركات الطيران وخدمات كبار الزوار حسب المبنى." : "Airline and meet-and-assist lounges vary by terminal.", scope: "T2 and T3 airside, selected T1 areas", note: "Check access rules with your airline or card provider before security." },
-    { icon: Utensils, title: isArabic ? "المطاعم والمقاهي" : "Restaurants and cafes", detail: isArabic ? "خيارات طعام قبل وبعد إجراءات السفر." : "Food options are available before and after formalities.", scope: "Public halls and airside concourses", note: "Allow extra time during peak banks because queues can build quickly." },
-    { icon: CircleDollarSign, title: isArabic ? "البنوك والصراف الآلي" : "Banks and ATMs", detail: isArabic ? "خدمات نقدية وصرافة في مناطق الركاب الرئيسية." : "Cash, banking and exchange services in main passenger zones.", scope: "Arrival halls, departure halls and public areas", note: "Use official bank/exchange counters for currency services." },
-    { icon: Accessibility, title: isArabic ? "المساعدة الخاصة" : "Special assistance", detail: isArabic ? "دعم الحركة والاستقبال يمكن ترتيبه قبل السفر." : "Mobility and meet-and-assist support can be arranged before travel.", scope: "Terminal entrances, check-in and arrivals", note: "Request assistance early through the airline or airport service desk." },
-  ];
-
-  return (
-    <SectionPanel title={isArabic ? "دليل خدمات الركاب" : "Passenger service guide"} action={<StatusPill tone="neutral">{isArabic ? "معلومات عامة" : "General info"}</StatusPill>}>
-      <p className="mb-3 text-xs text-muted-foreground">{isArabic ? "هذه معلومات عامة عن الخدمات وليست مبنية على موقعك الحالي." : "These are general airport services, not location-based recommendations."}</p>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {services.map((service) => {
-          const Icon = service.icon;
-          return (
-            <button key={service.title} type="button" onClick={() => setSelectedService(service)} className="panel-inner p-4 text-start transition-colors hover:border-primary/50">
-              <div className="grid h-10 w-10 place-items-center rounded-md border border-primary/30 bg-primary/10">
-                <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="mt-3 text-sm font-semibold">{service.title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{service.detail}</p>
-            </button>
-          );
-        })}
-      </div>
-      {selectedService && <ServiceDetailModal service={selectedService} onClose={() => setSelectedService(null)} />}
-    </SectionPanel>
-  );
-}
-
-function ServiceDetailModal({ service, onClose }: { service: ServiceGuideItem; onClose: () => void }) {
-  const Icon = service.icon;
-  return (
-    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="service-detail-title">
-      <div className="panel w-full max-w-xl overflow-hidden shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-border p-5">
-          <div className="flex items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-primary/30 bg-primary/10">
-              <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
-            </div>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <SectionPanel className="overflow-hidden p-0" title="">
+        <div className="border-b border-border p-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-primary">Interactive airport image map</p>
+          <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Passenger service</p>
-              <h3 id="service-detail-title" className="mt-1 text-xl font-semibold">{service.title}</h3>
+              <h2 className="text-2xl font-semibold">Cairo Airport visual command map</h2>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+                Use the airport image as the main interactive canvas. Click the hotspots to inspect details and shift into terminal views.
+              </p>
             </div>
-          </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border hover:bg-secondary" aria-label="Close service details">
-            <CircleX aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="grid gap-3 p-5">
-          <div className="panel-inner p-3">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">What to expect</p>
-            <p className="mt-1 text-sm">{service.detail}</p>
-          </div>
-          <div className="panel-inner p-3">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Typical locations</p>
-            <p className="mt-1 text-sm">{service.scope}</p>
-          </div>
-          <div className="panel-inner p-3">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Traveler note</p>
-            <p className="mt-1 text-sm">{service.note}</p>
+            <button type="button" onClick={() => setImageOpen(true)} className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-xs hover:bg-secondary">
+              <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
+              View real image
+            </button>
           </div>
         </div>
-      </div>
+
+        <div className="relative min-h-[520px] overflow-hidden bg-black">
+          <img src={ASSET} alt="Cairo Airport digital twin reference" className="h-[520px] w-full object-cover opacity-90 transition-[object-position] duration-500" style={{ objectPosition: activeScene.objectPosition }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/65 via-transparent to-transparent" />
+          <Hotspot left="50%" top="26%" label="T3" active={activeSceneId === "t3"} onClick={() => setActiveSceneId("t3")} />
+          <Hotspot left="31%" top="44%" label="T1" active={activeSceneId === "t1"} onClick={() => setActiveSceneId("t1")} />
+          <Hotspot left="65%" top="38%" label="T2" active={activeSceneId === "t2"} onClick={() => setActiveSceneId("t2")} />
+          <Hotspot left="50%" top="62%" label="Overview" active={activeSceneId === "overview"} onClick={() => setActiveSceneId("overview")} />
+        </div>
+
+        <div className="grid gap-4 border-t border-border p-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">Selected area</p>
+            <h3 className="mt-2 text-lg font-semibold">{activeScene.title}</h3>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{activeScene.summary}</p>
+          </div>
+          <div className="flex flex-wrap items-start gap-2">
+            <button type="button" onClick={() => setImageOpen(true)} className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium hover:bg-secondary">
+              <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
+              View real image
+            </button>
+            <button type="button" onClick={() => setActiveSceneId(activeScene.id === "overview" ? "t3" : "overview")} className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90">
+              {activeScene.id === "overview" ? "Open detailed view" : "Back to overview"}
+            </button>
+          </div>
+        </div>
+      </SectionPanel>
+
+      <aside className="grid content-start gap-6">
+        <TerminalQuickFacts />
+        <WaitTimes />
+      </aside>
+
+      {imageOpen && (
+        <Modal title={activeScene.title} onClose={() => setImageOpen(false)}>
+          <img src={ASSET} alt={activeScene.title} className="max-h-[72vh] w-full rounded-lg object-cover" style={{ objectPosition: activeScene.objectPosition }} />
+          <p className="mt-3 text-sm text-muted-foreground">{activeScene.summary}</p>
+        </Modal>
+      )}
     </div>
   );
 }
 
-function TerminalFacts({ language }: { language: Language }) {
+function Hotspot({ left, top, label, active, onClick }: { left: string; top: string; label: string; active: boolean; onClick: () => void }) {
   return (
-    <SectionPanel title={copy[language].terminals} className="h-fit">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 p-2 shadow-[0_0_28px_var(--cyan)] transition hover:scale-110 ${active ? "border-white bg-primary text-primary-foreground" : "border-primary bg-primary/45 text-white"}`}
+      style={{ left, top }}
+      aria-label={`Open ${label}`}
+    >
+      <span className="block h-4 w-4 rounded-full bg-current" />
+      <span className="sr-only">{label}</span>
+    </button>
+  );
+}
+
+function TerminalQuickFacts() {
+  return (
+    <SectionPanel title="Terminal quick facts">
       <div className="space-y-3">
-        {TERMINALS.map((terminal) => (
-          <article key={terminal.code} className="panel-inner p-4 transition-colors hover:border-primary/40">
-            <div className="flex items-start gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-bold" style={{ background: `color-mix(in oklab, ${terminal.color} 18%, transparent)`, color: terminal.color, border: `1px solid color-mix(in oklab, ${terminal.color} 50%, transparent)` }}>
-                {terminal.code}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="font-semibold">{terminal.name[language]}</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">{terminal.summary[language]}</p>
-                <p className="mt-1.5 font-mono text-[11px] text-muted-foreground/80">{terminal.halls[language]}</p>
-                <div className="mt-2 flex flex-wrap gap-1">
+        {terminalFacts.map((terminal) => (
+          <article key={terminal.code} className="panel-inner p-4">
+            <div className="flex gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-primary/40 bg-primary/10 font-mono font-semibold text-primary">{terminal.code}</span>
+              <div>
+                <h3 className="font-semibold">{terminal.title}</h3>
+                <p className="mt-1 text-sm leading-snug text-muted-foreground">{terminal.body}</p>
+                <p className="mt-2 font-mono text-[11px] text-muted-foreground">{terminal.detail}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {terminal.airlines.map((airline) => (
-                    <span key={airline} className="rounded border border-border bg-background/60 px-2 py-0.5 font-mono text-[10px]">
+                    <span key={airline} className="rounded border border-border px-2 py-1 font-mono text-[10px]">
                       {airline}
                     </span>
                   ))}
@@ -968,657 +422,402 @@ function TerminalFacts({ language }: { language: Language }) {
   );
 }
 
-function PassengerLinks({ language }: { language: Language }) {
+function WaitTimes() {
   return (
-    <SectionPanel title={copy[language].passengerLinks}>
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-        {QUICK_LINKS.map(({ icon: Icon, label, desc, href }) => (
-          <a key={label.en} href={href} target="_blank" rel="noreferrer" className="group flex items-center gap-3 panel-inner p-3 transition-colors hover:border-primary/40">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
-              <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+    <SectionPanel title="Wait times">
+      <div className="space-y-4">
+        {waitTimes.map((item) => (
+          <div key={item.label}>
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span>{item.label}</span>
+              <StatusPill tone={item.tone}>{item.value}m</StatusPill>
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium transition-colors group-hover:text-primary">{label[language]}</h3>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{desc[language]}</p>
-            </div>
-          </a>
+            <ProgressBar value={item.value} max={25} color={item.tone === "warn" ? "var(--status-warn)" : "var(--cyan)"} />
+          </div>
         ))}
       </div>
     </SectionPanel>
   );
 }
 
-function DirectionsCard({ language }: { language: Language }) {
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState(TERMINAL_DESTINATIONS[2].query);
-  const [travelMode, setTravelMode] = useState<(typeof TRAVEL_MODES)[number]["id"]>("driving");
-  const c = copy[language];
-  const selectedMode = TRAVEL_MODES.find((mode) => mode.id === travelMode) ?? TRAVEL_MODES[0];
-
-  const mapsUrl = useMemo(() => {
-    const encodedOrigin = encodeURIComponent(origin || "My location");
-    const encodedDestination = encodeURIComponent(destination);
-    return `https://www.google.com/maps/dir/?api=1&origin=${encodedOrigin}&destination=${encodedDestination}&travelmode=${travelMode}`;
-  }, [destination, origin, travelMode]);
-
-  const embedUrl = useMemo(() => `https://www.google.com/maps?q=${encodeURIComponent(destination)}&output=embed`, [destination]);
-
-  const useMyLocation = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (position) => setOrigin(`${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`),
-      () => setOrigin(""),
-    );
-  };
-
+function OperationsView() {
   return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-      <SectionPanel title={c.directions} className="h-fit">
-        <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
-          <label className="block">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{c.from}</span>
-            <span className="mt-1.5 flex gap-2">
-              <span className="relative flex-1">
-                <MapPin aria-hidden="true" className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input value={origin} onChange={(event) => setOrigin(event.target.value)} placeholder={c.fromPlaceholder} className="h-10 w-full rounded-md border border-border bg-background ps-9 pe-3 text-sm outline-none focus:border-primary" />
-              </span>
-              <button type="button" onClick={useMyLocation} className="h-10 rounded-md border border-border px-3 text-xs hover:bg-secondary">
-                {c.myLocation}
-              </button>
-            </span>
-          </label>
-
-          <fieldset>
-            <legend className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{c.toTerminal}</legend>
-            <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {TERMINAL_DESTINATIONS.map((terminal) => (
-                <button key={terminal.id} type="button" onClick={() => setDestination(terminal.query)} aria-pressed={destination === terminal.query} className={`h-10 rounded-md border px-3 text-start text-sm transition-colors ${destination === terminal.query ? "border-primary bg-primary/15 text-primary" : "border-border hover:bg-secondary"}`}>
-                  {terminal.label[language]}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{c.travelMode}</legend>
-            <div className="mt-1.5 inline-flex rounded-md border border-border bg-secondary/60 p-0.5">
-              {TRAVEL_MODES.map(({ id, label, icon: Icon }) => (
-                <button key={id} type="button" onClick={() => setTravelMode(id)} aria-pressed={travelMode === id} className={`flex h-8 items-center gap-1.5 rounded px-3 text-xs ${travelMode === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                  <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-                  {label[language]}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90">
-            <ExternalLink aria-hidden="true" className="h-4 w-4" />
-            {c.openRoute} - {selectedMode.label[language]}
-          </a>
-
-          <div className="panel-inner p-3 text-xs text-muted-foreground">
-            <strong className="block text-foreground">{c.routeTipTitle}</strong>
-            <span>{c.routeTip}</span>
-          </div>
-        </form>
+    <div className="grid gap-6">
+      <SectionPanel title="Needs a decision now" action={<StatusPill tone="warn">3 items</StatusPill>}>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {decisions.map((decision) => (
+            <article key={decision.title} className="panel-inner p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">{decision.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{decision.detail}</p>
+                </div>
+                <StatusPill tone={decision.tone}>{decision.badge}</StatusPill>
+              </div>
+            </article>
+          ))}
+        </div>
       </SectionPanel>
 
-      <SectionPanel title={c.mapPreview}>
-        <iframe title={c.mapPreview} src={embedUrl} className="h-[420px] w-full rounded-lg border border-border bg-background md:h-[560px]" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-      </SectionPanel>
-    </div>
-  );
-}
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
+        <MetricCard label="Passengers today" value="58,420" hint="Daily benchmark 85k" delta="+4.1% vs yesterday" icon={Users} accent="cyan" />
+        <MetricCard label="Aircraft movements" value="412" unit="/ 540" hint="390 average" delta="On schedule" icon={Activity} accent="cyan" />
+        <MetricCard label="Avg taxi-out" value="14" unit="min" hint="CAI operations sample" delta="-2 min" deltaTone="warn" icon={Clock3} accent="warn" />
+        <MetricCard label="Active alerts" value="3" hint="2 medium, 1 high" delta="Needs review" deltaTone="warn" icon={AlertTriangle} accent="warn" />
+      </section>
 
-function ManagerDashboard({ language, online }: { language: Language; online: boolean }) {
-  const [tab, setTab] = useState<ManagerTab>("operations");
-  const c = copy[language];
-  const liveData = useLiveAirportData();
-  const flightBoardTitle = {
-    arrivals: liveData.simulated ? (language === "ar" ? "عينة وصول للعرض" : "Arrivals sample") : c.liveArrivals,
-    departures: liveData.simulated ? (language === "ar" ? "عينة مغادرة للعرض" : "Departures sample") : c.liveDepartures,
-  };
-  const flightBoardPill = liveData.simulated ? (
-    <StatusPill tone="neutral">{language === "ar" ? "للعرض فقط" : "For display only"}</StatusPill>
-  ) : (
-    <StatusPill tone="ok">{language === "ar" ? "API مباشر" : "Live API"}</StatusPill>
-  );
-
-  return (
-    <div className="space-y-5">
-      <Hero eyebrow={c.managerHero.eyebrow} title={c.managerHero.title} description={c.managerHero.description} />
-      <ModeTrustStrip
-        language={language}
-        online={online}
-        mode="manager"
-        title="Manager mode is a decision console"
-        body="It prioritizes flow, risk accumulation and escalation signals. Maintenance and safety cards remain modelled unless a live source label says otherwise."
-      />
-      <Tabs
-        ariaLabel="Manager sections"
-        active={tab}
-        onChange={(value) => setTab(value as ManagerTab)}
-        items={[
-          { id: "operations", label: c.tabs.operations, icon: <Activity className="h-4 w-4" /> },
-          { id: "safety", label: c.tabs.safety, icon: <ShieldCheck className="h-4 w-4" /> },
-        ]}
-      />
-
-      {tab === "operations" && (
-        <div className="space-y-5">
-          <DataFreshnessBanner language={language} data={liveData} />
-          <ManagerCommandSummary language={language} />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricCard label={language === "ar" ? "ركاب اليوم" : "Passengers today"} value="58,420" delta={language === "ar" ? "+4.1% عن أمس" : "+4.1% vs yesterday"} icon={Users} hint={language === "ar" ? "المعيار اليومي 85k" : "Daily benchmark 85k"} />
-            <MetricCard label={language === "ar" ? "حركة الطائرات" : "Aircraft movements"} value="412" unit="/ 540" delta={language === "ar" ? "حسب الخطة" : "On schedule"} icon={Activity} />
-            <MetricCard label={language === "ar" ? "متوسط خروج المدرج" : "Avg taxi-out"} value="14" unit={language === "ar" ? "د" : "min"} delta={language === "ar" ? "-2 دقيقة" : "-2 min"} icon={Clock} accent="ok" />
-            <MetricCard label={language === "ar" ? "تنبيهات نشطة" : "Active alerts"} value="3" delta={language === "ar" ? "2 متوسط، 1 عال" : "2 medium, 1 high"} deltaTone="warn" icon={AlertTriangle} accent="warn" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_1fr] xl:items-start">
-            <div className="space-y-5">
-            <SectionPanel title={c.passengerFlow} action={<StatusPill tone="neutral">{language === "ar" ? "تقديري" : "Modelled"}</StatusPill>} className="h-fit">
-              <div className="mb-3">
-                <p className="text-sm font-semibold">{language === "ar" ? "يزداد التدفق قرب موجة الظهيرة" : "Passenger flow rises into the midday wave"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Line chart: best for trend over time. Read left to right to see whether passenger pressure is rising before the peak arrives.</p>
-              </div>
-              <Sparkline data={[42, 48, 55, 61, 70, 64, 72, 80, 76, 82, 78, 84]} height={58} />
-              <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                <span>06:00</span>
-                <span>{language === "ar" ? "مؤشر تدفق الركاب" : "Passenger throughput index"}</span>
-                <span>17:00</span>
-              </div>
-              <ChartNote title="How to interpret" body="The upward slope tells managers to prepare staffing before the visible queue becomes a problem. This is a trend indicator, not an exact passenger count." />
-              <div className="mt-3 grid grid-cols-1 gap-2 text-center sm:grid-cols-3">
-                <FlowZone label={language === "ar" ? "تسجيل" : "Check-in"} percent={62} tone="ok" />
-                <FlowZone label={language === "ar" ? "الأمن" : "Security"} percent={84} tone="warn" />
-                <FlowZone label={language === "ar" ? "الجوازات" : "Passport"} percent={71} tone="ok" />
-              </div>
-              <ChartNote title="Process bars" body="The small bars convert current load into a simple capacity view. Security is highest, so it is the first process to watch." />
-            </SectionPanel>
-            <QueueLoadChart language={language} />
-            </div>
-            <div className="space-y-5">
-              <SectionPanel title={flightBoardTitle.arrivals} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneLanding className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
-                <FlightTable rows={liveData.arrivals} directionLabel={c.fromCol} language={language} simulated={liveData.simulated} loading={liveData.loading} />
-              </SectionPanel>
-              <SectionPanel title={flightBoardTitle.departures} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info" icon={<PlaneTakeoff className="h-3 w-3" />}>{c.nextHour}</StatusPill>{flightBoardPill}</div>} dense>
-                <FlightTable rows={liveData.departures} directionLabel={c.toCol} language={language} simulated={liveData.simulated} loading={liveData.loading} />
-              </SectionPanel>
-            </div>
-          </div>
-
-          <SectionPanel title={c.parkingGates} action={<StatusPill tone="ok" icon={<ParkingSquare className="h-3 w-3" />}>2,180 free</StatusPill>}>
-            <ChartNote title="Why bullet bars" body="Each bar compares current use against two thresholds: target is the planned comfort level, escalate is the point where managers should intervene." className="mb-3 mt-0" />
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              {[
-                { area: "T3 Pier F gates", plain: "Busy boarding bank", used: 86, target: 75, limit: 90, free: "4 gates free", action: "Hold non-urgent gate swaps", tone: "warn" as Tone },
-                { area: "T2 Pier B gates", plain: "Healthy flow", used: 71, target: 75, limit: 90, free: "7 gates free", action: "Keep current allocation", tone: "info" as Tone },
-                { area: "T1 parking / halls", plain: "Comfortable capacity", used: 54, target: 80, limit: 92, free: "980 spaces free", action: "Route overflow here", tone: "ok" as Tone },
-              ].map((row) => (
-                <article key={row.area} className="panel-inner p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-sm font-semibold">{row.area}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">{row.plain}</p>
-                    </div>
-                    <StatusPill tone={row.tone}>{row.used}% used</StatusPill>
-                  </div>
-                  <BulletCapacityChart used={row.used} target={row.target} limit={row.limit} tone={row.tone} />
-                  <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-                    <span className="font-medium text-foreground">{row.free}</span>
-                    <span className="text-muted-foreground">{row.action}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </SectionPanel>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-6">
+          <FlightBoard title="Departures" direction="to" rows={departures} />
+          <FlightBoard title="Arrivals" direction="from" rows={arrivals} />
         </div>
-      )}
-
-      {tab === "safety" && (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:items-start">
-          <div className="space-y-5">
-          <DecisionQueue language={language} />
-          <SafetyAgingBuckets language={language} />
-          <SectionPanel title={c.recentMaintenance} action={<StatusPill tone="neutral">{language === "ar" ? "للعرض" : "Viewing sample"}</StatusPill>} className="h-fit">
-            <MaintenanceTable language={language} />
-          </SectionPanel>
-          </div>
-          <div className="space-y-5">
-          <SafetyControls language={language} />
-          <SectionPanel title={c.safetyChecks}>
-            <ul className="space-y-2">
-              {SAFETY_CHECKS.map(({ icon: Icon, label, status, tone, last }) => (
-                <li key={label.en} className="flex items-start gap-3 panel-inner p-3">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-primary/30 bg-primary/10">
-                    <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium">{label[language]}</span>
-                      <StatusPill tone={tone}>{status[language]}</StatusPill>
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">{last[language]}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </SectionPanel>
-          </div>
-          <SectionPanel title={c.attentionAircraft} action={<div className="flex items-center gap-2"><StatusPill tone="neutral">{language === "ar" ? "نموذج" : "Modelled"}</StatusPill><span className="font-mono text-[11px] text-muted-foreground">{c.sortedRisk}</span></div>} className="xl:col-span-2">
-            <ChartNote title="How to interpret" body="Horizontal risk bars rank named aircraft. Start at the top: longer red or yellow bars indicate the aircraft that need management attention first." className="mb-3 mt-0" />
-            <AttentionTable language={language} />
-          </SectionPanel>
+        <div className="grid content-start gap-6">
+          <PassengerFlowChart />
+          <QueuePressureChart />
         </div>
-      )}
-    </div>
-  );
-}
-
-function ManagerCommandSummary({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const items = [
-    { title: isArabic ? "طابور الأمن T2" : "T2 security queue", value: "17m", action: isArabic ? "افتح مسار إضافي" : "Open one more lane", tone: "warn" as Tone },
-    { title: isArabic ? "صعود بوابة F11" : "Gate F11 boarding", value: "72%", action: isArabic ? "أرسل موظف أرضي" : "Send floor agent", tone: "info" as Tone },
-    { title: isArabic ? "ماسح T2-B" : "T2-B scanner", value: "offline", action: isArabic ? "تصعيد للصيانة" : "Escalate maintenance", tone: "crit" as Tone },
-  ];
-
-  return (
-    <SectionPanel title={isArabic ? "ما يحتاج قرارا الآن" : "Needs a decision now"} action={<StatusPill tone="warn">{isArabic ? "3 عناصر" : "3 items"}</StatusPill>}>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {items.map((item) => (
-          <article key={item.title} className="panel-inner p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold">{item.title}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">{item.action}</p>
-              </div>
-              <StatusPill tone={item.tone}>{item.value}</StatusPill>
-            </div>
-          </article>
-        ))}
-      </div>
-    </SectionPanel>
-  );
-}
-
-function DataFreshnessBanner({ language, data }: { language: Language; data: LiveAirportData }) {
-  const isArabic = language === "ar";
-  const ageSeconds = Math.max(0, Math.round((Date.now() - data.lastUpdated.getTime()) / 1000));
-  const stale = ageSeconds > 120;
-  const confidenceLabel = {
-    sample: "Sample",
-    "public-api": "Public API",
-    "official-ready": "Official-ready",
-  }[data.confidence];
-  const statusText = data.loading
-    ? "Refreshing flight data..."
-    : data.simulated
-      ? "Current data is sample/modelled. Add VITE_AVIATIONSTACK_KEY to enable public flight data."
-      : "Flights auto-refresh from the public flight data provider. Gate and status fields may be incomplete.";
-
-  return (
-    <section className="panel flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between" role="status" aria-live="polite">
-      <div>
-        <p className="text-sm font-semibold">{isArabic ? "Data status" : "Data status"}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{statusText}</p>
-        {data.error && <p className="mt-1 text-xs text-status-warn">{data.error}</p>}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusPill tone="neutral">{confidenceLabel}</StatusPill>
-        <StatusPill tone={data.simulated ? "warn" : "ok"}>{data.simulated ? (isArabic ? "Simulated" : "Simulated") : (isArabic ? "Live" : "Live")}</StatusPill>
-        <StatusPill tone={stale ? "crit" : "info"}>{isArabic ? `Updated ${ageSeconds}s ago` : `Updated ${ageSeconds}s ago`}</StatusPill>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{data.source}</span>
-      </div>
-    </section>
-  );
-}
-
-function ModeTrustStrip({ online, mode, title, body }: { language: Language; online: boolean; mode: Mode; title: string; body: string }) {
-  const items = mode === "traveler"
-    ? [
-        { label: "Mobile first", value: "Few steps", tone: "info" as Tone },
-        { label: "Data trust", value: "Labelled", tone: "ok" as Tone },
-        { label: "Connection", value: online ? "Online" : "Offline", tone: online ? "ok" as Tone : "warn" as Tone },
-      ]
-    : [
-        { label: "Focus", value: "Escalation", tone: "warn" as Tone },
-        { label: "Safety", value: "Issue aging", tone: "info" as Tone },
-        { label: "Source", value: "Explicit", tone: "ok" as Tone },
-      ];
-
-  return (
-    <section className="panel grid grid-cols-1 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto]" aria-label="Mode and data trust context">
-      <div>
-        <h2 className="text-sm font-semibold">{title}</h2>
-        <p className="mt-1 max-w-4xl text-xs leading-relaxed text-muted-foreground">{body}</p>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {items.map((item) => (
-          <div key={item.label} className="panel-inner min-w-24 p-3 text-center">
-            <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{item.label}</p>
-            <div className="mt-1 flex justify-center"><StatusPill tone={item.tone}>{item.value}</StatusPill></div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-function QueueLoadChart({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const rows = [
-    { terminal: "T1", checkIn: 28, passport: 18, security: 22 },
-    { terminal: "T2", checkIn: 32, passport: 26, security: 31 },
-    { terminal: "T3", checkIn: 38, passport: 22, security: 24 },
-  ];
-
-  return (
-    <SectionPanel title={isArabic ? "ضغط الطوابير حسب المبنى" : "Queue pressure by terminal"} action={<StatusPill tone="info">{isArabic ? "مكدس" : "Stacked bar"}</StatusPill>}>
-      <p className="mb-3 max-w-3xl text-xs text-muted-foreground">
-        {isArabic ? "المخطط الشريطي المكدس يوضح أين يتجمع الضغط، وأي خطوة تسبب الجزء الأكبر منه." : "A stacked bar shows where queue pressure is building and which process contributes most."}
-      </p>
-      <ChartNote title="How to interpret" body="Compare total bar length first to find the busiest terminal, then compare segment sizes to see whether check-in, passport or security is creating the pressure." className="mb-4 mt-0" />
-      <div className="space-y-3">
-        {rows.map((row) => {
-          const total = row.checkIn + row.passport + row.security;
-          return (
-            <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_48px] items-center gap-3">
-              <span className="font-mono text-xs font-semibold">{row.terminal}</span>
-              <div className="flex h-4 overflow-hidden rounded-full bg-secondary" aria-label={`${row.terminal} queue pressure ${total}%`}>
-                <div className="bg-cyan/95" style={{ width: `${row.checkIn}%` }} title="Check-in" />
-                <div className="bg-cyan/65" style={{ width: `${row.passport}%` }} title="Passport" />
-                <div className="bg-cyan/35" style={{ width: `${row.security}%` }} title="Security" />
-              </div>
-              <span className="font-mono text-xs text-muted-foreground">{total}%</span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan/95" />{isArabic ? "تسجيل" : "Check-in"}</span>
-        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan/65" />{isArabic ? "جوازات" : "Passport"}</span>
-        <span><span className="me-1 inline-block h-2 w-2 rounded-full bg-cyan/35" />{isArabic ? "أمن" : "Security"}</span>
-      </div>
-    </SectionPanel>
-  );
-}
-
-function BulletCapacityChart({ used, target, limit, tone }: { used: number; target: number; limit: number; tone: Tone }) {
-  const color = tone === "warn" ? "var(--status-warn)" : tone === "ok" ? "var(--status-ok)" : "var(--cyan)";
-
-  return (
-    <div className="mt-3">
-      <div className="relative h-5 overflow-hidden rounded-full bg-secondary" aria-label={`Capacity ${used} percent used, planning target ${target} percent, escalation limit ${limit} percent`}>
-        <div className="h-full rounded-full" style={{ width: `${used}%`, backgroundColor: color }} />
-        <span className="absolute top-0 h-full w-px bg-white/80" style={{ left: `${target}%` }} aria-hidden="true" />
-        <span className="absolute top-0 h-full w-px bg-status-crit" style={{ left: `${limit}%` }} aria-hidden="true" />
-      </div>
-      <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-        <span>Now {used}%</span>
-        <span>Target {target}%</span>
-        <span>Escalate {limit}%</span>
       </div>
     </div>
   );
 }
 
-function SafetyAgingBuckets({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const buckets = [
-    { label: isArabic ? "جديد" : "New", value: 5, tone: "info" as Tone },
-    { label: isArabic ? "30-90 د" : "30-90m", value: 4, tone: "ok" as Tone },
-    { label: isArabic ? "2-4 س" : "2-4h", value: 2, tone: "warn" as Tone },
-    { label: isArabic ? "متأخر" : "Overdue", value: 1, tone: "crit" as Tone },
-  ];
-  const max = Math.max(...buckets.map((bucket) => bucket.value));
-
+function FlightBoard({ title, direction, rows }: { title: string; direction: "to" | "from"; rows: FlightRow[] }) {
   return (
-    <SectionPanel title={isArabic ? "عمر تنبيهات السلامة" : "Safety alert age"} action={<div className="flex items-center gap-2"><StatusPill tone="neutral">{isArabic ? "عينة" : "Sample"}</StatusPill><StatusPill tone="warn">{isArabic ? "1 متأخر" : "1 overdue"}</StatusPill></div>} className="h-fit self-start">
-      <p className="mb-4 text-xs text-muted-foreground">
-        {isArabic ? "الأعمدة توضح ما إذا كانت المشكلات تتراكم قبل أن تصبح حرجة." : "Aging buckets show whether issues are accumulating before they become critical."}
-      </p>
-      <ChartNote title="How to interpret" body="Column height is count of open alerts in each age bucket. The key signal is not the biggest bar; it is any overdue bar because overdue safety work can accumulate into critical risk." className="mb-4 mt-0" />
-      <div className="grid grid-cols-4 items-end gap-3">
-        {buckets.map((bucket) => {
-          const height = 24 + (bucket.value / max) * 48;
-          const bg = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
-          return (
-            <div key={bucket.label} className="text-center">
-              <div className="mx-auto flex h-20 w-full max-w-16 items-end rounded-md bg-secondary/70 p-1">
-                <div className={`w-full rounded ${bg}`} style={{ height }} aria-label={`${bucket.label}: ${bucket.value} alerts`} />
-              </div>
-              <p className="mt-2 font-mono text-sm font-semibold">{bucket.value}</p>
-              <p className="text-[11px] text-muted-foreground">{bucket.label}</p>
-            </div>
-          );
-        })}
-      </div>
-    </SectionPanel>
-  );
-}
-
-function DecisionQueue({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const decisions = [
-    { title: isArabic ? "إعادة توزيع موظفي الأمن" : "Rebalance security staff", impact: isArabic ? "-4 دقائق انتظار متوقعة" : "-4 min expected wait", owner: isArabic ? "العمليات" : "Ops" },
-    { title: isArabic ? "تحويل ركاب F11 إلى مسار أسرع" : "Fast-track F11 passengers", impact: isArabic ? "يحمي موعد الإقلاع" : "Protects departure time", owner: isArabic ? "البوابات" : "Gates" },
-    { title: isArabic ? "تأكيد قطع غيار SU-GBP" : "Confirm SU-GBP parts", impact: isArabic ? "يقلل مخاطر الغد" : "Reduces tomorrow risk", owner: isArabic ? "الصيانة" : "Maintenance" },
-  ];
-
-  return (
-    <SectionPanel title={isArabic ? "توصيات القرار" : "Decision recommendations"}>
-      <ul className="space-y-2">
-        {decisions.map((decision) => (
-          <li key={decision.title} className="panel-inner p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold">{decision.title}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">{decision.impact}</p>
-              </div>
-              <StatusPill tone="neutral">{decision.owner}</StatusPill>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </SectionPanel>
-  );
-}
-
-function SafetyControls({ language }: { language: Language }) {
-  const isArabic = language === "ar";
-  const controls = [
-    { label: isArabic ? "خطر متراكم" : "Accumulation risk", value: isArabic ? "متوسط" : "Medium", detail: isArabic ? "3 ملاحظات مفتوحة أكثر من 24 ساعة" : "3 findings open longer than 24h", tone: "warn" as Tone },
-    { label: isArabic ? "مالك الإجراء" : "Action owner", value: isArabic ? "محدد" : "Assigned", detail: isArabic ? "كل بند سلامة له مسؤول وموعد" : "Every safety item has an owner and due time", tone: "ok" as Tone },
-    { label: isArabic ? "تصعيد تلقائي" : "Auto-escalation", value: isArabic ? "90 دقيقة" : "90 min", detail: isArabic ? "يصعد إذا لم يبدأ الإجراء" : "Escalates if action has not started", tone: "info" as Tone },
-  ];
-
-  return (
-    <SectionPanel title={isArabic ? "ضوابط منع تراكم المشكلات" : "Controls to prevent issue build-up"}>
-      <div className="grid grid-cols-1 gap-3">
-        {controls.map((control) => (
-          <article key={control.label} className="panel-inner p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold">{control.label}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">{control.detail}</p>
-              </div>
-              <StatusPill tone={control.tone}>{control.value}</StatusPill>
-            </div>
-          </article>
-        ))}
-      </div>
-    </SectionPanel>
-  );
-}
-
-function Tabs({ items, active, onChange, ariaLabel }: { items: { id: string; label: string; icon: ReactNode }[]; active: string; onChange: (id: string) => void; ariaLabel: string }) {
-  return (
-    <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-secondary/40 p-1" role="tablist" aria-label={ariaLabel}>
-      {items.map((item) => (
-        <button key={item.id} type="button" role="tab" aria-selected={active === item.id} onClick={() => onChange(item.id)} className={`flex h-10 items-center gap-2 rounded-md px-4 text-sm font-medium transition-colors ${active === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
-          {item.icon}
-          {item.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Hero({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
-  return (
-    <section className="panel p-5 lg:p-6">
-      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">{eyebrow}</p>
-      <h2 className="mt-1 text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h2>
-      <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">{description}</p>
-    </section>
-  );
-}
-
-function ChartNote({ title, body, className = "" }: { title: string; body: string; className?: string }) {
-  return (
-    <div className={`mt-3 rounded-md border border-primary/20 bg-primary/10 p-3 text-xs leading-relaxed ${className}`}>
-      <span className="font-semibold text-foreground">{title}: </span>
-      <span className="text-muted-foreground">{body}</span>
-    </div>
-  );
-}
-
-function FlightTable({ rows, directionLabel, language, simulated = false, loading = false }: { rows: readonly FlightRow[]; directionLabel: string; language: Language; simulated?: boolean; loading?: boolean }) {
-  const c = copy[language];
-  const displayRows = loading ? rows.slice(0, 4) : rows;
-  return (
-    <>
+    <SectionPanel title={title} action={<div className="flex gap-2"><StatusPill tone="info">Next 60 min</StatusPill><StatusPill tone="neutral">Sample data</StatusPill></div>}>
       <div className="-mx-1 overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        <table className="w-full min-w-[580px] text-sm">
+          <thead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             <tr>
-              <th className="px-1 py-1.5 text-start">{c.flight}</th>
-              <th className="px-1 py-1.5 text-start">{directionLabel}</th>
-              <th className="px-1 py-1.5 text-start">{c.time}</th>
-              <th className="px-1 py-1.5 text-start">{c.gate}</th>
-              <th className="px-1 py-1.5 text-start">{c.status}</th>
+              <th className="px-1 py-2 text-start">Flight</th>
+              <th className="px-1 py-2 text-start">{direction === "to" ? "To" : "From"}</th>
+              <th className="px-1 py-2 text-start">Time</th>
+              <th className="px-1 py-2 text-start">Gate</th>
+              <th className="px-1 py-2 text-start">Status</th>
             </tr>
           </thead>
           <tbody>
-            {displayRows.map((row) => {
-              const gateText = row.terminal ? `${row.terminal}/${row.gate}` : row.gate;
+            {rows.map((row) => (
+              <tr key={row.flight} className="border-t border-border/60">
+                <td className="px-1 py-3 font-mono font-semibold">{row.flight}</td>
+                <td className="px-1 py-3">{row.city}</td>
+                <td className="px-1 py-3 font-mono">{row.time}</td>
+                <td className="px-1 py-3 font-mono text-muted-foreground">{row.gate}</td>
+                <td className="px-1 py-3"><StatusPill tone={row.tone}>{row.status}</StatusPill></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </SectionPanel>
+  );
+}
+
+function PassengerFlowChart() {
+  return (
+    <SectionPanel title="Passenger flow" action={<StatusPill tone="neutral">Modelled</StatusPill>}>
+      <h3 className="text-base font-semibold">Passenger flow rises into the midday wave</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Line chart is used because managers need the trend over time, not a terminal-by-terminal comparison.</p>
+      <div className="mt-4">
+        <Sparkline data={[28, 34, 42, 48, 58, 51, 61, 70, 66, 72, 69, 76]} height={122} />
+        <div className="mt-1 flex justify-between font-mono text-[11px] text-muted-foreground">
+          <span>06:00</span>
+          <span>Passenger throughput index</span>
+          <span>17:00</span>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <FlowZone label="Check-in" percent={62} tone="ok" />
+        <FlowZone label="Security" percent={84} tone="warn" />
+        <FlowZone label="Passport" percent={71} tone="ok" />
+      </div>
+    </SectionPanel>
+  );
+}
+
+function FlowZone({ label, percent, tone }: { label: string; percent: number; tone: "ok" | "warn" }) {
+  return (
+    <article className="panel-inner p-3 text-center">
+      <p className="font-mono text-[11px] text-muted-foreground">{label}</p>
+      <p className="mt-1 text-2xl font-semibold">{percent}%</p>
+      <ProgressBar value={percent} color={tone === "warn" ? "var(--status-warn)" : "var(--status-ok)"} className="mt-3" />
+    </article>
+  );
+}
+
+function QueuePressureChart() {
+  return (
+    <SectionPanel title="Queue pressure by terminal" action={<StatusPill tone="info">Stacked bar</StatusPill>}>
+      <p className="mb-4 text-sm text-muted-foreground">Stacked bars show both total queue pressure and which process contributes most.</p>
+      <div className="space-y-4">
+        {queueRows.map((row) => (
+          <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_42px] items-center gap-3">
+            <span className="font-mono font-semibold">{row.terminal}</span>
+            <div className="flex h-4 overflow-hidden rounded-full bg-secondary" aria-label={`${row.terminal} total pressure ${row.total}%`}>
+              <span className="bg-cyan" style={{ width: `${row.checkIn}%` }} />
+              <span className="bg-cyan/70" style={{ width: `${row.passport}%` }} />
+              <span className="bg-cyan/40" style={{ width: `${row.security}%` }} />
+            </div>
+            <span className="font-mono text-sm text-muted-foreground">{row.total}%</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <Legend color="bg-cyan" label="Check-in" />
+        <Legend color="bg-cyan/70" label="Passport" />
+        <Legend color="bg-cyan/40" label="Security" />
+      </div>
+    </SectionPanel>
+  );
+}
+
+function SafetyView() {
+  return (
+    <div className="grid gap-6">
+      <div className="grid gap-6 xl:grid-cols-2">
+        <DecisionRecommendations />
+        <SafetyControls />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]">
+        <SafetyAlertAge />
+        <SafetyChecks />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <MaintenanceTable />
+        <AircraftRiskTable />
+      </div>
+    </div>
+  );
+}
+
+function DecisionRecommendations() {
+  const rows = [
+    { title: "Rebalance security staff", detail: "-4 min expected wait", badge: "Ops" },
+    { title: "Fast-track F11 passengers", detail: "Protects departure time", badge: "Gates" },
+    { title: "Confirm SU-GBP parts", detail: "Reduces tomorrow risk", badge: "Maintenance" },
+  ];
+  return (
+    <SectionPanel title="Decision recommendations">
+      <div className="space-y-3">
+        {rows.map((row) => (
+          <article key={row.title} className="panel-inner flex items-start justify-between gap-4 p-4">
+            <div>
+              <h3 className="font-semibold">{row.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{row.detail}</p>
+            </div>
+            <StatusPill tone="neutral">{row.badge}</StatusPill>
+          </article>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function SafetyControls() {
+  const rows = [
+    { title: "Accumulation risk", detail: "3 findings open longer than 24h", badge: "Medium", tone: "warn" as Tone },
+    { title: "Action owner", detail: "Every safety item has an owner and due time", badge: "Assigned", tone: "ok" as Tone },
+    { title: "Auto-escalation", detail: "Escalates if action has not started", badge: "90 min", tone: "info" as Tone },
+  ];
+  return (
+    <SectionPanel title="Controls to prevent issue build-up">
+      <div className="space-y-3">
+        {rows.map((row) => (
+          <article key={row.title} className="panel-inner flex items-start justify-between gap-4 p-4">
+            <div>
+              <h3 className="font-semibold">{row.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{row.detail}</p>
+            </div>
+            <StatusPill tone={row.tone}>{row.badge}</StatusPill>
+          </article>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function SafetyAlertAge() {
+  const buckets = [
+    { label: "New", value: 5, tone: "info" as Tone },
+    { label: "30-90m", value: 4, tone: "ok" as Tone },
+    { label: "2-4h", value: 2, tone: "warn" as Tone },
+    { label: "Overdue", value: 1, tone: "crit" as Tone },
+  ];
+  const max = Math.max(...buckets.map((item) => item.value));
+  return (
+    <SectionPanel title="Safety alert age" action={<div className="flex gap-2"><StatusPill tone="neutral">Sample</StatusPill><StatusPill tone="warn">1 overdue</StatusPill></div>}>
+      <p className="mb-5 text-sm text-muted-foreground">Aging buckets show whether issues are accumulating before they become critical.</p>
+      <div className="grid grid-cols-4 items-end gap-4">
+        {buckets.map((bucket) => {
+          const height = 44 + (bucket.value / max) * 64;
+          const color = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
+          return (
+            <div key={bucket.label} className="text-center">
+              <div className="mx-auto flex h-32 max-w-20 items-end rounded-lg bg-secondary/70 p-2">
+                <div className={`w-full rounded-md ${color}`} style={{ height }} aria-label={`${bucket.value} ${bucket.label} alerts`} />
+              </div>
+              <p className="mt-2 text-lg font-semibold">{bucket.value}</p>
+              <p className="text-sm text-muted-foreground">{bucket.label}</p>
+            </div>
+          );
+        })}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function SafetyChecks() {
+  return (
+    <SectionPanel title="Safety checks">
+      <div className="space-y-3">
+        {safetyChecks.map((item) => {
+          const Icon = item.icon;
+          return (
+            <article key={item.title} className="panel-inner flex items-center justify-between gap-4 p-4">
+              <div className="flex items-center gap-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-primary/40 bg-primary/10">
+                  <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
+                </span>
+                <div>
+                  <h3 className="font-semibold">{item.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.detail}</p>
+                </div>
+              </div>
+              <StatusPill tone={item.tone}>{item.badge}</StatusPill>
+            </article>
+          );
+        })}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function MaintenanceTable() {
+  return (
+    <SectionPanel title="Recent aircraft maintenance" action={<StatusPill tone="neutral">Viewing sample</StatusPill>}>
+      <div className="-mx-1 overflow-x-auto">
+        <table className="w-full min-w-[620px] text-sm">
+          <thead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th className="px-1 py-2 text-start">A/C</th>
+              <th className="px-1 py-2 text-start">Task</th>
+              <th className="px-1 py-2 text-start">Date</th>
+              <th className="px-1 py-2 text-start">Dur</th>
+              <th className="px-1 py-2 text-start">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {maintenanceRows.map((item) => (
+              <tr key={item.reg} className="border-t border-border/60">
+                <td className="px-1 py-3 font-mono"><strong>{item.reg}</strong><div className="text-xs text-muted-foreground">{item.type}</div></td>
+                <td className="px-1 py-3">{item.task}<div className="text-xs text-muted-foreground">EgyptAir</div></td>
+                <td className="px-1 py-3 font-mono text-muted-foreground">{item.date}</td>
+                <td className="px-1 py-3 font-mono">{item.duration}</td>
+                <td className="px-1 py-3"><StatusPill tone={item.tone}>{item.status}</StatusPill></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </SectionPanel>
+  );
+}
+
+function AircraftRiskTable() {
+  return (
+    <SectionPanel title="Aircraft requiring attention" action={<div className="flex gap-2"><StatusPill tone="neutral">Modelled</StatusPill><span className="text-xs text-muted-foreground">30-day risk score</span></div>} className="xl:col-span-2">
+      <div className="-mx-1 overflow-x-auto">
+        <table className="w-full min-w-[780px] text-sm">
+          <thead className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <th className="px-1 py-2 text-start">Registration</th>
+              <th className="px-1 py-2 text-start">Type</th>
+              <th className="px-1 py-2 text-start">Events</th>
+              <th className="px-1 py-2 text-start">MTBF</th>
+              <th className="px-1 py-2 text-start">Top issue</th>
+              <th className="px-1 py-2 text-start">Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            {aircraftRiskRows.map((aircraft) => {
+              const color = aircraft.risk >= 70 ? "var(--status-crit)" : aircraft.risk >= 50 ? "var(--status-warn)" : "var(--status-ok)";
               return (
-                <tr key={row.flight} className="border-t border-border/60">
-                  {loading ? (
-                    <>
-                      <td className="px-1 py-2"><span className="skeleton-line w-12" /></td>
-                      <td className="px-1 py-2"><span className="skeleton-line w-28" /></td>
-                      <td className="px-1 py-2"><span className="skeleton-line w-10" /></td>
-                      <td className="px-1 py-2"><span className="skeleton-line w-16" /></td>
-                      <td className="px-1 py-2"><span className="skeleton-line w-20" /></td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-1 py-2 font-mono font-medium">{row.flight}</td>
-                      <td className="px-1 py-2 text-foreground/90">{row.city}</td>
-                      <td className="px-1 py-2 font-mono">{row.time}</td>
-                      <td className="px-1 py-2 font-mono text-muted-foreground">{gateText}</td>
-                      <td className="px-1 py-2"><StatusPill tone={row.tone}>{row.status[language]}</StatusPill></td>
-                    </>
-                  )}
+                <tr key={aircraft.reg} className="border-t border-border/60">
+                  <td className="px-1 py-3 font-mono font-semibold">{aircraft.reg}</td>
+                  <td className="px-1 py-3">{aircraft.type}</td>
+                  <td className="px-1 py-3 font-mono">{aircraft.events}</td>
+                  <td className="px-1 py-3 font-mono">{aircraft.mtbf}</td>
+                  <td className="px-1 py-3 text-muted-foreground">{aircraft.issue}</td>
+                  <td className="px-1 py-3">
+                    <div className="flex items-center gap-3">
+                      <ProgressBar value={aircraft.risk} color={color} className="min-w-36" />
+                      <span className="font-mono text-xs" style={{ color }}>{aircraft.risk}</span>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        {simulated
-          ? language === "ar" ? "هذه بيانات عينة للعرض فقط. أضف VITE_AVIATIONSTACK_KEY في Vercel لعرض بيانات API." : "Sample rows for display only. Add VITE_AVIATIONSTACK_KEY in Vercel to show API data."
-          : language === "ar" ? "بيانات من Aviationstack. تأكد من البوابة والحالة النهائية من شاشات المطار." : "Data from Aviationstack. Confirm final gate and status on airport screens."}
-      </p>
-    </>
+    </SectionPanel>
   );
 }
 
-function FlowZone({ label, percent, tone }: { label: string; percent: number; tone: "ok" | "warn" }) {
+function Legend({ color, label }: { color: string; label: string }) {
   return (
-    <div className="panel-inner p-2.5">
-      <p className="font-mono text-[10px] text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-lg font-semibold">{percent}%</p>
-      <ProgressBar value={percent} className="mt-1" color={tone === "warn" ? "var(--status-warn)" : "var(--status-ok)"} />
+    <span className="inline-flex items-center gap-2">
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      {label}
+    </span>
+  );
+}
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="panel max-h-[92vh] w-full max-w-5xl overflow-hidden p-4">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <h2 id="modal-title" className="text-lg font-semibold">{title}</h2>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-lg border border-border hover:bg-secondary" aria-label="Close">
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
 
-function MaintenanceTable({ language }: { language: Language }) {
-  const c = copy[language];
-  return (
-    <div className="-mx-1 overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          <tr>
-            <th className="px-1 py-1.5 text-start">{c.ac}</th>
-            <th className="px-1 py-1.5 text-start">{c.task}</th>
-            <th className="px-1 py-1.5 text-start">{c.date}</th>
-            <th className="px-1 py-1.5 text-start">{c.dur}</th>
-            <th className="px-1 py-1.5 text-start">{c.status}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {RECENT_MAINTENANCE.map((item) => (
-            <tr key={item.reg} className="border-t border-border/60 align-top">
-              <td className="px-1 py-2 font-mono">
-                <div className="font-medium">{item.reg}</div>
-                <div className="text-[10px] text-muted-foreground">{item.type}</div>
-              </td>
-              <td className="px-1 py-2">
-                <div>{item.task[language]}</div>
-                <div className="text-[10px] text-muted-foreground">{item.airline}</div>
-              </td>
-              <td className="px-1 py-2 font-mono text-muted-foreground">{item.date}</td>
-              <td className="px-1 py-2 font-mono">{item.duration}</td>
-              <td className="px-1 py-2"><StatusPill tone={item.tone}>{item.status[language]}</StatusPill></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+function useHeaderClock() {
+  const [now, setNow] = useState(() => new Date());
 
-function AttentionTable({ language }: { language: Language }) {
-  const c = copy[language];
-  return (
-    <div className="-mx-1 overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          <tr>
-            <th className="px-2 py-2 text-start">{c.registration}</th>
-            <th className="px-2 py-2 text-start">{c.type}</th>
-            <th className="px-2 py-2 text-start">{c.events}</th>
-            <th className="px-2 py-2 text-start">{c.mtbf}</th>
-            <th className="px-2 py-2 text-start">{language === "ar" ? "أبرز سبب" : "Top issue"}</th>
-            <th className="px-2 py-2 text-start">{c.risk}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ATTENTION_AIRCRAFT.map((aircraft) => {
-            const color = aircraft.risk >= 70 ? "var(--status-crit)" : aircraft.risk >= 50 ? "var(--status-warn)" : "var(--status-ok)";
-            return (
-              <tr key={aircraft.reg} className="border-t border-border/60">
-                <td className="px-2 py-2.5 font-mono font-medium">{aircraft.reg}</td>
-                <td className="px-2 py-2.5">{aircraft.type}</td>
-                <td className="px-2 py-2.5 font-mono">{aircraft.events}</td>
-                <td className="px-2 py-2.5 font-mono">{aircraft.mtbf}h</td>
-                <td className="px-2 py-2.5 text-muted-foreground">{aircraft.top}</td>
-                <td className="px-2 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <ProgressBar value={aircraft.risk} color={color} className="min-w-24 flex-1" />
-                    <span className="font-mono text-[11px]" style={{ color }}>{aircraft.risk}</span>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  return useMemo(
+    () => ({
+      cairo: new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Cairo",
+        timeZoneName: "short",
+      }).format(now),
+      utc: new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC",
+        timeZoneName: "short",
+      }).format(now),
+    }),
+    [now],
   );
 }

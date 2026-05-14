@@ -205,6 +205,27 @@
     background-size: 32px 32px;
     background-position: -1px -1px;
   }
+  .manager-hero {
+    position: relative;
+    min-height: 14.5rem;
+    background:
+      linear-gradient(90deg, color-mix(in oklab, var(--background) 92%, transparent), color-mix(in oklab, var(--background) 62%, transparent), color-mix(in oklab, var(--background) 88%, transparent)),
+      radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--primary) 32%, transparent), transparent 18rem),
+      url("/manager-assets/digital-twin-reference.png");
+    background-size: cover, auto, cover;
+    background-position: center, center, center 12%;
+  }
+  .manager-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(color-mix(in oklab, var(--cyan) 16%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 16%, transparent) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity: 0.55;
+    pointer-events: none;
+  }
   .skeleton-line {
     display: block;
     height: 0.75rem;
