@@ -22,6 +22,7 @@ import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from "@/
 type ManagerTab = "digital" | "operations" | "safety";
 type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 type Language = "en" | "ar";
+type ThemeMode = "dark" | "light";
 
 type FlightRow = {
   flight: string;
@@ -48,7 +49,7 @@ type AirportScene = {
   }[];
 };
 
-const HERO_PLANE = "/manager-assets/hero-egyptair-plane.png";
+const HERO_PLANE = "/manager-assets/hero-egyptair-plane.webp";
 
 const LocaleContext = createContext<Language>("en");
 
@@ -213,6 +214,7 @@ const copy = {
     resources: "Resources and audit notes",
     footer: "Cairo International Airport - Operated by Cairo Airport Company - IATA: CAI - ICAO: HECA",
     contrast: "Toggle high contrast",
+    theme: "Switch color theme",
     language: "Switch language",
   },
   ar: {
@@ -227,6 +229,7 @@ const copy = {
     resources: "المصادر وملاحظات التدقيق",
     footer: "مطار القاهرة الدولي - تديره شركة ميناء القاهرة الجوي - IATA: CAI - ICAO: HECA",
     contrast: "تبديل التباين العالي",
+    theme: "تبديل نمط الألوان",
     language: "تبديل اللغة",
   },
 } as const;
@@ -237,8 +240,8 @@ const scenes: AirportScene[] = [
     label: "Airport overview",
     title: "Airport overview",
     summary: "High-level airport map showing terminals, roads, parking, airside zones, runways, and transfer connections.",
-    lightImage: "/manager-assets/overview-light.png",
-    darkImage: "/manager-assets/overview-dark.png",
+    lightImage: "/manager-assets/overview-light.webp",
+    darkImage: "/manager-assets/overview-dark.webp",
     objectPosition: "top center",
     hotspots: [
       { left: "21%", top: "58%", label: "Terminal 1", target: "t1" },
@@ -251,8 +254,8 @@ const scenes: AirportScene[] = [
     label: "Terminal 1",
     title: "Terminal 1",
     summary: "Separate terminal area serving selected domestic, regional and international operations.",
-    lightImage: "/manager-assets/terminal-1-light.png",
-    darkImage: "/manager-assets/terminal-1-dark.png",
+    lightImage: "/manager-assets/terminal-1-light.webp",
+    darkImage: "/manager-assets/terminal-1-dark.webp",
     objectPosition: "center center",
     hotspots: [
       { left: "50%", top: "31%", label: "Terminal 1", target: "t1" },
@@ -266,8 +269,8 @@ const scenes: AirportScene[] = [
     label: "Terminal 2",
     title: "Terminal 2",
     summary: "International terminal connected operationally with the Terminal 3 side of the airport.",
-    lightImage: "/manager-assets/terminal-2-light.png",
-    darkImage: "/manager-assets/terminal-2-dark.png",
+    lightImage: "/manager-assets/terminal-2-light.webp",
+    darkImage: "/manager-assets/terminal-2-dark.webp",
     objectPosition: "center center",
     hotspots: [
       { left: "50%", top: "43%", label: "Terminal 2", target: "t2" },
@@ -280,8 +283,8 @@ const scenes: AirportScene[] = [
     label: "Terminal 3",
     title: "Terminal 3",
     summary: "Major passenger terminal and hub-style area with large concourse and gate capacity.",
-    lightImage: "/manager-assets/terminal-3-light.png",
-    darkImage: "/manager-assets/terminal-3-dark.png",
+    lightImage: "/manager-assets/terminal-3-light.webp",
+    darkImage: "/manager-assets/terminal-3-dark.webp",
     objectPosition: "center center",
     hotspots: [
       { left: "50%", top: "43%", label: "Terminal 3", target: "t3" },
@@ -378,6 +381,7 @@ const aircraftRiskRows = [
 export function App() {
   const [activeTab, setActiveTab] = useState<ManagerTab>("digital");
   const [language, setLanguage] = useState<Language>("en");
+  const [theme, setTheme] = useState<ThemeMode>("dark");
   const [highContrast, setHighContrast] = useState(false);
   const times = useHeaderClock();
   const c = copy[language];
@@ -385,13 +389,15 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.classList.toggle("light", theme === "light");
     document.documentElement.classList.toggle("hc", highContrast);
-  }, [highContrast, language]);
+  }, [highContrast, language, theme]);
 
   return (
     <LocaleContext.Provider value={language}>
     <div className="min-h-screen overflow-x-hidden">
-      <Header language={language} setLanguage={setLanguage} highContrast={highContrast} setHighContrast={setHighContrast} times={times} />
+      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} />
       <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-4 overflow-x-hidden px-3 py-4 sm:gap-5 sm:px-5 lg:gap-6 lg:px-6">
         <Hero activeTab={activeTab} setActiveTab={setActiveTab} language={language} />
         {activeTab === "digital" && <DigitalTwinView />}
@@ -413,18 +419,23 @@ export function App() {
 function Header({
   language,
   setLanguage,
+  theme,
+  setTheme,
   highContrast,
   setHighContrast,
   times,
 }: {
   language: Language;
   setLanguage: (language: Language) => void;
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
   highContrast: boolean;
   setHighContrast: (value: boolean) => void;
   times: { cairo: string; utc: string };
 }) {
   const c = copy[language];
   const { tr } = useLocale();
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/82 backdrop-blur-xl">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
@@ -449,6 +460,9 @@ function Header({
           </div>
           <button type="button" onClick={() => setHighContrast(!highContrast)} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
+            <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
           <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 text-sm hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
             <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
@@ -483,7 +497,7 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
       <img
         src={HERO_PLANE}
         alt="EgyptAir aircraft in flight"
-        className="pointer-events-none absolute right-3 top-3 z-[1] hidden h-16 w-auto max-w-[34%] object-contain opacity-95 drop-shadow-[0_14px_22px_rgba(0,0,0,0.45)] sm:block md:h-20 lg:h-24 xl:h-28"
+        className="pointer-events-none absolute right-4 top-1/2 z-[1] hidden h-24 w-auto max-w-[42%] -translate-y-1/2 object-contain opacity-95 drop-shadow-[0_16px_24px_rgba(0,0,0,0.45)] sm:block md:h-32 lg:right-8 lg:h-40 xl:h-48"
       />
       <div className="relative z-10 min-w-0">
         <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
@@ -534,10 +548,6 @@ function DigitalTwinView() {
                 {tr("Use the airport image as the main interactive canvas. Click the hotspots to inspect details and shift into terminal views.")}
               </p>
             </div>
-            <button type="button" onClick={() => setImageOpen(true)} className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border px-3 text-xs hover:bg-secondary">
-              <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
-              {tr("View real image")}
-            </button>
           </div>
         </div>
 
@@ -559,7 +569,7 @@ function DigitalTwinView() {
                 {tr("Back to overview")}
               </button>
             )}
-            {activeScene.hotspots.map((hotspot) => (
+            {activeScene.id === "overview" && activeScene.hotspots.map((hotspot) => (
               <Hotspot
                 key={`${activeScene.id}-${hotspot.label}-${hotspot.left}`}
                 left={hotspot.left}
@@ -589,9 +599,6 @@ function DigitalTwinView() {
                 >
                   <ImageModeIcon aria-hidden="true" className="h-4 w-4" />
                   {imageMode === "dark" ? tr("Show Light Mode") : tr("Show Dark Mode")}
-                </button>
-                <button type="button" onClick={() => setActiveSceneId(activeScene.id === "overview" ? "t3" : "overview")} className="inline-flex h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-semibold hover:bg-secondary">
-                  {activeScene.id === "overview" ? tr("Open detailed view") : tr("Back to overview")}
                 </button>
               </div>
             </div>

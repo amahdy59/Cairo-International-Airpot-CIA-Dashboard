@@ -49,7 +49,66 @@
   --color-grid: var(--grid);
 }
 
-:root,
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(0.97 0.012 235);
+  --foreground: oklch(0.20 0.04 250);
+
+  --surface: oklch(0.96 0.018 235 / 0.86);
+  --surface-2: oklch(0.91 0.025 238 / 0.82);
+
+  --card: oklch(0.98 0.012 235 / 0.84);
+  --card-foreground: oklch(0.20 0.04 250);
+  --popover: oklch(0.99 0.01 235);
+  --popover-foreground: oklch(0.20 0.04 250);
+
+  --primary: oklch(0.48 0.14 220);
+  --primary-foreground: oklch(0.99 0.01 235);
+  --primary-glow: oklch(0.68 0.14 210);
+
+  --secondary: oklch(0.91 0.025 238);
+  --secondary-foreground: oklch(0.20 0.04 250);
+
+  --muted: oklch(0.91 0.02 238);
+  --muted-foreground: oklch(0.44 0.035 248);
+
+  --accent: oklch(0.52 0.20 335);
+  --accent-foreground: oklch(0.99 0.01 235);
+
+  --destructive: oklch(0.52 0.20 25);
+  --destructive-foreground: oklch(0.99 0.01 235);
+
+  --border: oklch(0.72 0.035 240 / 0.55);
+  --input: oklch(0.72 0.035 240 / 0.55);
+  --ring: oklch(0.48 0.14 220);
+
+  --status-ok: oklch(0.50 0.15 155);
+  --status-info: oklch(0.48 0.14 220);
+  --status-warn: oklch(0.58 0.14 85);
+  --status-high: oklch(0.55 0.17 55);
+  --status-crit: oklch(0.54 0.20 25);
+  --magenta: oklch(0.52 0.20 335);
+  --cyan: oklch(0.48 0.14 220);
+  --grid: oklch(0.42 0.04 240 / 0.10);
+
+  --chart-1: var(--cyan);
+  --chart-2: var(--magenta);
+  --chart-3: var(--status-warn);
+  --chart-4: var(--status-ok);
+  --chart-5: var(--status-high);
+
+  --sidebar: oklch(0.95 0.015 235);
+  --sidebar-foreground: oklch(0.20 0.04 250);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.91 0.025 238);
+  --sidebar-accent-foreground: oklch(0.20 0.04 250);
+  --sidebar-border: oklch(0.72 0.035 240 / 0.55);
+  --sidebar-ring: var(--primary);
+  color-scheme: light;
+}
+
 .dark {
   --radius: 0.75rem;
 
@@ -107,6 +166,7 @@
   --sidebar-accent-foreground: oklch(0.97 0.01 230);
   --sidebar-border: oklch(0.32 0.04 255 / 0.5);
   --sidebar-ring: var(--primary);
+  color-scheme: dark;
 }
 
 /* High contrast mode */
@@ -251,7 +311,7 @@
     background:
       linear-gradient(90deg, color-mix(in oklab, var(--background) 94%, transparent), color-mix(in oklab, var(--background) 70%, transparent), color-mix(in oklab, var(--background) 90%, transparent)),
       radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--primary) 32%, transparent), transparent 18rem),
-      url("/manager-assets/hero-command-bg.png");
+      url("/manager-assets/hero-command-bg.webp");
     background-size: cover, auto, cover;
     background-position: center, center, center 46%;
   }
