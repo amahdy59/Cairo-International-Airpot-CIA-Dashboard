@@ -85,7 +85,7 @@ export function StatusPill({
   }[tone];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${toneClass}`}>
+    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${toneClass}`}>
       {icon}
       {children}
     </span>
@@ -108,11 +108,11 @@ export function SectionPanel({
   return (
     <section className={`panel ${dense ? "p-3" : "p-4"} ${className}`}>
       {(title || action) && (
-        <header className="mb-3 flex items-center justify-between gap-3">
+        <header className="mb-3 grid gap-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
           {title && (
             <div className="flex min-w-0 items-center gap-2">
               <span className="h-3 w-[3px] shrink-0 rounded bg-primary" />
-              <h2 className="truncate text-sm font-semibold tracking-tight">{title}</h2>
+              <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
             </div>
           )}
           {action}

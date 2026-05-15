@@ -12,7 +12,7 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
 
-  --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter", "Noto Sans Arabic", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
@@ -145,6 +145,15 @@
     color: var(--color-foreground);
     font-family: var(--font-display);
     font-feature-settings: "ss01", "cv11";
+    overflow-x: hidden;
+  }
+
+  html[dir="rtl"] body {
+    letter-spacing: 0;
+  }
+
+  html[dir="rtl"] .font-mono {
+    letter-spacing: 0.02em;
   }
 
   button,
