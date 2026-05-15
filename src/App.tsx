@@ -2,16 +2,22 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import {
   Activity,
   AlertTriangle,
+  BaggageClaim,
   Clock3,
   Contrast,
+  DoorOpen,
   Eye,
   Flame,
+  Gauge,
   Languages,
   Moon,
   Plane,
+  PlaneLanding,
   Radar,
+  RadioTower,
   ShieldCheck,
   Sun,
+  UserCheck,
   Users,
   Wrench,
   X,
@@ -23,6 +29,7 @@ type ManagerTab = "digital" | "operations" | "safety";
 type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 type Language = "en" | "ar";
 type ThemeMode = "dark" | "light";
+type LocalizedText = { en: string; ar: string };
 
 type FlightRow = {
   flight: string;
@@ -31,6 +38,28 @@ type FlightRow = {
   gate: string;
   status: string;
   tone: Tone;
+};
+
+type IncomingFlight = {
+  airline: string;
+  flight: string;
+  eta: string;
+  gate: string;
+  status: string;
+  tone: Tone;
+  origin: string;
+};
+
+type AviationStackFlight = {
+  airline?: { name?: string };
+  flight?: { iata?: string; number?: string };
+  departure?: { airport?: string; iata?: string };
+  arrival?: { estimated?: string; scheduled?: string; terminal?: string; gate?: string };
+  flight_status?: string;
+};
+
+type AviationStackResponse = {
+  data?: AviationStackFlight[];
 };
 
 type AirportScene = {
@@ -201,6 +230,38 @@ function useLocale() {
   return { language, tr };
 }
 
+function localize(value: LocalizedText, language: Language) {
+  return value[language];
+}
+
+function formatCairoTime(value?: string) {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Cairo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
+function localizedFlightStatus(status: string, language: Language) {
+  const normalized = status.toLowerCase();
+  const labels: Record<string, LocalizedText> = {
+    scheduled: { en: "Scheduled", ar: "مجدولة" },
+    active: { en: "Active", ar: "نشطة" },
+    landed: { en: "Landed", ar: "هبطت" },
+    cancelled: { en: "Cancelled", ar: "ملغاة" },
+    incident: { en: "Incident", ar: "حادث" },
+    diverted: { en: "Diverted", ar: "محولة" },
+    "on time": { en: "On time", ar: "في الموعد" },
+    landing: { en: "Landing", ar: "تهبط" },
+    "delayed +18m": { en: "Delayed +18m", ar: "متأخرة 18د" },
+  };
+  return localize(labels[normalized] ?? { en: status, ar: status }, language);
+}
+
 const copy = {
   en: {
     airport: "Cairo International Airport",
@@ -295,38 +356,116 @@ const scenes: AirportScene[] = [
   },
 ];
 
-const terminalFacts = [
+const sampleIncomingFlights: IncomingFlight[] = [
+  { airline: "EgyptAir", flight: "MS786", eta: "13:40", gate: "T3 / F06", status: "On time", tone: "ok", origin: "Frankfurt (FRA)" },
+  { airline: "Qatar Airways", flight: "QR1303", eta: "14:05", gate: "T2 / B03", status: "Landing", tone: "info", origin: "Doha (DOH)" },
+  { airline: "Emirates", flight: "EK927", eta: "14:25", gate: "T2 / B12", status: "Delayed +18m", tone: "warn", origin: "Dubai (DXB)" },
+  { airline: "Saudia", flight: "SV301", eta: "14:55", gate: "T1 / A04", status: "On time", tone: "ok", origin: "Jeddah (JED)" },
+];
+
+const operationalAlerts = [
   {
-    code: "T1",
-    title: "Terminal 1",
-    body: "Domestic, regional and selected international operations",
-    detail: "Hall 1 - Hall 2 - Hall 3",
-    airlines: ["Air Arabia Egypt", "Nile Air", "Flynas", "Domestic carriers"],
-    tone: "ok" as Tone,
+    title: { en: "T2 security queue rising", ar: "ارتفاع طابور الأمن في مبنى 2" },
+    detail: { en: "Open one extra lane before the 14:00 arrival wave.", ar: "افتح مسارا إضافيا قبل موجة الوصول الساعة 14:00." },
+    badge: { en: "17 min", ar: "17 دقيقة" },
+    tone: "warn" as Tone,
   },
   {
-    code: "T2",
-    title: "Terminal 2",
-    body: "Renovated international terminal connected to Terminal 3",
-    detail: "International concourse",
-    airlines: ["Emirates", "British Airways", "Air France", "Qatar Airways"],
-    tone: "info" as Tone,
-  },
-  {
-    code: "T3",
-    title: "Terminal 3",
-    body: "EgyptAir hub and largest passenger terminal",
-    detail: "Main concourse and pier",
-    airlines: ["EgyptAir", "Star Alliance partners", "Turkish Airlines"],
+    title: { en: "Baggage belt 4 nearing capacity", ar: "سير الأمتعة 4 يقترب من السعة القصوى" },
+    detail: { en: "Assign ramp runner for EK927 and QR1303 overlap.", ar: "عيّن منسق ساحة لتداخل رحلتي EK927 و QR1303." },
+    badge: { en: "High", ar: "مرتفع" },
     tone: "high" as Tone,
+  },
+  {
+    title: { en: "T3 staff buffer is healthy", ar: "احتياطي موظفي مبنى 3 جيد" },
+    detail: { en: "Keep two floating agents near passport control.", ar: "أبق موظفين متحركين قرب الجوازات." },
+    badge: { en: "Stable", ar: "مستقر" },
+    tone: "ok" as Tone,
   },
 ];
 
-const waitTimes = [
-  { label: "T3 check-in", value: 8, tone: "ok" as Tone },
-  { label: "Passport", value: 11, tone: "info" as Tone },
-  { label: "Security", value: 17, tone: "warn" as Tone },
-  { label: "Baggage", value: 14, tone: "info" as Tone },
+const digitalMetrics = [
+  {
+    label: { en: "Current passengers", ar: "الركاب الحاليون" },
+    value: "2,850",
+    hint: { en: "Across T1/T2/T3", ar: "عبر مباني 1 و2 و3" },
+    delta: "+12%",
+    icon: Users,
+    tone: "ok" as Tone,
+  },
+  {
+    label: { en: "Active flights", ar: "الرحلات النشطة" },
+    value: "15",
+    hint: { en: "Next 2 hours", ar: "خلال الساعتين القادمتين" },
+    delta: { en: "8 arrivals", ar: "8 وصول" },
+    icon: PlaneLanding,
+    tone: "info" as Tone,
+  },
+  {
+    label: { en: "Avg wait per gate", ar: "متوسط الانتظار لكل بوابة" },
+    value: "22",
+    unit: "min",
+    hint: { en: "Security + passport", ar: "الأمن والجوازات" },
+    delta: "+5 min",
+    icon: Clock3,
+    tone: "warn" as Tone,
+  },
+  {
+    label: { en: "Ground crew available", ar: "طاقم أرضي متاح" },
+    value: "120",
+    hint: { en: "On duty now", ar: "في الخدمة الآن" },
+    delta: { en: "14 floaters", ar: "14 دعم متحرك" },
+    icon: UserCheck,
+    tone: "ok" as Tone,
+  },
+];
+
+const densityZones = [
+  { label: "T1", x: "21%", y: "58%", size: 96, tone: "ok" as Tone, value: "Low" },
+  { label: "T2", x: "70%", y: "47%", size: 116, tone: "warn" as Tone, value: "Medium" },
+  { label: "T3", x: "46%", y: "40%", size: 132, tone: "high" as Tone, value: "High" },
+  { label: "Security", x: "52%", y: "56%", size: 104, tone: "crit" as Tone, value: "Critical" },
+  { label: "Baggage", x: "57%", y: "72%", size: 92, tone: "warn" as Tone, value: "Medium" },
+];
+
+const zoneStatusRows = [
+  { zone: "Terminal 1", status: { en: "Smooth", ar: "سلس" }, detail: { en: "8 min average queue", ar: "متوسط الطابور 8 دقائق" }, tone: "ok" as Tone },
+  { zone: "Terminal 2", status: { en: "Moderate", ar: "متوسط" }, detail: { en: "Security pressure building", ar: "ضغط متزايد على الأمن" }, tone: "warn" as Tone },
+  { zone: "Terminal 3", status: { en: "Busy", ar: "مزدحم" }, detail: { en: "Passport wave from F gates", ar: "موجة جوازات من بوابات F" }, tone: "high" as Tone },
+];
+
+const gateWaitRows = [
+  { gate: "F06", wait: 12, tone: "ok" as Tone },
+  { gate: "B03", wait: 16, tone: "info" as Tone },
+  { gate: "B12", wait: 24, tone: "warn" as Tone },
+  { gate: "A04", wait: 9, tone: "ok" as Tone },
+  { gate: "F11", wait: 28, tone: "high" as Tone },
+];
+
+const influxForecastRows = [
+  { time: "Now", current: 960, forecast: 980 },
+  { time: "+1h", current: 1200, forecast: 1320 },
+  { time: "+2h", current: 1380, forecast: 1540 },
+  { time: "+3h", current: 1180, forecast: 1460 },
+  { time: "+4h", current: 980, forecast: 1120 },
+];
+
+const baggageRows = [
+  { belt: "Belt 2", flight: "MS786", status: { en: "Loading", ar: "تحميل" }, tone: "info" as Tone },
+  { belt: "Belt 4", flight: "EK927", status: { en: "Near capacity", ar: "قريب من السعة" }, tone: "warn" as Tone },
+  { belt: "Belt 6", flight: "SV301", status: { en: "Ready", ar: "جاهز" }, tone: "ok" as Tone },
+];
+
+const securityThroughputRows = [
+  { lane: "T1", open: 6, total: 8, paxPerHour: 720 },
+  { lane: "T2", open: 7, total: 10, paxPerHour: 860 },
+  { lane: "T3", open: 14, total: 16, paxPerHour: 1540 },
+];
+
+const gateChangeFrequencyRows = [
+  { terminal: "T1", changes: 2 },
+  { terminal: "T2", changes: 5 },
+  { terminal: "T3", changes: 3 },
 ];
 
 const decisions = [
@@ -526,11 +665,87 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
   );
 }
 
+function useIncomingCaiFlights() {
+  const [flights, setFlights] = useState<IncomingFlight[]>(sampleIncomingFlights);
+  const [source, setSource] = useState<"loading" | "live" | "sample">("loading");
+  const [updatedAt, setUpdatedAt] = useState(() => formatCairoTime(new Date().toISOString()));
+
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_AVIATIONSTACK_KEY as string | undefined;
+    if (!apiKey || apiKey === "replace_with_your_aviationstack_access_key") {
+      setSource("sample");
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      access_key: apiKey,
+      arr_iata: "CAI",
+      limit: "6",
+    });
+
+    fetch(`https://api.aviationstack.com/v1/flights?${params.toString()}`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Flight provider unavailable");
+        return response.json() as Promise<AviationStackResponse>;
+      })
+      .then((payload) => {
+        const mapped = (payload.data ?? [])
+          .map((item): IncomingFlight | null => {
+            const flight = item.flight?.iata ?? item.flight?.number;
+            if (!flight) return null;
+            const status = item.flight_status ?? "scheduled";
+            const normalized = status.toLowerCase();
+            const tone: Tone = normalized.includes("delay")
+              ? "warn"
+              : normalized.includes("landed")
+                ? "ok"
+                : normalized.includes("active")
+                  ? "info"
+                  : "neutral";
+            const gate = item.arrival?.gate
+              ? `${item.arrival.terminal ? `T${item.arrival.terminal} / ` : ""}${item.arrival.gate}`
+              : item.arrival?.terminal
+                ? `T${item.arrival.terminal} / --`
+                : "Gate TBD";
+            const origin = item.departure?.iata ? `${item.departure.airport ?? "Origin"} (${item.departure.iata})` : item.departure?.airport ?? "Origin TBD";
+            return {
+              airline: item.airline?.name ?? "Airline TBD",
+              flight,
+              eta: formatCairoTime(item.arrival?.estimated ?? item.arrival?.scheduled),
+              gate,
+              status: status.replace(/_/g, " "),
+              tone,
+              origin,
+            };
+          })
+          .filter((item): item is IncomingFlight => item != null)
+          .slice(0, 4);
+
+        if (mapped.length === 0) {
+          setSource("sample");
+          return;
+        }
+        setFlights(mapped);
+        setSource("live");
+        setUpdatedAt(formatCairoTime(new Date().toISOString()));
+      })
+      .catch(() => {
+        setSource("sample");
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  return { flights, source, updatedAt };
+}
+
 function DigitalTwinView() {
-  const { tr } = useLocale();
+  const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("overview");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [imageOpen, setImageOpen] = useState(false);
+  const incoming = useIncomingCaiFlights();
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
   const activeImage = imageMode === "dark" ? activeScene.darkImage : activeScene.lightImage;
   const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
@@ -538,20 +753,28 @@ function DigitalTwinView() {
 
   return (
     <div className="grid min-w-0 gap-4 lg:gap-6">
+      <DigitalAlertStrip />
+      <DigitalKpiGrid />
+
       <SectionPanel className="overflow-hidden p-0" title="">
         <div className="min-w-0 border-b border-border p-4">
           <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{tr("Interactive airport image map")}</p>
           <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <h2 className="text-xl font-semibold sm:text-2xl">{tr("Cairo Airport visual command map")}</h2>
+              <h2 className="text-xl font-semibold sm:text-2xl">{localize({ en: "Passenger density map", ar: "خريطة كثافة الركاب" }, language)}</h2>
               <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                {tr("Use the airport image as the main interactive canvas. Click the hotspots to inspect details and shift into terminal views.")}
+                {localize({ en: "Heat overlays show where passenger pressure is building across terminals and processing zones.", ar: "توضح طبقات الحرارة أين يتزايد ضغط الركاب داخل المباني ومناطق المعالجة." }, language)}
               </p>
+            </div>
+            <div className="flex flex-wrap gap-2" aria-label={localize({ en: "Density legend", ar: "مفتاح الكثافة" }, language)}>
+              <DensityLegend tone="ok" label={localize({ en: "Low", ar: "منخفض" }, language)} />
+              <DensityLegend tone="warn" label={localize({ en: "Medium", ar: "متوسط" }, language)} />
+              <DensityLegend tone="crit" label={localize({ en: "High", ar: "مرتفع" }, language)} />
             </div>
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+        <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
           <div className="relative min-h-[300px] min-w-0 overflow-hidden bg-black sm:min-h-[430px] lg:min-h-[620px]">
             <img
               src={activeImage}
@@ -560,6 +783,7 @@ function DigitalTwinView() {
               style={{ objectPosition: activeScene.objectPosition }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/45 via-transparent to-background/10" />
+            {activeScene.id === "overview" && <DensityOverlay />}
             {activeScene.id !== "overview" && (
               <button
                 type="button"
@@ -581,7 +805,7 @@ function DigitalTwinView() {
             ))}
           </div>
 
-          <aside className="grid min-w-0 content-start gap-4 border-t border-border p-4 lg:border-s lg:border-t-0">
+          <aside className="grid min-w-0 content-start gap-4 border-t border-border p-4 xl:border-s xl:border-t-0">
             <div className="panel-inner p-4 sm:p-5">
               <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{tr("Selected area")}</p>
               <h3 className="mt-3 text-xl font-semibold sm:text-2xl">{tr(activeScene.title)}</h3>
@@ -602,14 +826,13 @@ function DigitalTwinView() {
                 </button>
               </div>
             </div>
+            <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
+            <ZoneStatusPanel />
           </aside>
         </div>
       </SectionPanel>
 
-      <aside className="grid content-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-        <TerminalQuickFacts />
-        <WaitTimes />
-      </aside>
+      <DigitalOperationalGrid />
 
       {imageOpen && (
         <Modal title={activeScene.title} onClose={() => setImageOpen(false)}>
@@ -618,6 +841,363 @@ function DigitalTwinView() {
         </Modal>
       )}
     </div>
+  );
+}
+
+function toneCssVar(tone: Tone) {
+  const map: Record<Tone, string> = {
+    ok: "var(--status-ok)",
+    info: "var(--status-info)",
+    warn: "var(--status-warn)",
+    high: "var(--status-high)",
+    crit: "var(--status-crit)",
+    neutral: "var(--muted-foreground)",
+  };
+  return map[tone];
+}
+
+function DigitalAlertStrip() {
+  const { language } = useLocale();
+  return (
+    <section className="grid gap-3 md:grid-cols-3" aria-label={localize({ en: "Operational decision alerts", ar: "تنبيهات قرارات التشغيل" }, language)}>
+      {operationalAlerts.map((alert) => (
+        <article key={alert.title.en} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="flex min-w-0 gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-background/60">
+              <AlertTriangle aria-hidden="true" className="h-4 w-4" style={{ color: toneCssVar(alert.tone) }} />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold">{localize(alert.title, language)}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{localize(alert.detail, language)}</p>
+            </div>
+          </div>
+          <StatusPill tone={alert.tone}>{localize(alert.badge, language)}</StatusPill>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function DigitalKpiGrid() {
+  const { language } = useLocale();
+  return (
+    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={localize({ en: "Digital twin key metrics", ar: "المؤشرات الرئيسية للتوأم الرقمي" }, language)}>
+      {digitalMetrics.map((metric) => {
+        const delta = typeof metric.delta === "string" ? metric.delta : localize(metric.delta, language);
+        const accent = metric.tone === "warn" || metric.tone === "high" ? "warn" : metric.tone === "ok" ? "ok" : "cyan";
+        const deltaTone = metric.tone === "warn" || metric.tone === "high" ? "warn" : metric.tone === "ok" ? "ok" : "info";
+        return (
+          <MetricCard
+            key={metric.label.en}
+            label={localize(metric.label, language)}
+            value={metric.value}
+            unit={metric.unit}
+            hint={localize(metric.hint, language)}
+            delta={delta}
+            deltaTone={deltaTone}
+            icon={metric.icon}
+            accent={accent}
+          />
+        );
+      })}
+    </section>
+  );
+}
+
+function DensityLegend({ tone, label }: { tone: Tone; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 rounded-md border border-border bg-background/55 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
+      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: toneCssVar(tone), boxShadow: `0 0 12px ${toneCssVar(tone)}` }} />
+      {label}
+    </span>
+  );
+}
+
+function DensityOverlay() {
+  const { language } = useLocale();
+  return (
+    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+      {densityZones.map((zone) => {
+        const color = toneCssVar(zone.tone);
+        return (
+          <div key={zone.label} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: zone.x, top: zone.y }}>
+            <span
+              className="absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
+              style={{
+                width: zone.size,
+                height: zone.size,
+                background: `radial-gradient(circle, ${color} 0%, color-mix(in oklab, ${color} 55%, transparent) 36%, transparent 72%)`,
+                opacity: 0.72,
+              }}
+            />
+            <span className="relative inline-flex rounded-md border border-white/30 bg-background/70 px-2 py-1 text-[10px] font-semibold text-foreground shadow-lg backdrop-blur">
+              {zone.label} · {localize({ en: zone.value, ar: zone.value === "Low" ? "منخفض" : zone.value === "Medium" ? "متوسط" : zone.value === "High" ? "مرتفع" : "حرج" }, language)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function IncomingFlightsPanel({
+  flights,
+  source,
+  updatedAt,
+}: {
+  flights: IncomingFlight[];
+  source: "live" | "sample" | "loading";
+  updatedAt: string;
+}) {
+  const { language } = useLocale();
+  const sourceLabel = source === "live"
+    ? localize({ en: "Live API", ar: "API مباشر" }, language)
+    : source === "loading"
+      ? localize({ en: "Loading", ar: "جار التحميل" }, language)
+      : localize({ en: "Sample data", ar: "بيانات عينة" }, language);
+  const sourceTone: Tone = source === "live" ? "ok" : source === "loading" ? "info" : "neutral";
+
+  return (
+    <section className="panel-inner p-4 sm:p-5" aria-label={localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {localize({ en: "Last updated", ar: "آخر تحديث" }, language)}: {updatedAt}
+          </p>
+        </div>
+        <StatusPill tone={sourceTone}>{sourceLabel}</StatusPill>
+      </div>
+      <div className="grid gap-2">
+        {flights.map((flight) => (
+          <article key={`${flight.flight}-${flight.eta}`} className="rounded-md border border-border/70 bg-background/45 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">{flight.airline} · <span className="font-mono">{flight.flight}</span></p>
+                <p className="mt-1 text-xs text-muted-foreground">{flight.origin}</p>
+              </div>
+              <StatusPill tone={flight.tone}>{localizedFlightStatus(flight.status, language)}</StatusPill>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <dt className="text-muted-foreground">{localize({ en: "ETA", ar: "الوصول المتوقع" }, language)}</dt>
+                <dd className="font-mono font-semibold">{flight.eta}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">{localize({ en: "Gate", ar: "البوابة" }, language)}</dt>
+                <dd className="font-mono font-semibold">{flight.gate}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ZoneStatusPanel() {
+  const { language } = useLocale();
+  return (
+    <section className="panel-inner p-4 sm:p-5" aria-label={localize({ en: "Terminal zone status", ar: "حالة مناطق المباني" }, language)}>
+      <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
+      <div className="grid gap-2">
+        {zoneStatusRows.map((zone) => (
+          <article key={zone.zone} className="flex items-center justify-between gap-3 rounded-md border border-border/70 bg-background/45 p-3">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">{localize(zone.detail, language)}</p>
+            </div>
+            <StatusPill tone={zone.tone}>{localize(zone.status, language)}</StatusPill>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DigitalOperationalGrid() {
+  return (
+    <section className="grid gap-4 lg:gap-6 xl:grid-cols-2 xl:items-start" aria-label="Digital twin operational analytics">
+      <div className="grid gap-4 lg:gap-6">
+        <PassengerInfluxForecast />
+        <GateWaitChart />
+        <SecurityThroughputPanel />
+      </div>
+      <div className="grid gap-4 lg:gap-6">
+        <BaggageClaimStatus />
+        <GateChangeFrequencyPanel />
+        <AnomalyWarningsPanel />
+      </div>
+    </section>
+  );
+}
+
+function PassengerInfluxForecast() {
+  const { language } = useLocale();
+  return (
+    <SectionPanel
+      title={localize({ en: "Passenger influx forecast", ar: "توقع تدفق الركاب" }, language)}
+      action={<StatusPill tone="neutral">{localize({ en: "Modelled", ar: "نمذجة" }, language)}</StatusPill>}
+    >
+      <p className="mb-4 text-sm text-muted-foreground">
+        {localize({ en: "Line charts show the next 2-4 hours because managers need timing and direction, not just totals.", ar: "المخطط الخطي يوضح الساعتين إلى الأربع القادمة لأن المدير يحتاج إلى التوقيت والاتجاه وليس الإجمالي فقط." }, language)}
+      </p>
+      <ForecastLineChart />
+      <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <Legend color="bg-cyan" label={localize({ en: "Current trajectory", ar: "المسار الحالي" }, language)} />
+        <Legend color="bg-status-warn" label={localize({ en: "Forecast", ar: "التوقع" }, language)} />
+      </div>
+    </SectionPanel>
+  );
+}
+
+function ForecastLineChart() {
+  const values = influxForecastRows.flatMap((row) => [row.current, row.forecast]);
+  const min = Math.min(...values) - 100;
+  const max = Math.max(...values) + 100;
+  const span = max - min || 1;
+  const width = 420;
+  const height = 150;
+  const toPoint = (value: number, index: number) => {
+    const x = 18 + (index / (influxForecastRows.length - 1)) * (width - 36);
+    const y = height - 18 - ((value - min) / span) * (height - 38);
+    return `${x},${y}`;
+  };
+  const currentPoints = influxForecastRows.map((row, index) => toPoint(row.current, index)).join(" ");
+  const forecastPoints = influxForecastRows.map((row, index) => toPoint(row.forecast, index)).join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full" role="img" aria-label="Passenger influx forecast line chart">
+      {[0, 1, 2].map((line) => (
+        <line key={line} x1="18" x2={width - 18} y1={28 + line * 42} y2={28 + line * 42} stroke="var(--border)" strokeOpacity="0.55" />
+      ))}
+      <polyline points={currentPoints} fill="none" stroke="var(--cyan)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={forecastPoints} fill="none" stroke="var(--status-warn)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="7 6" />
+      {influxForecastRows.map((row, index) => (
+        <g key={row.time}>
+          <circle cx={toPoint(row.forecast, index).split(",")[0]} cy={toPoint(row.forecast, index).split(",")[1]} r="3" fill="var(--status-warn)" />
+          <text x={18 + (index / (influxForecastRows.length - 1)) * (width - 36)} y={height - 2} textAnchor="middle" fill="var(--muted-foreground)" fontSize="10">{row.time}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function GateWaitChart() {
+  const { language } = useLocale();
+  return (
+    <SectionPanel
+      title={localize({ en: "Average wait time per gate", ar: "متوسط الانتظار لكل بوابة" }, language)}
+      action={<StatusPill tone="warn">{localize({ en: "F11 needs action", ar: "F11 يحتاج إجراء" }, language)}</StatusPill>}
+    >
+      <p className="mb-4 text-sm text-muted-foreground">
+        {localize({ en: "Horizontal bars make gate-to-gate comparison fast and keep the longest wait visually obvious.", ar: "الأشرطة الأفقية تجعل مقارنة البوابات سريعة وتبرز أطول انتظار بصريا." }, language)}
+      </p>
+      <div className="grid gap-3">
+        {gateWaitRows.map((row) => (
+          <div key={row.gate} className="grid grid-cols-[48px_minmax(0,1fr)_58px] items-center gap-3">
+            <span className="font-mono text-sm font-semibold">{row.gate}</span>
+            <ProgressBar value={row.wait} max={30} color={toneCssVar(row.tone)} />
+            <span className="justify-self-end font-mono text-sm text-muted-foreground">{row.wait}m</span>
+          </div>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function BaggageClaimStatus() {
+  const { language } = useLocale();
+  return (
+    <SectionPanel title={localize({ en: "Baggage claim status", ar: "حالة استلام الأمتعة" }, language)} action={<StatusPill tone="neutral">{localize({ en: "Sample", ar: "عينة" }, language)}</StatusPill>}>
+      <div className="grid gap-3">
+        {baggageRows.map((row) => (
+          <article key={row.belt} className="panel-inner flex items-center justify-between gap-3 p-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-background/60">
+                <BaggageClaim aria-hidden="true" className="h-4 w-4 text-primary" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold">{row.belt}</h3>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">{row.flight}</p>
+              </div>
+            </div>
+            <StatusPill tone={row.tone}>{localize(row.status, language)}</StatusPill>
+          </article>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function SecurityThroughputPanel() {
+  const { language } = useLocale();
+  return (
+    <SectionPanel title={localize({ en: "Security lane throughput", ar: "إنتاجية مسارات الأمن" }, language)}>
+      <div className="grid gap-4">
+        {securityThroughputRows.map((row) => (
+          <div key={row.lane}>
+            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
+              <span className="font-semibold">{row.lane}</span>
+              <span className="text-muted-foreground">{row.open}/{row.total} · {row.paxPerHour} pax/h</span>
+            </div>
+            <ProgressBar value={row.open} max={row.total} color="var(--cyan)" />
+          </div>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function GateChangeFrequencyPanel() {
+  const { language } = useLocale();
+  const max = Math.max(...gateChangeFrequencyRows.map((row) => row.changes));
+  return (
+    <SectionPanel title={localize({ en: "Gate change frequency", ar: "تكرار تغيير البوابات" }, language)}>
+      <p className="mb-4 text-sm text-muted-foreground">
+        {localize({ en: "Use this as a trust signal: repeated changes create passenger confusion and service load.", ar: "استخدمه كمؤشر ثقة: كثرة تغييرات البوابات تسبب ارتباكا للركاب وضغطا على الخدمة." }, language)}
+      </p>
+      <div className="grid grid-cols-3 items-end gap-4">
+        {gateChangeFrequencyRows.map((row) => (
+          <div key={row.terminal} className="text-center">
+            <div className="mx-auto flex h-28 max-w-20 items-end rounded-lg bg-secondary/70 p-2">
+              <div className="w-full rounded-md bg-cyan" style={{ height: `${32 + (row.changes / max) * 64}%` }} />
+            </div>
+            <p className="mt-2 text-lg font-semibold">{row.changes}</p>
+            <p className="font-mono text-xs text-muted-foreground">{row.terminal}</p>
+          </div>
+        ))}
+      </div>
+    </SectionPanel>
+  );
+}
+
+function AnomalyWarningsPanel() {
+  const { language } = useLocale();
+  const warnings = [
+    { icon: Gauge, title: { en: "Threshold warning", ar: "تحذير حد تشغيلي" }, detail: { en: "Security may exceed 25 minutes within the next hour.", ar: "قد يتجاوز الأمن 25 دقيقة خلال الساعة القادمة." }, tone: "warn" as Tone },
+    { icon: RadioTower, title: { en: "Ground crew buffer", ar: "احتياطي الطاقم الأرضي" }, detail: { en: "Coverage is healthy; keep floaters near T3 passport.", ar: "التغطية جيدة؛ أبق الدعم المتحرك قرب جوازات مبنى 3." }, tone: "ok" as Tone },
+    { icon: DoorOpen, title: { en: "Open counter recommendation", ar: "توصية فتح كاونتر" }, detail: { en: "Open two counters before the +2h forecast peak.", ar: "افتح كاونترين قبل ذروة التوقع بعد ساعتين." }, tone: "info" as Tone },
+  ];
+  return (
+    <SectionPanel title={localize({ en: "Anomaly alerts and recommendations", ar: "تنبيهات الشذوذ والتوصيات" }, language)} action={<StatusPill tone="info">AI</StatusPill>}>
+      <div className="grid gap-3">
+        {warnings.map((warning) => {
+          const Icon = warning.icon;
+          return (
+            <article key={warning.title.en} className="panel-inner flex items-start gap-3 p-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-background/60">
+                <Icon aria-hidden="true" className="h-4 w-4" style={{ color: toneCssVar(warning.tone) }} />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold">{localize(warning.title, language)}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{localize(warning.detail, language)}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </SectionPanel>
   );
 }
 
@@ -634,54 +1214,6 @@ function Hotspot({ left, top, label, active, onClick }: { left: string; top: str
       <span className="block h-4 w-4 rounded-full bg-current" />
       <span className="sr-only">{label}</span>
     </button>
-  );
-}
-
-function TerminalQuickFacts() {
-  const { tr } = useLocale();
-  return (
-    <SectionPanel title={tr("Terminal quick facts")}>
-      <div className="space-y-3">
-        {terminalFacts.map((terminal) => (
-          <article key={terminal.code} className="panel-inner p-4">
-            <div className="flex gap-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-primary/40 bg-primary/10 font-mono font-semibold text-primary">{terminal.code}</span>
-              <div className="min-w-0">
-                <h3 className="font-semibold">{tr(terminal.title)}</h3>
-                <p className="mt-1 text-sm leading-snug text-muted-foreground">{tr(terminal.body)}</p>
-                <p className="mt-2 font-mono text-[11px] text-muted-foreground">{tr(terminal.detail)}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {terminal.airlines.map((airline) => (
-                    <span key={airline} className="rounded border border-border px-2 py-1 font-mono text-[10px]">
-                      {tr(airline)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-    </SectionPanel>
-  );
-}
-
-function WaitTimes() {
-  const { tr } = useLocale();
-  return (
-    <SectionPanel title={tr("Wait times")}>
-      <div className="space-y-4">
-        {waitTimes.map((item) => (
-          <div key={item.label}>
-            <div className="mb-1 flex items-center justify-between text-sm">
-              <span>{tr(item.label)}</span>
-              <StatusPill tone={item.tone}>{item.value}m</StatusPill>
-            </div>
-            <ProgressBar value={item.value} max={25} color={item.tone === "warn" ? "var(--status-warn)" : "var(--cyan)"} />
-          </div>
-        ))}
-      </div>
-    </SectionPanel>
   );
 }
 
