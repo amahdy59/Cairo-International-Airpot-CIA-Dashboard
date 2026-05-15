@@ -7,9 +7,11 @@ import {
   Eye,
   Flame,
   Languages,
+  Moon,
   Plane,
   Radar,
   ShieldCheck,
+  Sun,
   Users,
   Wrench,
   X,
@@ -35,10 +37,18 @@ type AirportScene = {
   label: string;
   title: string;
   summary: string;
-  objectPosition: string;
+  lightImage: string;
+  darkImage: string;
+  objectPosition?: string;
+  hotspots: {
+    left: string;
+    top: string;
+    label: string;
+    target: AirportScene["id"];
+  }[];
 };
 
-const ASSET = "/manager-assets/digital-twin-reference.png";
+const HERO_PLANE = "/manager-assets/hero-egyptair-plane.png";
 
 const LocaleContext = createContext<Language>("en");
 
@@ -52,6 +62,10 @@ const arText: Record<string, string> = {
   "Use the airport image as the main interactive canvas. Click the hotspots to inspect details and shift into terminal views.": "استخدم صورة المطار كلوحة تفاعلية رئيسية. اضغط على النقاط النشطة لعرض التفاصيل والانتقال إلى عروض المباني.",
   "View real image": "عرض الصورة",
   "Cairo Airport digital twin reference": "مرجع التوأم الرقمي لمطار القاهرة",
+  "Show Dark Mode": "عرض الوضع الداكن",
+  "Show Light Mode": "عرض الوضع الفاتح",
+  "Dark view": "عرض داكن",
+  "Light view": "عرض فاتح",
   "Selected area": "المنطقة المحددة",
   "Airport overview": "نظرة عامة على المطار",
   "High-level airport map showing terminals, roads, parking, airside zones, runways, and transfer connections.": "خريطة عالية المستوى تعرض المباني والطرق والمواقف ومناطق الحركة الجوية والمدارج وروابط النقل.",
@@ -223,28 +237,58 @@ const scenes: AirportScene[] = [
     label: "Airport overview",
     title: "Airport overview",
     summary: "High-level airport map showing terminals, roads, parking, airside zones, runways, and transfer connections.",
+    lightImage: "/manager-assets/overview-light.png",
+    darkImage: "/manager-assets/overview-dark.png",
     objectPosition: "top center",
+    hotspots: [
+      { left: "21%", top: "58%", label: "Terminal 1", target: "t1" },
+      { left: "70%", top: "47%", label: "Terminal 2", target: "t2" },
+      { left: "46%", top: "40%", label: "Terminal 3", target: "t3" },
+    ],
   },
   {
     id: "t1",
     label: "Terminal 1",
     title: "Terminal 1",
     summary: "Separate terminal area serving selected domestic, regional and international operations.",
-    objectPosition: "center 29%",
+    lightImage: "/manager-assets/terminal-1-light.png",
+    darkImage: "/manager-assets/terminal-1-dark.png",
+    objectPosition: "center center",
+    hotspots: [
+      { left: "50%", top: "31%", label: "Terminal 1", target: "t1" },
+      { left: "36%", top: "49%", label: "Departures", target: "t1" },
+      { left: "64%", top: "48%", label: "Arrivals", target: "t1" },
+      { left: "50%", top: "78%", label: "Parking", target: "t1" },
+    ],
   },
   {
     id: "t2",
     label: "Terminal 2",
     title: "Terminal 2",
     summary: "International terminal connected operationally with the Terminal 3 side of the airport.",
-    objectPosition: "center 58%",
+    lightImage: "/manager-assets/terminal-2-light.png",
+    darkImage: "/manager-assets/terminal-2-dark.png",
+    objectPosition: "center center",
+    hotspots: [
+      { left: "50%", top: "43%", label: "Terminal 2", target: "t2" },
+      { left: "50%", top: "68%", label: "Road access", target: "t2" },
+      { left: "72%", top: "28%", label: "Apron", target: "t2" },
+    ],
   },
   {
     id: "t3",
     label: "Terminal 3",
     title: "Terminal 3",
     summary: "Major passenger terminal and hub-style area with large concourse and gate capacity.",
-    objectPosition: "center 88%",
+    lightImage: "/manager-assets/terminal-3-light.png",
+    darkImage: "/manager-assets/terminal-3-dark.png",
+    objectPosition: "center center",
+    hotspots: [
+      { left: "50%", top: "43%", label: "Terminal 3", target: "t3" },
+      { left: "27%", top: "54%", label: "West pier", target: "t3" },
+      { left: "72%", top: "53%", label: "East pier", target: "t3" },
+      { left: "50%", top: "72%", label: "Road access", target: "t3" },
+    ],
   },
 ];
 
@@ -346,9 +390,9 @@ export function App() {
 
   return (
     <LocaleContext.Provider value={language}>
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <Header language={language} setLanguage={setLanguage} highContrast={highContrast} setHighContrast={setHighContrast} times={times} />
-      <main id="main" className="mx-auto grid w-full max-w-[1480px] gap-4 px-3 py-4 sm:gap-5 sm:px-5 lg:gap-6 lg:px-6">
+      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-4 overflow-x-hidden px-3 py-4 sm:gap-5 sm:px-5 lg:gap-6 lg:px-6">
         <Hero activeTab={activeTab} setActiveTab={setActiveTab} language={language} />
         {activeTab === "digital" && <DigitalTwinView />}
         {activeTab === "operations" && <OperationsView />}
@@ -387,7 +431,7 @@ function Header({
         {tr("Skip to content")}
       </a>
       <div className="mx-auto flex min-h-16 max-w-[1480px] items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" className="flex min-w-0 items-center gap-3 rounded-md" aria-label={tr("Go to dashboard")}>
+        <a href="#main" className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
           </span>
@@ -406,7 +450,7 @@ function Header({
           <button type="button" onClick={() => setHighContrast(!highContrast)} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
           </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 text-sm hover:bg-secondary" aria-label={c.language}>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 text-sm hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
             <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
             {language === "en" ? "AR" : "EN"}
           </button>
@@ -436,11 +480,16 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
 
   return (
     <section className="manager-hero panel overflow-hidden p-4 sm:p-6">
-      <div className="relative z-10">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
+      <img
+        src={HERO_PLANE}
+        alt="EgyptAir aircraft in flight"
+        className="pointer-events-none absolute right-3 top-3 z-[1] hidden h-16 w-auto max-w-[34%] object-contain opacity-95 drop-shadow-[0_14px_22px_rgba(0,0,0,0.45)] sm:block md:h-20 lg:h-24 xl:h-28"
+      />
+      <div className="relative z-10 min-w-0">
+        <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
         <h1 className="mt-2 max-w-3xl text-2xl font-semibold tracking-tight sm:text-4xl">{c.heroTitle}</h1>
         <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground sm:text-base">{c.heroBody}</p>
-        <div className="mt-5 grid w-full grid-cols-1 gap-2 rounded-xl border border-border bg-background/45 p-2 backdrop-blur-md sm:inline-flex sm:w-auto sm:flex-wrap" role="tablist" aria-label={tr("Manager dashboard sections")}>
+        <nav className="mt-5 grid w-full max-w-full grid-cols-1 gap-2 rounded-xl border border-border bg-background/45 p-2 backdrop-blur-md sm:inline-flex sm:w-auto sm:flex-wrap" role="tablist" aria-label={tr("Manager dashboard sections")}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -457,7 +506,7 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
               </button>
             );
           })}
-        </div>
+        </nav>
       </div>
     </section>
   );
@@ -466,16 +515,20 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
 function DigitalTwinView() {
   const { tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("overview");
+  const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [imageOpen, setImageOpen] = useState(false);
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
+  const activeImage = imageMode === "dark" ? activeScene.darkImage : activeScene.lightImage;
+  const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
+  const imageModeLabel = imageMode === "dark" ? tr("Dark view") : tr("Light view");
 
   return (
-    <div className="grid min-w-0 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
+    <div className="grid min-w-0 gap-4 lg:gap-6">
       <SectionPanel className="overflow-hidden p-0" title="">
-        <div className="border-b border-border p-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{tr("Interactive airport image map")}</p>
+        <div className="min-w-0 border-b border-border p-4">
+          <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{tr("Interactive airport image map")}</p>
           <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+            <div className="min-w-0">
               <h2 className="text-xl font-semibold sm:text-2xl">{tr("Cairo Airport visual command map")}</h2>
               <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
                 {tr("Use the airport image as the main interactive canvas. Click the hotspots to inspect details and shift into terminal views.")}
@@ -488,41 +541,72 @@ function DigitalTwinView() {
           </div>
         </div>
 
-        <div className="relative min-h-[320px] overflow-hidden bg-black sm:min-h-[420px] lg:min-h-[520px]">
-          <img src={ASSET} alt={tr("Cairo Airport digital twin reference")} className="h-[320px] w-full object-cover opacity-90 transition-[object-position] duration-500 sm:h-[420px] lg:h-[520px]" style={{ objectPosition: activeScene.objectPosition }} />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/65 via-transparent to-transparent" />
-          <Hotspot left="50%" top="26%" label="T3" active={activeSceneId === "t3"} onClick={() => setActiveSceneId("t3")} />
-          <Hotspot left="31%" top="44%" label="T1" active={activeSceneId === "t1"} onClick={() => setActiveSceneId("t1")} />
-          <Hotspot left="65%" top="38%" label="T2" active={activeSceneId === "t2"} onClick={() => setActiveSceneId("t2")} />
-          <Hotspot left="50%" top="62%" label="Overview" active={activeSceneId === "overview"} onClick={() => setActiveSceneId("overview")} />
-        </div>
+        <div className="grid min-w-0 gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+          <div className="relative min-h-[300px] min-w-0 overflow-hidden bg-black sm:min-h-[430px] lg:min-h-[620px]">
+            <img
+              src={activeImage}
+              alt={`${tr(activeScene.title)} - ${imageModeLabel}`}
+              className="h-[300px] w-full object-cover opacity-95 transition-[object-position,opacity] duration-500 sm:h-[430px] lg:h-[620px]"
+              style={{ objectPosition: activeScene.objectPosition }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/45 via-transparent to-background/10" />
+            {activeScene.id !== "overview" && (
+              <button
+                type="button"
+                onClick={() => setActiveSceneId("overview")}
+                className="absolute left-4 top-4 inline-flex h-9 items-center justify-center rounded-md border border-border bg-background/70 px-3 text-xs font-semibold backdrop-blur-md hover:bg-secondary"
+              >
+                {tr("Back to overview")}
+              </button>
+            )}
+            {activeScene.hotspots.map((hotspot) => (
+              <Hotspot
+                key={`${activeScene.id}-${hotspot.label}-${hotspot.left}`}
+                left={hotspot.left}
+                top={hotspot.top}
+                label={hotspot.label}
+                active={activeSceneId === hotspot.target}
+                onClick={() => setActiveSceneId(hotspot.target)}
+              />
+            ))}
+          </div>
 
-        <div className="grid gap-4 border-t border-border p-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{tr("Selected area")}</p>
-            <h3 className="mt-2 text-lg font-semibold">{tr(activeScene.title)}</h3>
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">{tr(activeScene.summary)}</p>
-          </div>
-          <div className="flex flex-wrap items-start gap-2">
-            <button type="button" onClick={() => setImageOpen(true)} className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-medium hover:bg-secondary sm:flex-none">
-              <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
-              {tr("View real image")}
-            </button>
-            <button type="button" onClick={() => setActiveSceneId(activeScene.id === "overview" ? "t3" : "overview")} className="inline-flex h-10 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 sm:flex-none">
-              {activeScene.id === "overview" ? tr("Open detailed view") : tr("Back to overview")}
-            </button>
-          </div>
+          <aside className="grid min-w-0 content-start gap-4 border-t border-border p-4 lg:border-s lg:border-t-0">
+            <div className="panel-inner p-4 sm:p-5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{tr("Selected area")}</p>
+              <h3 className="mt-3 text-xl font-semibold sm:text-2xl">{tr(activeScene.title)}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">{tr(activeScene.summary)}</p>
+              <div className="mt-5 grid gap-2">
+                <button type="button" onClick={() => setImageOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-semibold hover:bg-secondary">
+                  <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
+                  {tr("View real image")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                  aria-pressed={imageMode === "dark"}
+                >
+                  <ImageModeIcon aria-hidden="true" className="h-4 w-4" />
+                  {imageMode === "dark" ? tr("Show Light Mode") : tr("Show Dark Mode")}
+                </button>
+                <button type="button" onClick={() => setActiveSceneId(activeScene.id === "overview" ? "t3" : "overview")} className="inline-flex h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-semibold hover:bg-secondary">
+                  {activeScene.id === "overview" ? tr("Open detailed view") : tr("Back to overview")}
+                </button>
+              </div>
+            </div>
+          </aside>
         </div>
       </SectionPanel>
 
-      <aside className="grid content-start gap-6">
+      <aside className="grid content-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
         <TerminalQuickFacts />
         <WaitTimes />
       </aside>
 
       {imageOpen && (
         <Modal title={activeScene.title} onClose={() => setImageOpen(false)}>
-          <img src={ASSET} alt={tr(activeScene.title)} className="max-h-[72vh] w-full rounded-lg object-cover" style={{ objectPosition: activeScene.objectPosition }} />
+          <img src={activeImage} alt={`${tr(activeScene.title)} - ${imageModeLabel}`} className="max-h-[72vh] w-full rounded-lg object-cover" style={{ objectPosition: activeScene.objectPosition }} />
           <p className="mt-3 text-sm text-muted-foreground">{tr(activeScene.summary)}</p>
         </Modal>
       )}
