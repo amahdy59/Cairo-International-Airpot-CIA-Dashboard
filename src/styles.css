@@ -153,7 +153,17 @@
   }
 
   html[dir="rtl"] .font-mono {
-    letter-spacing: 0.02em;
+    font-family: var(--font-display);
+    letter-spacing: 0;
+    font-feature-settings: normal;
+  }
+
+  html[dir="rtl"] [class*="tracking-"] {
+    letter-spacing: 0;
+  }
+
+  html[dir="rtl"] .uppercase {
+    text-transform: none;
   }
 
   button,
