@@ -91,7 +91,7 @@
   --status-crit: oklch(0.68 0.25 25);    /* red */
   --magenta: oklch(0.70 0.27 340);
   --cyan: oklch(0.82 0.15 210);
-  --grid: oklch(0.35 0.05 250 / 0.35);
+  --grid: oklch(0.45 0.04 250 / 0.10);
 
   --chart-1: var(--cyan);
   --chart-2: var(--magenta);
@@ -137,12 +137,10 @@
   html, body {
     background-color: var(--color-background);
     background-image:
-      linear-gradient(color-mix(in oklab, var(--cyan) 24%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 24%, transparent) 1px, transparent 1px),
-      linear-gradient(color-mix(in oklab, var(--cyan) 12%, transparent) 2px, transparent 2px),
-      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 12%, transparent) 2px, transparent 2px),
-      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 16%, transparent), transparent 30rem);
-    background-size: 32px 32px, 32px 32px, 160px 160px, 160px 160px, auto;
+      linear-gradient(color-mix(in oklab, var(--cyan) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 6%, transparent) 1px, transparent 1px),
+      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 8%, transparent), transparent 30rem);
+    background-size: 56px 56px, 56px 56px, auto;
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-display);
@@ -180,8 +178,8 @@
   }
   .panel {
     background: linear-gradient(180deg,
-      color-mix(in oklab, var(--surface) 70%, transparent),
-      color-mix(in oklab, var(--surface-2) 64%, transparent));
+      color-mix(in oklab, var(--surface) 82%, transparent),
+      color-mix(in oklab, var(--surface-2) 78%, transparent));
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     box-shadow:
@@ -191,7 +189,7 @@
     -webkit-backdrop-filter: blur(14px) saturate(145%);
   }
   .panel-inner {
-    background: color-mix(in oklab, var(--background) 68%, transparent);
+    background: color-mix(in oklab, var(--background) 82%, transparent);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
@@ -220,10 +218,10 @@
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(color-mix(in oklab, var(--cyan) 16%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 16%, transparent) 1px, transparent 1px);
-    background-size: 42px 42px;
-    opacity: 0.55;
+      linear-gradient(color-mix(in oklab, var(--cyan) 9%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 9%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    opacity: 0.32;
     pointer-events: none;
   }
   .skeleton-line {

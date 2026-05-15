@@ -576,7 +576,7 @@ function SafetyView() {
         <DecisionRecommendations />
         <SafetyControls />
       </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)]">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,0.96fr)_minmax(460px,1.04fr)]">
         <SafetyAlertAge />
         <SafetyChecks />
       </div>
@@ -643,15 +643,15 @@ function SafetyAlertAge() {
   ];
   const max = Math.max(...buckets.map((item) => item.value));
   return (
-    <SectionPanel title="Safety alert age" action={<div className="flex gap-2"><StatusPill tone="neutral">Sample</StatusPill><StatusPill tone="warn">1 overdue</StatusPill></div>}>
+    <SectionPanel title="Safety alert age" action={<div className="flex shrink-0 flex-wrap justify-end gap-2"><StatusPill tone="neutral">Sample</StatusPill><StatusPill tone="warn">1 overdue</StatusPill></div>} className="h-fit self-start">
       <p className="mb-5 text-sm text-muted-foreground">Aging buckets show whether issues are accumulating before they become critical.</p>
-      <div className="grid grid-cols-4 items-end gap-4">
+      <div className="grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
         {buckets.map((bucket) => {
-          const height = 44 + (bucket.value / max) * 64;
+          const height = 40 + (bucket.value / max) * 58;
           const color = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
           return (
             <div key={bucket.label} className="text-center">
-              <div className="mx-auto flex h-32 max-w-20 items-end rounded-lg bg-secondary/70 p-2">
+              <div className="mx-auto flex h-28 w-full max-w-18 items-end rounded-lg bg-secondary/70 p-2">
                 <div className={`w-full rounded-md ${color}`} style={{ height }} aria-label={`${bucket.value} ${bucket.label} alerts`} />
               </div>
               <p className="mt-2 text-lg font-semibold">{bucket.value}</p>
@@ -666,22 +666,24 @@ function SafetyAlertAge() {
 
 function SafetyChecks() {
   return (
-    <SectionPanel title="Safety checks">
-      <div className="space-y-3">
+    <SectionPanel title="Safety checks" className="h-fit self-start">
+      <div className="grid gap-3">
         {safetyChecks.map((item) => {
           const Icon = item.icon;
           return (
-            <article key={item.title} className="panel-inner flex items-center justify-between gap-4 p-4">
-              <div className="flex items-center gap-4">
+            <article key={item.title} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div className="flex min-w-0 items-center gap-4">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-primary/40 bg-primary/10">
                   <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
                 </span>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-semibold">{item.title}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{item.detail}</p>
                 </div>
               </div>
-              <StatusPill tone={item.tone}>{item.badge}</StatusPill>
+              <div className="sm:justify-self-end">
+                <StatusPill tone={item.tone}>{item.badge}</StatusPill>
+              </div>
             </article>
           );
         })}
