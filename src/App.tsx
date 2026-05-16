@@ -1332,7 +1332,7 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
 }
 
 function PassengerFlowChart() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
   return (
     <SectionPanel title={tr("Passenger flow")} action={<StatusPill tone="neutral">{tr("Modelled")}</StatusPill>}>
       <h3 className="text-base font-semibold">{tr("Passenger flow rises into the midday wave")}</h3>
