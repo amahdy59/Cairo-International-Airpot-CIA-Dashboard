@@ -62,20 +62,30 @@ type AviationStackResponse = {
   data?: AviationStackFlight[];
 };
 
-type AirportScene = {
-  id: "overview" | "t1" | "t2" | "t3";
+export type HotspotStatus = 'critical' | 'warning' | 'good' | 'info' | 'offline';
+
+export type MapHotspot = {
+  id: string;
+  cx: number;
+  cy: number;
+  status: HotspotStatus;
+  title: string;
+  category: string;
+  impact?: string;
+  evidence?: string;
+  action?: string;
+  source?: string;
+  updatedAt?: string;
+};
+
+export type AirportScene = {
+  id: 'overview' | 't3-exterior' | 't3-frontage' | 'inter-terminal' | 'services';
   label: string;
   title: string;
   summary: string;
-  lightImage: string;
-  darkImage: string;
+  image: string;
   objectPosition?: string;
-  hotspots: {
-    left: string;
-    top: string;
-    label: string;
-    target: AirportScene["id"];
-  }[];
+  hotspots: MapHotspot[];
 };
 
 const HERO_PLANE = "/manager-assets/hero-egyptair-plane.webp";
@@ -301,59 +311,56 @@ const scenes: AirportScene[] = [
     label: "Airport overview",
     title: "Airport overview",
     summary: "High-level airport map showing terminals, roads, parking, airside zones, runways, and transfer connections.",
-    lightImage: "/manager-assets/overview-light.webp",
-    darkImage: "/manager-assets/overview-dark.webp",
-    objectPosition: "top center",
+    image: "/manager-assets/cai-overview.jpg",
     hotspots: [
-      { left: "21%", top: "58%", label: "Terminal 1", target: "t1" },
-      { left: "70%", top: "47%", label: "Terminal 2", target: "t2" },
-      { left: "46%", top: "40%", label: "Terminal 3", target: "t3" },
-    ],
+      { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Smooth processing across T3.", evidence: "Wait times < 5 mins.", source: "Ops Sensor", updatedAt: "14:04" },
+      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Landside Parking Congestion", category: "Landside", impact: "Drivers experiencing delays entering parking.", evidence: "Queue > 15 vehicles.", action: "Deploy traffic wardens.", source: "Traffic Cam", updatedAt: "14:02" },
+      { id: "runway-05r", cx: 75.0, cy: 15.0, status: "info", title: "Runway 05R/23L Active", category: "Airside", source: "ATC", updatedAt: "13:50" }
+    ]
   },
   {
-    id: "t1",
-    label: "Terminal 1",
-    title: "Terminal 1",
-    summary: "Separate terminal area serving selected domestic, regional and international operations.",
-    lightImage: "/manager-assets/terminal-1-light.webp",
-    darkImage: "/manager-assets/terminal-1-dark.webp",
-    objectPosition: "center center",
+    id: "t3-exterior",
+    label: "Terminal 3 Exterior",
+    title: "Terminal 3 Exterior",
+    summary: "Airside and landside view of the main international hub.",
+    image: "/manager-assets/cai-t3-exterior.jpg",
     hotspots: [
-      { left: "50%", top: "31%", label: "Terminal 1", target: "t1" },
-      { left: "36%", top: "49%", label: "Departures", target: "t1" },
-      { left: "64%", top: "48%", label: "Arrivals", target: "t1" },
-      { left: "50%", top: "78%", label: "Parking", target: "t1" },
-    ],
+      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Delay", category: "Operations", impact: "Passengers may miss connection.", evidence: "Aircraft delayed by 18 mins.", action: "Assign ramp runner.", source: "Gate Agent", updatedAt: "14:10" },
+      { id: "t3-apron", cx: 80.0, cy: 60.0, status: "good", title: "Apron Clear", category: "Safety", source: "Ground Radar", updatedAt: "14:05" }
+    ]
   },
   {
-    id: "t2",
-    label: "Terminal 2",
-    title: "Terminal 2",
-    summary: "International terminal connected operationally with the Terminal 3 side of the airport.",
-    lightImage: "/manager-assets/terminal-2-light.webp",
-    darkImage: "/manager-assets/terminal-2-dark.webp",
-    objectPosition: "center center",
+    id: "t3-frontage",
+    label: "Terminal 3 Frontage",
+    title: "Terminal 3 Frontage",
+    summary: "Curbside access, drop-off zones, and passenger arrival flows.",
+    image: "/manager-assets/cai-t3-frontage.jpg",
     hotspots: [
-      { left: "50%", top: "43%", label: "Terminal 2", target: "t2" },
-      { left: "50%", top: "68%", label: "Road access", target: "t2" },
-      { left: "72%", top: "28%", label: "Apron", target: "t2" },
-    ],
+      { id: "curbside-drop", cx: 40.0, cy: 65.0, status: "warning", title: "Curbside Congestion", category: "Landside", impact: "Traffic backing up to main road.", evidence: "Dwell time > 5 mins.", action: "Dispatch police to clear idling vehicles.", source: "CCTV", updatedAt: "14:08" }
+    ]
   },
   {
-    id: "t3",
-    label: "Terminal 3",
-    title: "Terminal 3",
-    summary: "Major passenger terminal and hub-style area with large concourse and gate capacity.",
-    lightImage: "/manager-assets/terminal-3-light.webp",
-    darkImage: "/manager-assets/terminal-3-dark.webp",
-    objectPosition: "center center",
+    id: "inter-terminal",
+    label: "APM Connection",
+    title: "Inter-Terminal Connection",
+    summary: "Automated People Mover connecting Terminal 2 and 3.",
+    image: "/manager-assets/cai-inter-terminal.jpg",
     hotspots: [
-      { left: "50%", top: "43%", label: "Terminal 3", target: "t3" },
-      { left: "27%", top: "54%", label: "West pier", target: "t3" },
-      { left: "72%", top: "53%", label: "East pier", target: "t3" },
-      { left: "50%", top: "72%", label: "Road access", target: "t3" },
-    ],
+      { id: "apm-station", cx: 25.0, cy: 45.0, status: "good", title: "APM Operational", category: "Transport", evidence: "Headway 3 mins.", source: "APM Control", updatedAt: "14:12" },
+      { id: "transfer-corridor", cx: 55.0, cy: 40.0, status: "info", title: "Transfer Corridor Normal", category: "Operations", source: "Ops Sensor", updatedAt: "14:12" }
+    ]
   },
+  {
+    id: "services",
+    label: "Services Zone",
+    title: "Services Zone Exterior",
+    summary: "Commercial facilities, banks, medical center, and retail access.",
+    image: "/manager-assets/cai-services.jpg",
+    hotspots: [
+      { id: "medical-center", cx: 48.0, cy: 55.0, status: "info", title: "Medical Center Active", category: "Services", source: "Facilities", updatedAt: "14:00" },
+      { id: "atm-offline", cx: 35.0, cy: 55.0, status: "offline", title: "ATM Maintenance", category: "Services", impact: "No cash withdrawal at this bank.", source: "Bank API", updatedAt: "13:30" }
+    ]
+  }
 ];
 
 const sampleIncomingFlights: IncomingFlight[] = [
@@ -746,12 +753,68 @@ function DigitalTwinView() {
   const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("overview");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
-  const [imageOpen, setImageOpen] = useState(false);
+  const [filterMode, setFilterMode] = useState<HotspotStatus | "all">("all");
+  const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const incoming = useIncomingCaiFlights();
+
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
-  const activeImage = imageMode === "dark" ? activeScene.darkImage : activeScene.lightImage;
   const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
-  const imageModeLabel = imageMode === "dark" ? tr("Dark view") : tr("Light view");
+  
+  // Filter hotspots based on selected filter
+  const visibleHotspots = activeScene.hotspots.filter(h => filterMode === "all" || h.status === filterMode);
+  const selectedHotspot = activeScene.hotspots.find(h => h.id === selectedHotspotId);
+
+  // Status Summary
+  const stats = {
+    critical: activeScene.hotspots.filter(h => h.status === "critical").length,
+    warning: activeScene.hotspots.filter(h => h.status === "warning").length,
+    good: activeScene.hotspots.filter(h => h.status === "good").length,
+  };
+
+  const getStatusColor = (status: HotspotStatus) => {
+    switch (status) {
+      case "critical": return "#D92D20";
+      case "warning": return "#F79009";
+      case "good": return "#12B76A";
+      case "info": return "#2E90FA";
+      case "offline": return "#98A2B3";
+    }
+  };
+
+  const renderHotspotMarker = (hotspot: MapHotspot) => {
+    const isSelected = selectedHotspotId === hotspot.id;
+    const color = getStatusColor(hotspot.status);
+    
+    // SVG Hotspot
+    return (
+      <g 
+        key={hotspot.id} 
+        transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
+        onClick={() => setSelectedHotspotId(hotspot.id)}
+        className="cursor-pointer"
+      >
+        {/* Outer Glow */}
+        <circle 
+          r={isSelected ? "28" : "20"} 
+          fill={color} 
+          opacity="0.25" 
+          className={hotspot.status === "critical" ? "animate-pulse" : ""}
+        />
+        {/* Main Ring */}
+        <circle 
+          r={isSelected ? "14" : "10"} 
+          fill="none" 
+          stroke={color} 
+          strokeWidth={isSelected ? "3" : "2"} 
+        />
+        {/* Inner Dot */}
+        <circle 
+          r={isSelected ? "6" : "4"} 
+          fill={color} 
+        />
+      </g>
+    );
+  };
 
   return (
     <div className="grid min-w-0 gap-4 lg:gap-6">
@@ -760,88 +823,195 @@ function DigitalTwinView() {
 
       <SectionPanel className="overflow-hidden p-0" title="">
         <div className="min-w-0 border-b border-border p-4">
-          <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{tr("Interactive airport image map")}</p>
-          <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <h2 className="text-xl font-semibold sm:text-2xl">{localize({ en: "Passenger density map", ar: "خريطة كثافة الركاب" }, language)}</h2>
-              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                {localize({ en: "Heat overlays show where passenger pressure is building across terminals and processing zones.", ar: "توضح طبقات الحرارة أين يتزايد ضغط الركاب داخل المباني ومناطق المعالجة." }, language)}
-              </p>
+              <h2 className="text-xl font-semibold sm:text-2xl">{localize({ en: "Airport Operational Insight Map", ar: "خريطة الرؤية التشغيلية للمطار" }, language)}</h2>
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#D92D20]" /> {stats.critical} Critical</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F79009]" /> {stats.warning} Needs attention</span>
+                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#12B76A]" /> {stats.good} Good</span>
+                <span className="border-l border-border pl-4">Updated: 14:04</span>
+                <span>Mode: Live</span>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2" aria-label={localize({ en: "Density legend", ar: "مفتاح الكثافة" }, language)}>
-              <DensityLegend tone="ok" label={localize({ en: "Low", ar: "منخفض" }, language)} />
-              <DensityLegend tone="warn" label={localize({ en: "Medium", ar: "متوسط" }, language)} />
-              <DensityLegend tone="crit" label={localize({ en: "High", ar: "مرتفع" }, language)} />
+            
+            <div className="flex flex-wrap gap-2">
+              {(["all", "critical", "warning", "good", "info"] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setFilterMode(f)}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${filterMode === f ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+                >
+                  {f === "all" ? "All insights" : f === "warning" ? "Needs attention" : f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
+                className="ml-2 inline-flex items-center justify-center gap-2 rounded-full border border-border px-4 py-1.5 text-xs font-semibold hover:bg-secondary"
+              >
+                <ImageModeIcon className="h-3.5 w-3.5" />
+                {imageMode === "dark" ? "Light mode" : "Dark mode"}
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
-          <div className="relative min-h-[300px] min-w-0 overflow-hidden bg-black sm:min-h-[430px] lg:min-h-[620px]">
-            <img
-              src={activeImage}
-              alt={`${tr(activeScene.title)} - ${imageModeLabel}`}
-              className="h-[300px] w-full object-cover opacity-95 transition-[object-position,opacity] duration-500 sm:h-[430px] lg:h-[620px]"
-              style={{ objectPosition: activeScene.objectPosition }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/45 via-transparent to-background/10" />
-            {activeScene.id === "overview" && <DensityOverlay />}
+        <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
+          <div className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
+            <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
+              <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none" }} />
+              
+              {/* Optional Density Overlays inside SVG */}
+              {activeScene.id === "overview" && (
+                 <g opacity="0.3">
+                    <circle cx="800" cy="500" r="150" fill="url(#density-high)" />
+                    <circle cx="400" cy="600" r="100" fill="url(#density-medium)" />
+                 </g>
+              )}
+
+              {/* Definitions for overlays */}
+              <defs>
+                 <radialGradient id="density-high">
+                    <stop offset="0%" stopColor="#B42318" />
+                    <stop offset="100%" stopColor="#B42318" stopOpacity="0" />
+                 </radialGradient>
+                 <radialGradient id="density-medium">
+                    <stop offset="0%" stopColor="#B54708" />
+                    <stop offset="100%" stopColor="#B54708" stopOpacity="0" />
+                 </radialGradient>
+              </defs>
+
+              {/* Render Hotspots */}
+              {visibleHotspots.map(renderHotspotMarker)}
+            </svg>
+
+            {/* Back button overlay */}
             {activeScene.id !== "overview" && (
               <button
                 type="button"
-                onClick={() => setActiveSceneId("overview")}
-                className="absolute left-4 top-4 inline-flex h-9 items-center justify-center rounded-md border border-border bg-background/70 px-3 text-xs font-semibold backdrop-blur-md hover:bg-secondary"
+                onClick={() => {
+                  setActiveSceneId("overview");
+                  setSelectedHotspotId(null);
+                }}
+                className="absolute left-4 top-4 inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background/80 px-4 text-sm font-semibold backdrop-blur-md hover:bg-background"
               >
-                {tr("Back to overview")}
+                Reset map
               </button>
             )}
-            {activeScene.id === "overview" && activeScene.hotspots.map((hotspot) => (
-              <Hotspot
-                key={`${activeScene.id}-${hotspot.label}-${hotspot.left}`}
-                left={hotspot.left}
-                top={hotspot.top}
-                label={hotspot.label}
-                active={activeSceneId === hotspot.target}
-                onClick={() => setActiveSceneId(hotspot.target)}
-              />
-            ))}
+            
+            {/* Quick Scene Navigation */}
+            {activeScene.id === "overview" && (
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-background/80 p-2 backdrop-blur-md">
+                 {scenes.filter(s => s.id !== "overview").map(s => (
+                   <button
+                     key={s.id}
+                     onClick={() => {
+                        setActiveSceneId(s.id);
+                        setSelectedHotspotId(null);
+                     }}
+                     className="rounded-full px-4 py-1.5 text-xs font-semibold hover:bg-secondary"
+                   >
+                     {s.title}
+                   </button>
+                 ))}
+              </div>
+            )}
           </div>
 
-          <aside className="grid min-w-0 content-start gap-4 border-t border-border p-4 xl:border-s xl:border-t-0">
-            <div className="panel-inner p-4 sm:p-5">
-              <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{tr("Selected area")}</p>
-              <h3 className="mt-3 text-xl font-semibold sm:text-2xl">{tr(activeScene.title)}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">{tr(activeScene.summary)}</p>
-              <div className="mt-5 grid gap-2">
-                <button type="button" onClick={() => setImageOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-semibold hover:bg-secondary">
-                  <Eye aria-hidden="true" className="h-4 w-4 text-primary" />
-                  {tr("View real image")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
-                  aria-pressed={imageMode === "dark"}
+          <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[800px] overflow-y-auto">
+            {selectedHotspot ? (
+              <div className="p-6">
+                <button 
+                  onClick={() => setSelectedHotspotId(null)}
+                  className="mb-6 inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
-                  <ImageModeIcon aria-hidden="true" className="h-4 w-4" />
-                  {imageMode === "dark" ? tr("Show Light Mode") : tr("Show Dark Mode")}
+                  ← Back to {activeScene.title}
                 </button>
+                
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white" style={{ backgroundColor: getStatusColor(selectedHotspot.status) }}>
+                    {selectedHotspot.status === "warning" ? "Needs attention" : selectedHotspot.status.charAt(0).toUpperCase() + selectedHotspot.status.slice(1)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{selectedHotspot.category}</span>
+                  <span className="text-xs text-muted-foreground">• Updated {selectedHotspot.updatedAt}</span>
+                </div>
+
+                <h3 className="text-2xl font-bold tracking-tight mb-6">{selectedHotspot.title}</h3>
+
+                <div className="space-y-6">
+                  {selectedHotspot.impact && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Impact</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedHotspot.impact}</p>
+                    </div>
+                  )}
+                  {selectedHotspot.evidence && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Evidence</h4>
+                      <div className="rounded-md bg-secondary/50 p-3 border border-border/50">
+                        <p className="text-sm font-mono text-secondary-foreground">{selectedHotspot.evidence}</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedHotspot.action && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Recommended Action</h4>
+                      <div className="rounded-md border-l-2 border-primary bg-primary/5 p-4">
+                        <p className="text-sm font-medium text-primary">{selectedHotspot.action}</p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedHotspot.source && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-1">Source</h4>
+                      <p className="text-xs text-muted-foreground">{selectedHotspot.source}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
-            <ZoneStatusPanel />
+            ) : (
+              <div className="p-6">
+                <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{tr("Area Overview")}</p>
+                <h3 className="mt-3 text-2xl font-bold tracking-tight">{tr(activeScene.title)}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{tr(activeScene.summary)}</p>
+                
+                <div className="mt-8 border-t border-border pt-6">
+                  <h4 className="text-sm font-semibold mb-4">Active Issues in Area</h4>
+                  <div className="grid gap-3">
+                    {activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").length > 0 ? 
+                      activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").map(h => (
+                        <button 
+                          key={h.id} 
+                          onClick={() => setSelectedHotspotId(h.id)}
+                          className="flex items-start gap-3 rounded-md border border-border p-3 text-left transition hover:border-primary hover:bg-secondary/50"
+                        >
+                          <span className="mt-0.5 block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: getStatusColor(h.status) }} />
+                          <div>
+                            <p className="text-sm font-medium">{h.title}</p>
+                            <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{h.evidence}</p>
+                          </div>
+                        </button>
+                      ))
+                    : (
+                      <p className="text-sm text-muted-foreground italic">No critical issues or attention items in this area.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!selectedHotspot && (
+               <div className="mt-auto border-t border-border p-6 bg-surface-2/50">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider mb-3">Incoming Operations</h4>
+                  <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
+               </div>
+            )}
           </aside>
         </div>
       </SectionPanel>
 
       <DigitalOperationalGrid />
-
-      {imageOpen && (
-        <Modal title={activeScene.title} onClose={() => setImageOpen(false)}>
-          <img src={activeImage} alt={`${tr(activeScene.title)} - ${imageModeLabel}`} className="max-h-[72vh] w-full rounded-lg object-cover" style={{ objectPosition: activeScene.objectPosition }} />
-          <p className="mt-3 text-sm text-muted-foreground">{tr(activeScene.summary)}</p>
-        </Modal>
-      )}
     </div>
   );
 }
