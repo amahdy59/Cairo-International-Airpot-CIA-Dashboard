@@ -638,13 +638,13 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
       <img
         src={HERO_PLANE}
         alt="EgyptAir aircraft in flight"
-        className="pointer-events-none absolute right-4 rtl:left-4 rtl:right-auto rtl:-scale-x-100 top-1/2 z-[1] hidden h-24 w-auto max-w-[42%] -translate-y-1/2 object-contain opacity-95 drop-shadow-[0_16px_24px_rgba(0,0,0,0.45)] sm:block md:h-32 lg:right-8 lg:rtl:left-8 lg:rtl:right-auto lg:h-40 xl:h-48"
+        className="pointer-events-none absolute right-12 rtl:left-12 rtl:right-auto rtl:-scale-x-100 top-1/2 z-[1] hidden h-24 w-auto max-w-[35%] -translate-y-1/2 object-contain opacity-80 drop-shadow-[0_8px_16px_rgba(0,0,0,0.12)] dark:opacity-95 dark:drop-shadow-[0_16px_24px_rgba(0,0,0,0.45)] sm:block md:h-28 lg:right-20 lg:rtl:left-20 lg:rtl:right-auto lg:h-32 xl:h-40"
       />
       <div className="relative z-10 min-w-0">
         <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
         <h1 className="mt-2 max-w-3xl text-2xl font-semibold tracking-tight sm:text-4xl">{c.heroTitle}</h1>
         <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground sm:text-base">{c.heroBody}</p>
-        <nav className="mt-5 grid w-full max-w-full grid-cols-1 gap-2 rounded-xl border border-border bg-background/45 p-2 backdrop-blur-md sm:inline-flex sm:w-auto sm:flex-wrap" role="tablist" aria-label={tr("Manager dashboard sections")}>
+        <nav className="mt-5 grid w-full max-w-full grid-cols-1 gap-3 rounded-xl border border-border bg-background/45 p-2.5 backdrop-blur-md sm:inline-flex sm:w-auto sm:flex-wrap" role="tablist" aria-label={tr("Manager dashboard sections")}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -654,7 +654,7 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition sm:justify-start ${activeTab === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
+                className={`inline-flex h-12 items-center justify-center gap-3 rounded-lg px-6 text-sm font-semibold transition-all duration-300 sm:justify-start ${activeTab === tab.id ? "bg-[#3154D4] dark:bg-primary text-white shadow-[0_8px_20px_rgba(49,84,212,0.22)] dark:shadow-none" : "bg-transparent text-slate-600 hover:bg-secondary/60 hover:text-foreground dark:text-muted-foreground"}`}
               >
                 <Icon aria-hidden="true" className="h-4 w-4" />
                 {tab.label}
