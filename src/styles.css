@@ -12,7 +12,7 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
 
-  --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Inter", "Noto Sans Arabic", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
@@ -49,7 +49,66 @@
   --color-grid: var(--grid);
 }
 
-:root,
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(0.97 0.012 235);
+  --foreground: oklch(0.20 0.04 250);
+
+  --surface: oklch(0.96 0.018 235 / 0.86);
+  --surface-2: oklch(0.91 0.025 238 / 0.82);
+
+  --card: oklch(0.98 0.012 235 / 0.84);
+  --card-foreground: oklch(0.20 0.04 250);
+  --popover: oklch(0.99 0.01 235);
+  --popover-foreground: oklch(0.20 0.04 250);
+
+  --primary: oklch(0.48 0.14 220);
+  --primary-foreground: oklch(0.99 0.01 235);
+  --primary-glow: oklch(0.68 0.14 210);
+
+  --secondary: oklch(0.91 0.025 238);
+  --secondary-foreground: oklch(0.20 0.04 250);
+
+  --muted: oklch(0.91 0.02 238);
+  --muted-foreground: oklch(0.44 0.035 248);
+
+  --accent: oklch(0.52 0.20 335);
+  --accent-foreground: oklch(0.99 0.01 235);
+
+  --destructive: oklch(0.52 0.20 25);
+  --destructive-foreground: oklch(0.99 0.01 235);
+
+  --border: oklch(0.72 0.035 240 / 0.55);
+  --input: oklch(0.72 0.035 240 / 0.55);
+  --ring: oklch(0.48 0.14 220);
+
+  --status-ok: oklch(0.50 0.15 155);
+  --status-info: oklch(0.48 0.14 220);
+  --status-warn: oklch(0.58 0.14 85);
+  --status-high: oklch(0.55 0.17 55);
+  --status-crit: oklch(0.54 0.20 25);
+  --magenta: oklch(0.52 0.20 335);
+  --cyan: oklch(0.48 0.14 220);
+  --grid: oklch(0.42 0.04 240 / 0.10);
+
+  --chart-1: var(--cyan);
+  --chart-2: var(--magenta);
+  --chart-3: var(--status-warn);
+  --chart-4: var(--status-ok);
+  --chart-5: var(--status-high);
+
+  --sidebar: oklch(0.95 0.015 235);
+  --sidebar-foreground: oklch(0.20 0.04 250);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.91 0.025 238);
+  --sidebar-accent-foreground: oklch(0.20 0.04 250);
+  --sidebar-border: oklch(0.72 0.035 240 / 0.55);
+  --sidebar-ring: var(--primary);
+  color-scheme: light;
+}
+
 .dark {
   --radius: 0.75rem;
 
@@ -91,7 +150,7 @@
   --status-crit: oklch(0.68 0.25 25);    /* red */
   --magenta: oklch(0.70 0.27 340);
   --cyan: oklch(0.82 0.15 210);
-  --grid: oklch(0.35 0.05 250 / 0.35);
+  --grid: oklch(0.45 0.04 250 / 0.10);
 
   --chart-1: var(--cyan);
   --chart-2: var(--magenta);
@@ -107,6 +166,7 @@
   --sidebar-accent-foreground: oklch(0.97 0.01 230);
   --sidebar-border: oklch(0.32 0.04 255 / 0.5);
   --sidebar-ring: var(--primary);
+  color-scheme: dark;
 }
 
 /* High contrast mode */
@@ -132,21 +192,59 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    min-width: 0;
   }
 
   html, body {
+    width: 100%;
+    max-width: 100vw;
     background-color: var(--color-background);
     background-image:
-      linear-gradient(color-mix(in oklab, var(--cyan) 24%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 24%, transparent) 1px, transparent 1px),
-      linear-gradient(color-mix(in oklab, var(--cyan) 12%, transparent) 2px, transparent 2px),
-      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 12%, transparent) 2px, transparent 2px),
-      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 16%, transparent), transparent 30rem);
-    background-size: 32px 32px, 32px 32px, 160px 160px, 160px 160px, auto;
+      linear-gradient(color-mix(in oklab, var(--cyan) 6%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 6%, transparent) 1px, transparent 1px),
+      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--status-ok) 8%, transparent), transparent 30rem);
+    background-size: 56px 56px, 56px 56px, auto;
     background-attachment: fixed;
     color: var(--color-foreground);
     font-family: var(--font-display);
     font-feature-settings: "ss01", "cv11";
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  li,
+  td,
+  th {
+    overflow-wrap: anywhere;
+  }
+
+  html[dir="rtl"] body {
+    letter-spacing: 0;
+  }
+
+  html[dir="rtl"] .font-mono {
+    font-family: var(--font-display);
+    letter-spacing: 0;
+    font-feature-settings: normal;
+  }
+
+  html[dir="rtl"] [class*="tracking-"] {
+    letter-spacing: 0;
+  }
+
+  html[dir="rtl"] .uppercase {
+    text-transform: none;
   }
 
   button,
@@ -179,9 +277,10 @@
       0 0 24px -6px color-mix(in oklab, var(--cyan) 60%, transparent);
   }
   .panel {
+    max-width: 100%;
     background: linear-gradient(180deg,
-      color-mix(in oklab, var(--surface) 70%, transparent),
-      color-mix(in oklab, var(--surface-2) 64%, transparent));
+      color-mix(in oklab, var(--surface) 82%, transparent),
+      color-mix(in oklab, var(--surface-2) 78%, transparent));
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     box-shadow:
@@ -191,7 +290,8 @@
     -webkit-backdrop-filter: blur(14px) saturate(145%);
   }
   .panel-inner {
-    background: color-mix(in oklab, var(--background) 68%, transparent);
+    max-width: 100%;
+    background: color-mix(in oklab, var(--background) 82%, transparent);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
@@ -204,6 +304,35 @@
       linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
     background-size: 32px 32px;
     background-position: -1px -1px;
+  }
+  .manager-hero {
+    position: relative;
+    min-height: 14.5rem;
+    background:
+      linear-gradient(90deg, color-mix(in oklab, var(--background) 94%, transparent), color-mix(in oklab, var(--background) 70%, transparent), color-mix(in oklab, var(--background) 90%, transparent)),
+      radial-gradient(circle at 78% 8%, color-mix(in oklab, var(--primary) 32%, transparent), transparent 18rem),
+      url("/manager-assets/hero-command-bg.webp");
+    background-size: cover, auto, cover;
+    background-position: center, center, center 46%;
+  }
+  html[dir="rtl"] .manager-hero {
+    background:
+      linear-gradient(270deg, color-mix(in oklab, var(--background) 94%, transparent), color-mix(in oklab, var(--background) 70%, transparent), color-mix(in oklab, var(--background) 90%, transparent)),
+      radial-gradient(circle at 22% 8%, color-mix(in oklab, var(--primary) 32%, transparent), transparent 18rem),
+      url("/manager-assets/hero-command-bg.webp");
+    background-size: cover, auto, cover;
+    background-position: center, center, center 46%;
+  }
+  .manager-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(color-mix(in oklab, var(--cyan) 9%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, var(--cyan) 9%, transparent) 1px, transparent 1px);
+    background-size: 56px 56px;
+    opacity: 0.32;
+    pointer-events: none;
   }
   .skeleton-line {
     display: block;
