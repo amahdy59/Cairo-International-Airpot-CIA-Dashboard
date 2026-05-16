@@ -636,7 +636,7 @@ function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; se
       <img
         src={HERO_PLANE}
         alt="EgyptAir aircraft in flight"
-        className="pointer-events-none absolute right-4 top-1/2 z-[1] hidden h-24 w-auto max-w-[42%] -translate-y-1/2 object-contain opacity-95 drop-shadow-[0_16px_24px_rgba(0,0,0,0.45)] sm:block md:h-32 lg:right-8 lg:h-40 xl:h-48"
+        className="pointer-events-none absolute right-4 rtl:left-4 rtl:right-auto rtl:-scale-x-100 top-1/2 z-[1] hidden h-24 w-auto max-w-[42%] -translate-y-1/2 object-contain opacity-95 drop-shadow-[0_16px_24px_rgba(0,0,0,0.45)] sm:block md:h-32 lg:right-8 lg:rtl:left-8 lg:rtl:right-auto lg:h-40 xl:h-48"
       />
       <div className="relative z-10 min-w-0">
         <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
