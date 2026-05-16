@@ -111,44 +111,44 @@
   color-scheme: light;
 }
 
-/* Vibrant Light Mode Override */
+/* Clean, WCAG compliant Light Mode */
 .light {
-  --background: oklch(0.97 0.02 245); /* Soft slate blue background */
-  --foreground: oklch(0.22 0.04 255);
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   
-  /* Multi-colored card surfaces */
-  --surface: oklch(0.99 0.01 220 / 0.85); /* Very light cyan */
-  --surface-2: oklch(0.96 0.02 270 / 0.8); /* Soft indigo tint */
+  --surface: #FFFFFF;
+  --surface-2: #F9FAFB;
   
-  --card: oklch(0.99 0.01 250 / 0.9);
-  --card-foreground: oklch(0.22 0.04 255);
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
   
-  --primary: oklch(0.42 0.16 260); /* Deeper, vibrant blue */
-  --primary-foreground: oklch(0.99 0.01 250);
-  --primary-glow: oklch(0.55 0.18 260);
+  --primary: #1D4ED8;
+  --primary-foreground: #FFFFFF;
+  --primary-glow: #1D4ED8;
   
-  --accent: oklch(0.60 0.18 35); /* Vibrant Amber/Orange */
-  --accent-foreground: oklch(0.99 0.01 250);
+  --accent: #2563EB;
+  --accent-foreground: #FFFFFF;
   
-  --secondary: oklch(0.94 0.04 220); /* Light cyan accent box */
-  --secondary-foreground: oklch(0.22 0.04 255);
+  --secondary: #EFF6FF;
+  --secondary-foreground: #1D4ED8;
   
-  --border: oklch(0.82 0.04 250 / 0.5);
-  --muted: oklch(0.92 0.03 260);
-  --muted-foreground: oklch(0.45 0.05 260);
+  --border: #E2E8F0;
+  --muted: #F8FAFC;
+  --muted-foreground: #475569; /* Better contrast secondary text */
+
+  --status-ok: #047857;
+  --status-info: #1D4ED8;
+  --status-warn: #B45309;
+  --status-high: #B91C1C;
+  --status-crit: #B91C1C;
+
+  --cyan: #1D4ED8; /* Info */
+  --magenta: #6D28D9; /* AI / Insight */
 }
 
 html.light body {
-  /* 5-color rich ambient background */
-  background-image: 
-    radial-gradient(circle at 10% 0%, oklch(0.92 0.08 230 / 0.6) 0%, transparent 40%),
-    radial-gradient(circle at 90% 10%, oklch(0.90 0.08 280 / 0.5) 0%, transparent 40%),
-    radial-gradient(circle at 50% 100%, oklch(0.93 0.06 180 / 0.5) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, oklch(0.94 0.08 340 / 0.4) 0%, transparent 40%),
-    linear-gradient(color-mix(in oklab, var(--primary) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, var(--primary) 8%, transparent) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 56px 56px, 56px 56px;
-  background-attachment: fixed;
+  background-color: #F8FAFC;
+  background-image: none; /* Clean background per spec */
 }
 
 .dark {
@@ -358,11 +358,11 @@ html.light body {
     background-position: center, center, center 46%;
   }
   html.light .manager-hero {
-    background-color: oklch(0.92 0.01 240);
+    background-color: #F8FAFC;
     background-image:
-      linear-gradient(90deg, oklch(0.95 0.01 240 / 0.85) 0%, oklch(0.88 0.02 240 / 0.80) 40%, oklch(0.92 0.02 240 / 0.85) 100%),
+      linear-gradient(90deg, rgba(248,250,252,0.95) 0%, rgba(248,250,252,0.85) 40%, rgba(248,250,252,0.95) 100%),
       url("/manager-assets/hero-command-bg.webp");
-    background-blend-mode: normal, multiply;
+    background-blend-mode: normal;
     background-size: cover, cover;
     background-position: center, center 46%;
   }
@@ -375,11 +375,11 @@ html.light body {
     background-position: center, center, center 46%;
   }
   html[dir="rtl"].light .manager-hero {
-    background-color: oklch(0.92 0.01 240);
+    background-color: #F8FAFC;
     background-image:
-      linear-gradient(270deg, oklch(0.95 0.01 240 / 0.85) 0%, oklch(0.88 0.02 240 / 0.80) 40%, oklch(0.92 0.02 240 / 0.85) 100%),
+      linear-gradient(270deg, rgba(248,250,252,0.95) 0%, rgba(248,250,252,0.85) 40%, rgba(248,250,252,0.95) 100%),
       url("/manager-assets/hero-command-bg.webp");
-    background-blend-mode: normal, multiply;
+    background-blend-mode: normal;
     background-size: cover, cover;
     background-position: center, center 46%;
   }

@@ -46,25 +46,23 @@ export function MetricCard({
   const isPositive = deltaTone === "ok" && delta != null && !delta.trim().startsWith("-");
 
   return (
-    <article 
-      className="panel relative overflow-hidden p-4"
-      style={{
-        background: `linear-gradient(145deg, color-mix(in oklab, var(--surface) 95%, transparent) 0%, color-mix(in oklab, ${accentHex} 12%, transparent) 100%)`
-      }}
-    >
-      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full opacity-40 mix-blend-multiply dark:mix-blend-screen dark:opacity-15 blur-2xl pointer-events-none" style={{ backgroundColor: accentHex }} />
-      <div className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${accentClass} opacity-80`} />
-      <div className="relative z-10 flex items-start justify-between gap-3">
+    <article className="panel relative overflow-hidden p-4 transition-all duration-300 hover:shadow-md bg-card">
+      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full opacity-0 dark:opacity-15 blur-2xl pointer-events-none" style={{ backgroundColor: accentHex }} />
+      <div className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100`} />
+      <div className="relative z-10 flex items-start justify-between gap-3 pl-1">
         <div className="min-w-0">
           <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold tracking-tight lg:text-3xl">{value}</span>
+            <span className="text-2xl font-semibold tracking-tight text-foreground lg:text-3xl">{value}</span>
             {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
           </div>
           {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
         </div>
         {Icon && (
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-background/60 shadow-sm backdrop-blur-md">
+          <div 
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border/50 shadow-sm backdrop-blur-md" 
+            style={{ backgroundColor: `color-mix(in srgb, ${accentHex} 12%, transparent)` }}
+          >
             <Icon aria-hidden="true" className="h-4 w-4" style={{ color: accentHex }} />
           </div>
         )}
