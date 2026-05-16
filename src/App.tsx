@@ -539,9 +539,11 @@ export function App() {
       <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} />
       <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-4 overflow-x-hidden px-3 py-4 sm:gap-5 sm:px-5 lg:gap-6 lg:px-6">
         <Hero activeTab={activeTab} setActiveTab={setActiveTab} language={language} />
-        {activeTab === "digital" && <DigitalTwinView />}
-        {activeTab === "operations" && <OperationsView />}
-        {activeTab === "safety" && <SafetyView />}
+        <div key={activeTab} className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+          {activeTab === "digital" && <DigitalTwinView />}
+          {activeTab === "operations" && <OperationsView />}
+          {activeTab === "safety" && <SafetyView />}
+        </div>
       </main>
       <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
         {c.footer}
@@ -1040,7 +1042,7 @@ function PassengerInfluxForecast() {
       action={<StatusPill tone="neutral">{localize({ en: "Modelled", ar: "نمذجة" }, language)}</StatusPill>}
     >
       <p className="mb-4 text-sm text-muted-foreground">
-        {localize({ en: "Line charts show the next 2-4 hours because managers need timing and direction, not just totals.", ar: "المخطط الخطي يوضح الساعتين إلى الأربع القادمة لأن المدير يحتاج إلى التوقيت والاتجاه وليس الإجمالي فقط." }, language)}
+        {localize({ en: "Forecasted trend of passenger flow over the next 4 hours.", ar: "الاتجاه المتوقع لتدفق الركاب خلال الـ 4 ساعات القادمة." }, language)}
       </p>
       <ForecastLineChart />
       <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
@@ -1130,7 +1132,7 @@ function GateWaitChart() {
       action={<StatusPill tone="warn">{localize({ en: "F11 needs action", ar: "F11 يحتاج إجراء" }, language)}</StatusPill>}
     >
       <p className="mb-4 text-sm text-muted-foreground">
-        {localize({ en: "Horizontal bars make gate-to-gate comparison fast and keep the longest wait visually obvious.", ar: "الأشرطة الأفقية تجعل مقارنة البوابات سريعة وتبرز أطول انتظار بصريا." }, language)}
+        {localize({ en: "Current wait times across active gates.", ar: "أوقات الانتظار الحالية عبر البوابات النشطة." }, language)}
       </p>
       <div className="grid gap-3">
         {gateWaitRows.map((row) => (
@@ -1194,7 +1196,7 @@ function GateChangeFrequencyPanel() {
   return (
     <SectionPanel title={localize({ en: "Gate change frequency", ar: "تكرار تغيير البوابات" }, language)}>
       <p className="mb-4 text-sm text-muted-foreground">
-        {localize({ en: "Use this as a trust signal: repeated changes create passenger confusion and service load.", ar: "استخدمه كمؤشر ثقة: كثرة تغييرات البوابات تسبب ارتباكا للركاب وضغطا على الخدمة." }, language)}
+        {localize({ en: "Tracking the number of gate changes to minimize passenger disruption.", ar: "تتبع عدد تغييرات البوابات لتقليل إزعاج الركاب." }, language)}
       </p>
       <div className="grid grid-cols-3 items-end gap-4">
         {gateChangeFrequencyRows.map((row) => (
@@ -1334,7 +1336,7 @@ function PassengerFlowChart() {
   return (
     <SectionPanel title={tr("Passenger flow")} action={<StatusPill tone="neutral">{tr("Modelled")}</StatusPill>}>
       <h3 className="text-base font-semibold">{tr("Passenger flow rises into the midday wave")}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{tr("Line chart is used because managers need the trend over time, not a terminal-by-terminal comparison.")}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{localize({ en: "Hourly progression of passenger throughput across all terminals.", ar: "التطور الساعي لتدفق الركاب عبر جميع المباني." }, language)}</p>
       <div className="mt-4">
         <Sparkline data={[28, 34, 42, 48, 58, 51, 61, 70, 66, 72, 69, 76]} height={122} />
         <div className="mt-1 flex justify-between font-mono text-[11px] text-muted-foreground">
@@ -1363,24 +1365,40 @@ function FlowZone({ label, percent, tone }: { label: string; percent: number; to
 }
 
 function QueuePressureChart() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
   return (
     <SectionPanel title={tr("Queue pressure by terminal")} action={<StatusPill tone="info">{tr("Stacked bar")}</StatusPill>}>
-      <p className="mb-4 text-sm text-muted-foreground">{tr("Stacked bars show both total queue pressure and which process contributes most.")}</p>
-      <div className="space-y-4">
+      <p className="mb-4 text-sm text-muted-foreground">{localize({ en: "Breakdown of passenger congestion by processing stage.", ar: "تفصيل ازدحام الركاب حسب مرحلة المعالجة." }, language)}</p>
+      
+      {/* Screen reader accessible data table */}
+      <table className="sr-only">
+        <caption>{tr("Queue pressure by terminal")}</caption>
+        <thead>
+          <tr><th>Terminal</th><th>Check-in</th><th>Passport</th><th>Security</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          {queueRows.map((row) => (
+            <tr key={`sr-${row.terminal}`}>
+              <td>{row.terminal}</td><td>{row.checkIn}%</td><td>{row.passport}%</td><td>{row.security}%</td><td>{row.total}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="space-y-4" aria-hidden="true">
         {queueRows.map((row) => (
           <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_42px] items-center gap-3">
             <span className="font-mono font-semibold">{row.terminal}</span>
-            <div className="flex h-4 overflow-hidden rounded-full bg-secondary" aria-label={`${row.terminal} total pressure ${row.total}%`}>
-              <span className="bg-cyan" style={{ width: `${row.checkIn}%` }} />
-              <span className="bg-cyan/70" style={{ width: `${row.passport}%` }} />
-              <span className="bg-cyan/40" style={{ width: `${row.security}%` }} />
+            <div className="flex h-4 overflow-hidden rounded-full bg-secondary">
+              <span className="bg-cyan transition-opacity hover:opacity-80 cursor-help" style={{ width: `${row.checkIn}%` }} title={`${tr("Check-in")}: ${row.checkIn}%`} />
+              <span className="bg-cyan/70 transition-opacity hover:opacity-80 cursor-help" style={{ width: `${row.passport}%` }} title={`${tr("Passport")}: ${row.passport}%`} />
+              <span className="bg-cyan/40 transition-opacity hover:opacity-80 cursor-help" style={{ width: `${row.security}%` }} title={`${tr("Security")}: ${row.security}%`} />
             </div>
             <span className="font-mono text-sm text-muted-foreground">{row.total}%</span>
           </div>
         ))}
       </div>
-      <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+      <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground" aria-hidden="true">
         <Legend color="bg-cyan" label={tr("Check-in")} />
         <Legend color="bg-cyan/70" label={tr("Passport")} />
         <Legend color="bg-cyan/40" label={tr("Security")} />

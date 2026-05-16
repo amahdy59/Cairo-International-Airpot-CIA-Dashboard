@@ -52,36 +52,38 @@
 :root {
   --radius: 0.75rem;
 
-  --background: oklch(0.97 0.012 235);
-  --foreground: oklch(0.20 0.04 250);
+  /* Vibrant, airy aviation light mode */
+  --background: oklch(0.98 0.015 240);
+  --foreground: oklch(0.25 0.04 250);
 
-  --surface: oklch(0.96 0.018 235 / 0.86);
-  --surface-2: oklch(0.91 0.025 238 / 0.82);
+  --surface: oklch(0.96 0.025 245 / 0.86);
+  --surface-2: oklch(0.93 0.035 250 / 0.82);
 
-  --card: oklch(0.98 0.012 235 / 0.84);
-  --card-foreground: oklch(0.20 0.04 250);
-  --popover: oklch(0.99 0.01 235);
-  --popover-foreground: oklch(0.20 0.04 250);
+  --card: oklch(0.99 0.01 240 / 0.84);
+  --card-foreground: oklch(0.25 0.04 250);
+  
+  --popover: oklch(0.99 0.01 240);
+  --popover-foreground: oklch(0.25 0.04 250);
 
-  --primary: oklch(0.48 0.14 220);
-  --primary-foreground: oklch(0.99 0.01 235);
-  --primary-glow: oklch(0.68 0.14 210);
+  --primary: oklch(0.45 0.16 250); /* Deep aviation blue */
+  --primary-foreground: oklch(0.99 0.01 240);
+  --primary-glow: oklch(0.65 0.14 240);
 
-  --secondary: oklch(0.91 0.025 238);
-  --secondary-foreground: oklch(0.20 0.04 250);
+  --secondary: oklch(0.92 0.03 255);
+  --secondary-foreground: oklch(0.25 0.04 250);
 
-  --muted: oklch(0.91 0.02 238);
-  --muted-foreground: oklch(0.44 0.035 248);
+  --muted: oklch(0.94 0.02 250);
+  --muted-foreground: oklch(0.48 0.04 255);
 
-  --accent: oklch(0.52 0.20 335);
-  --accent-foreground: oklch(0.99 0.01 235);
+  --accent: oklch(0.65 0.18 45); /* Amber/orange accent */
+  --accent-foreground: oklch(0.99 0.01 240);
 
-  --destructive: oklch(0.52 0.20 25);
-  --destructive-foreground: oklch(0.99 0.01 235);
+  --destructive: oklch(0.55 0.20 25);
+  --destructive-foreground: oklch(0.99 0.01 240);
 
-  --border: oklch(0.72 0.035 240 / 0.55);
-  --input: oklch(0.72 0.035 240 / 0.55);
-  --ring: oklch(0.48 0.14 220);
+  --border: oklch(0.85 0.03 250 / 0.6);
+  --input: oklch(0.85 0.03 250 / 0.6);
+  --ring: oklch(0.45 0.16 250);
 
   --status-ok: oklch(0.50 0.15 155);
   --status-info: oklch(0.48 0.14 220);
