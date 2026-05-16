@@ -1058,26 +1058,65 @@ function ForecastLineChart() {
   const span = max - min || 1;
   const width = 420;
   const height = 150;
-  const toPoint = (value: number, index: number) => {
+  
+  const getPoint = (value: number, index: number): [number, number] => {
     const x = 18 + (index / (influxForecastRows.length - 1)) * (width - 36);
     const y = height - 18 - ((value - min) / span) * (height - 38);
-    return `${x},${y}`;
+    return [x, y];
   };
-  const currentPoints = influxForecastRows.map((row, index) => toPoint(row.current, index)).join(" ");
-  const forecastPoints = influxForecastRows.map((row, index) => toPoint(row.forecast, index)).join(" ");
+
+  const createSmoothPath = (coords: [number, number][]) => {
+    if (coords.length === 0) return "";
+    let d = `M ${coords[0][0]},${coords[0][1]}`;
+    for (let i = 1; i < coords.length; i++) {
+      const p1 = coords[i - 1];
+      const p2 = coords[i];
+      const cpX = (p1[0] + p2[0]) / 2;
+      d += ` C ${cpX},${p1[1]} ${cpX},${p2[1]} ${p2[0]},${p2[1]}`;
+    }
+    return d;
+  };
+
+  const currentCoords = influxForecastRows.map((row, index) => getPoint(row.current, index));
+  const forecastCoords = influxForecastRows.map((row, index) => getPoint(row.forecast, index));
+  
+  const currentPath = createSmoothPath(currentCoords);
+  const forecastPath = createSmoothPath(forecastCoords);
+  
+  const areaPath = currentCoords.length > 0
+    ? `${currentPath} L ${currentCoords[currentCoords.length - 1][0]},${height - 18} L ${currentCoords[0][0]},${height - 18} Z`
+    : "";
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full" role="img" aria-label="Passenger influx forecast line chart">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full overflow-visible" role="img" aria-label="Passenger influx forecast line chart">
+      <defs>
+        <linearGradient id="forecast-cyan-grad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="var(--cyan)" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="var(--cyan)" stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
       {[0, 1, 2].map((line) => (
-        <line key={line} x1="18" x2={width - 18} y1={28 + line * 42} y2={28 + line * 42} stroke="var(--border)" strokeOpacity="0.55" />
+        <line key={line} x1="18" x2={width - 18} y1={28 + line * 42} y2={28 + line * 42} stroke="var(--border)" strokeOpacity="0.55" strokeDasharray={line > 0 ? "4 4" : "none"} />
       ))}
-      <polyline points={currentPoints} fill="none" stroke="var(--cyan)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points={forecastPoints} fill="none" stroke="var(--status-warn)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="7 6" />
+      <path d={areaPath} fill="url(#forecast-cyan-grad)" />
+      <path d={currentPath} fill="none" stroke="var(--cyan)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={forecastPath} fill="none" stroke="var(--status-warn)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 6" />
+      
+      {/* Current Points - Dots */}
+      {currentCoords.map((coord, index) => (
+        <circle key={`curr-${index}`} cx={coord[0]} cy={coord[1]} r="4" fill="var(--background)" stroke="var(--cyan)" strokeWidth="2" />
+      ))}
+      
+      {/* Forecast Points - Dots */}
+      {forecastCoords.map((coord, index) => (
+        <circle key={`fore-${index}`} cx={coord[0]} cy={coord[1]} r="4" fill="var(--background)" stroke="var(--status-warn)" strokeWidth="2" />
+      ))}
+      
+      {/* X Axis Labels */}
       {influxForecastRows.map((row, index) => (
-        <g key={row.time}>
-          <circle cx={toPoint(row.forecast, index).split(",")[0]} cy={toPoint(row.forecast, index).split(",")[1]} r="3" fill="var(--status-warn)" />
-          <text x={18 + (index / (influxForecastRows.length - 1)) * (width - 36)} y={height - 2} textAnchor="middle" fill="var(--muted-foreground)" fontSize="10">{row.time}</text>
-        </g>
+        <text key={row.time} x={currentCoords[index][0]} y={height - 2} textAnchor="middle" fill="var(--muted-foreground)" fontSize="10" className="font-mono">
+          {row.time}
+        </text>
       ))}
     </svg>
   );
