@@ -1434,6 +1434,27 @@ function OperationsView() {
   const { tr } = useLocale();
   return (
     <div className="grid gap-6">
+      {/* Top: Key Metrics */}
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
+        <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
+        <MetricCard label={tr("Aircraft movements")} value="412" unit="/ 540" hint={tr("390 average")} delta={tr("On schedule")} icon={Activity} accent="cyan" />
+        <MetricCard label={tr("Avg taxi-out")} value="14" unit="min" hint={tr("CAI operations sample")} delta="-2 min" deltaTone="warn" icon={Clock3} accent="warn" />
+        <MetricCard label={tr("Active alerts")} value="3" hint={tr("2 medium, 1 high")} delta={tr("Needs review")} deltaTone="warn" icon={AlertTriangle} accent="warn" />
+      </section>
+
+      {/* Middle: Charts for visual absorption */}
+      <div className="grid gap-6 xl:grid-cols-2">
+        <PassengerFlowChart />
+        <QueuePressureChart />
+      </div>
+
+      {/* Tables: Detailed lists */}
+      <div className="grid gap-6 xl:grid-cols-2">
+        <FlightBoard title={tr("Departures")} direction="to" rows={departures} />
+        <FlightBoard title={tr("Arrivals")} direction="from" rows={arrivals} />
+      </div>
+
+      {/* Bottom: Actionable decisions */}
       <SectionPanel title={tr("Needs a decision now")} action={<StatusPill tone="warn">{tr("3 items")}</StatusPill>}>
         <div className="grid gap-3 md:grid-cols-3">
           {decisions.map((decision) => (
@@ -1449,24 +1470,6 @@ function OperationsView() {
           ))}
         </div>
       </SectionPanel>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
-        <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
-        <MetricCard label={tr("Aircraft movements")} value="412" unit="/ 540" hint={tr("390 average")} delta={tr("On schedule")} icon={Activity} accent="cyan" />
-        <MetricCard label={tr("Avg taxi-out")} value="14" unit="min" hint={tr("CAI operations sample")} delta="-2 min" deltaTone="warn" icon={Clock3} accent="warn" />
-        <MetricCard label={tr("Active alerts")} value="3" hint={tr("2 medium, 1 high")} delta={tr("Needs review")} deltaTone="warn" icon={AlertTriangle} accent="warn" />
-      </section>
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div className="grid gap-6">
-          <FlightBoard title={tr("Departures")} direction="to" rows={departures} />
-          <FlightBoard title={tr("Arrivals")} direction="from" rows={arrivals} />
-        </div>
-        <div className="grid content-start gap-6">
-          <PassengerFlowChart />
-          <QueuePressureChart />
-        </div>
-      </div>
     </div>
   );
 }
@@ -1581,16 +1584,27 @@ function QueuePressureChart() {
 
 function SafetyView() {
   return (
-    <div className="grid gap-4 lg:gap-6 xl:grid-cols-2 xl:items-start">
-      <div className="grid min-w-0 content-start gap-4 lg:gap-6">
-        <DecisionRecommendations />
-        <SafetyAlertAge />
-        <MaintenanceTable />
+    <div className="flex flex-col gap-4 lg:gap-6">
+      {/* Top Section: Charts and Tables for immediate information absorption */}
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-2 xl:items-start">
+        <div className="grid min-w-0 content-start gap-4 lg:gap-6">
+          <SafetyAlertAge />
+          <AircraftRiskTable />
+        </div>
+        <div className="grid min-w-0 content-start gap-4 lg:gap-6">
+          <SafetyChecks />
+          <MaintenanceTable />
+        </div>
       </div>
-      <div className="grid min-w-0 content-start gap-4 lg:gap-6">
-        <SafetyControls />
-        <SafetyChecks />
-        <AircraftRiskTable />
+      
+      {/* Bottom Section: Decision logic and preventing issue build-up */}
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-2 xl:items-start">
+        <div className="grid min-w-0 content-start gap-4 lg:gap-6">
+          <DecisionRecommendations />
+        </div>
+        <div className="grid min-w-0 content-start gap-4 lg:gap-6">
+          <SafetyControls />
+        </div>
       </div>
     </div>
   );
