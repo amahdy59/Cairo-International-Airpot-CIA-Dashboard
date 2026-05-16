@@ -36,12 +36,25 @@ export function MetricCard({
     ok: "from-status-ok to-status-ok/0",
   }[accent];
 
+  const accentHex = {
+    cyan: "var(--cyan)",
+    magenta: "var(--magenta)",
+    warn: "var(--status-warn)",
+    ok: "var(--status-ok)",
+  }[accent];
+
   const isPositive = deltaTone === "ok" && delta != null && !delta.trim().startsWith("-");
 
   return (
-    <article className="panel relative overflow-hidden p-4">
-      <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
-      <div className="flex items-start justify-between gap-3">
+    <article 
+      className="panel relative overflow-hidden p-4"
+      style={{
+        background: `linear-gradient(145deg, color-mix(in oklab, var(--surface) 95%, transparent) 0%, color-mix(in oklab, ${accentHex} 12%, transparent) 100%)`
+      }}
+    >
+      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full opacity-40 mix-blend-multiply dark:mix-blend-screen dark:opacity-15 blur-2xl pointer-events-none" style={{ backgroundColor: accentHex }} />
+      <div className={`absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r ${accentClass} opacity-80`} />
+      <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
           <div className="mt-2 flex items-baseline gap-1.5">
@@ -51,13 +64,13 @@ export function MetricCard({
           {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
         </div>
         {Icon && (
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-background/60">
-            <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-background/60 shadow-sm backdrop-blur-md">
+            <Icon aria-hidden="true" className="h-4 w-4" style={{ color: accentHex }} />
           </div>
         )}
       </div>
       {delta && (
-        <p className={`mt-2 inline-flex items-center gap-1 text-xs ${toneClass}`}>
+        <p className={`relative z-10 mt-2 inline-flex items-center gap-1 text-xs ${toneClass}`}>
           {isPositive ? <ArrowUpRight aria-hidden="true" className="h-3 w-3" /> : <ArrowDownRight aria-hidden="true" className="h-3 w-3" />}
           <span className="font-mono">{delta}</span>
         </p>
