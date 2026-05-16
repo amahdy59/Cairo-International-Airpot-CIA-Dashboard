@@ -858,7 +858,8 @@ function DigitalTwinView() {
         </div>
 
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
-          <div className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
+          <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
+            <div className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
               <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none" }} />
               
@@ -885,39 +886,40 @@ function DigitalTwinView() {
               {/* Render Hotspots */}
               {visibleHotspots.map(renderHotspotMarker)}
             </svg>
-
-            {/* Back button overlay */}
-            {activeScene.id !== "overview" && (
+          </div>
+          
+          {/* Map Navigation Bar */}
+          <div className="flex w-full items-center gap-2 overflow-x-auto bg-card p-3 scrollbar-hide">
+            {activeScene.id !== "overview" ? (
               <button
                 type="button"
                 onClick={() => {
                   setActiveSceneId("overview");
                   setSelectedHotspotId(null);
                 }}
-                className="absolute left-4 top-4 inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background/80 px-4 text-sm font-semibold backdrop-blur-md hover:bg-background"
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-semibold shadow-sm hover:bg-secondary"
               >
-                Reset map
+                ← Reset to Airport Overview
               </button>
-            )}
-            
-            {/* Quick Scene Navigation */}
-            {activeScene.id === "overview" && (
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-background/80 p-2 backdrop-blur-md">
-                 {scenes.filter(s => s.id !== "overview").map(s => (
-                   <button
-                     key={s.id}
-                     onClick={() => {
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Jump to:</span>
+                {scenes.filter(s => s.id !== "overview").map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
                         setActiveSceneId(s.id);
                         setSelectedHotspotId(null);
-                     }}
-                     className="rounded-full px-4 py-1.5 text-xs font-semibold hover:bg-secondary"
-                   >
-                     {s.title}
-                   </button>
-                 ))}
+                    }}
+                    className="shrink-0 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-semibold shadow-sm hover:bg-secondary hover:text-foreground transition-colors"
+                  >
+                    {s.title}
+                  </button>
+                ))}
               </div>
             )}
           </div>
+        </div>
 
           <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[800px] overflow-y-auto">
             {selectedHotspot ? (
