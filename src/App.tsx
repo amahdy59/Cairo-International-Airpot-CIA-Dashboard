@@ -79,7 +79,7 @@ export type MapHotspot = {
 };
 
 export type AirportScene = {
-  id: 'overview' | 't3-exterior' | 't3-frontage' | 'inter-terminal' | 'services';
+  id: 'terminal-1' | 'terminal-2' | 'terminal-3' | 'landside' | 'services';
   label: string;
   title: string;
   summary: string;
@@ -307,58 +307,54 @@ const copy = {
 
 const scenes: AirportScene[] = [
   {
-    id: "overview",
-    label: "Airport overview",
-    title: "Airport overview",
-    summary: "High-level airport map showing terminals, roads, parking, airside zones, runways, and transfer connections.",
-    image: "/manager-assets/cai-overview.jpg",
+    id: "terminal-3",
+    label: "Terminal 3",
+    title: "Terminal 3 Aerial",
+    summary: "Airside and landside view of the main international hub.",
+    image: "/manager-assets/terminal-3.jpg",
     hotspots: [
       { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Smooth processing across T3.", evidence: "Wait times < 5 mins.", source: "Ops Sensor", updatedAt: "14:04" },
-      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Landside Parking Congestion", category: "Landside", impact: "Drivers experiencing delays entering parking.", evidence: "Queue > 15 vehicles.", action: "Deploy traffic wardens.", source: "Traffic Cam", updatedAt: "14:02" },
-      { id: "runway-05r", cx: 75.0, cy: 15.0, status: "info", title: "Runway 05R/23L Active", category: "Airside", source: "ATC", updatedAt: "13:50" }
+      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Delay", category: "Operations", impact: "Passengers may miss connection.", evidence: "Aircraft delayed by 18 mins.", action: "Assign ramp runner.", source: "Gate Agent", updatedAt: "14:10" }
     ]
   },
   {
-    id: "t3-exterior",
-    label: "Terminal 3 Exterior",
-    title: "Terminal 3 Exterior",
-    summary: "Airside and landside view of the main international hub.",
-    image: "/manager-assets/cai-t3-exterior.jpg",
+    id: "terminal-2",
+    label: "Terminal 2",
+    title: "Terminal 2 Aerial",
+    summary: "International terminal connected operationally with Terminal 3.",
+    image: "/manager-assets/terminal-2.jpg",
     hotspots: [
-      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Delay", category: "Operations", impact: "Passengers may miss connection.", evidence: "Aircraft delayed by 18 mins.", action: "Assign ramp runner.", source: "Gate Agent", updatedAt: "14:10" },
-      { id: "t3-apron", cx: 80.0, cy: 60.0, status: "good", title: "Apron Clear", category: "Safety", source: "Ground Radar", updatedAt: "14:05" }
+      { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Potential delays for departing passengers.", evidence: "Wait time 17 mins.", action: "Open extra lane.", source: "Ops Sensor", updatedAt: "14:15" }
     ]
   },
   {
-    id: "t3-frontage",
-    label: "Terminal 3 Frontage",
-    title: "Terminal 3 Frontage",
-    summary: "Curbside access, drop-off zones, and passenger arrival flows.",
-    image: "/manager-assets/cai-t3-frontage.jpg",
+    id: "terminal-1",
+    label: "Terminal 1",
+    title: "Terminal 1 Aerial",
+    summary: "Separate terminal area serving selected domestic and international operations.",
+    image: "/manager-assets/terminal-1.jpg",
     hotspots: [
-      { id: "curbside-drop", cx: 40.0, cy: 65.0, status: "warning", title: "Curbside Congestion", category: "Landside", impact: "Traffic backing up to main road.", evidence: "Dwell time > 5 mins.", action: "Dispatch police to clear idling vehicles.", source: "CCTV", updatedAt: "14:08" }
+      { id: "t1-apron", cx: 60.0, cy: 35.0, status: "info", title: "Apron Normal", category: "Airside", source: "Ground Radar", updatedAt: "14:00" }
     ]
   },
   {
-    id: "inter-terminal",
-    label: "APM Connection",
-    title: "Inter-Terminal Connection",
-    summary: "Automated People Mover connecting Terminal 2 and 3.",
-    image: "/manager-assets/cai-inter-terminal.jpg",
+    id: "landside",
+    label: "Landside Buildings",
+    title: "Landside Buildings Aerial",
+    summary: "Parking facilities, access roads, and landside infrastructure.",
+    image: "/manager-assets/landside.jpg",
     hotspots: [
-      { id: "apm-station", cx: 25.0, cy: 45.0, status: "good", title: "APM Operational", category: "Transport", evidence: "Headway 3 mins.", source: "APM Control", updatedAt: "14:12" },
-      { id: "transfer-corridor", cx: 55.0, cy: 40.0, status: "info", title: "Transfer Corridor Normal", category: "Operations", source: "Ops Sensor", updatedAt: "14:12" }
+      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Congestion", category: "Landside", impact: "Drivers experiencing delays entering parking.", evidence: "Queue > 15 vehicles.", action: "Deploy traffic wardens.", source: "Traffic Cam", updatedAt: "14:02" }
     ]
   },
   {
     id: "services",
-    label: "Services Zone",
-    title: "Services Zone Exterior",
-    summary: "Commercial facilities, banks, medical center, and retail access.",
-    image: "/manager-assets/cai-services.jpg",
+    label: "Support & Services",
+    title: "Support & Services Aerial",
+    summary: "Maintenance, catering, and airport support facilities.",
+    image: "/manager-assets/support-services.jpg",
     hotspots: [
-      { id: "medical-center", cx: 48.0, cy: 55.0, status: "info", title: "Medical Center Active", category: "Services", source: "Facilities", updatedAt: "14:00" },
-      { id: "atm-offline", cx: 35.0, cy: 55.0, status: "offline", title: "ATM Maintenance", category: "Services", impact: "No cash withdrawal at this bank.", source: "Bank API", updatedAt: "13:30" }
+      { id: "catering-facility", cx: 70.0, cy: 40.0, status: "good", title: "Catering Operations Normal", category: "Services", source: "Facilities", updatedAt: "14:10" }
     ]
   }
 ];
@@ -751,7 +747,7 @@ function useIncomingCaiFlights() {
 
 function DigitalTwinView() {
   const { language, tr } = useLocale();
-  const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("overview");
+  const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [filterMode, setFilterMode] = useState<HotspotStatus | "all">("all");
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
@@ -818,9 +814,6 @@ function DigitalTwinView() {
 
   return (
     <div className="grid min-w-0 gap-4 lg:gap-6">
-      <DigitalAlertStrip />
-      <DigitalKpiGrid />
-
       <SectionPanel className="overflow-hidden p-0" title="">
         <div className="min-w-0 border-b border-border p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -864,7 +857,7 @@ function DigitalTwinView() {
               <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none" }} />
               
               {/* Optional Density Overlays inside SVG */}
-              {activeScene.id === "overview" && (
+              {activeScene.id === "terminal-3" && (
                  <g opacity="0.3">
                     <circle cx="800" cy="500" r="150" fill="url(#density-high)" />
                     <circle cx="400" cy="600" r="100" fill="url(#density-medium)" />
@@ -890,11 +883,11 @@ function DigitalTwinView() {
           
           {/* Map Navigation Bar */}
           <div className="flex w-full items-center gap-2 overflow-x-auto bg-card p-3 scrollbar-hide">
-            {activeScene.id !== "overview" ? (
+            {activeScene.id !== "terminal-3" ? (
               <button
                 type="button"
                 onClick={() => {
-                  setActiveSceneId("overview");
+                  setActiveSceneId("terminal-3");
                   setSelectedHotspotId(null);
                 }}
                 className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-semibold shadow-sm hover:bg-secondary"
@@ -1012,8 +1005,6 @@ function DigitalTwinView() {
           </aside>
         </div>
       </SectionPanel>
-
-      <DigitalOperationalGrid />
     </div>
   );
 }
@@ -1434,6 +1425,8 @@ function OperationsView() {
   const { tr } = useLocale();
   return (
     <div className="grid gap-6">
+      <DigitalAlertStrip />
+      <DigitalKpiGrid />
       {/* Top: Key Metrics */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
         <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
@@ -1470,6 +1463,7 @@ function OperationsView() {
           ))}
         </div>
       </SectionPanel>
+      <DigitalOperationalGrid />
     </div>
   );
 }
