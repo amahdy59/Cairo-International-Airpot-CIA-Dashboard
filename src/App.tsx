@@ -147,7 +147,7 @@ const arText: Record<string, string> = {
   "390 average": "متوسط 390",
   "On schedule": "ضمن الجدول",
   "Avg taxi-out": "متوسط الخروج للمدرج",
-  "CIA operations sample": "عينة تشغيلية للمطار",
+  "CAI operations sample": "عينة تشغيلية للمطار",
   "Active alerts": "تنبيهات نشطة",
   "2 medium, 1 high": "2 متوسط، 1 مرتفع",
   "Needs review": "يتطلب مراجعة",
@@ -537,68 +537,25 @@ export function App() {
   }, [highContrast, language, theme]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/82 backdrop-blur-xl">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
-        {tr("Skip to content")}
-      </a>
-      <div className="mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}>
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
-            <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
-          </span>
-          <span className="hidden min-w-0 sm:block sm:max-w-none">
-            <span className="block truncate font-mono text-[10px] uppercase tracking-[0.18em] text-primary sm:text-[11px] sm:tracking-[0.28em]">{c.airport}</span>
-            <span className="block truncate text-sm font-semibold">{c.brand}</span>
-          </span>
-        </a>
-        
-        {/* Navigation Tabs */}
-        <nav className="flex flex-1 justify-center order-3 w-full sm:order-none sm:w-auto mt-2 sm:mt-0" role="tablist" aria-label={tr("Manager dashboard sections")}>
-          <div className="flex items-center gap-1 rounded-xl bg-secondary/30 p-1 backdrop-blur-md">
-            {[
-              { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
-              { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
-              { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls="main-content"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold transition ${isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"}`}
-                >
-                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-
-        <div className="flex items-center gap-2 order-2 sm:order-none">
-          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex">
-            <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
-            <TimeChip label={tr("Cairo")} value={times.cairo} />
-            <span className="h-5 w-px bg-border" />
-            <TimeChip label="UTC" value={times.utc} />
-          </div>
-          <button type="button" onClick={() => setHighContrast(!highContrast)} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast}>
-            <Contrast aria-hidden="true" className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
-            <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
-          </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 text-sm hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
-            <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
-            {language === "en" ? "AR" : "EN"}
-          </button>
+    <LocaleContext.Provider value={language}>
+    <div className="min-h-screen overflow-x-hidden">
+      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-4 overflow-x-hidden px-2 py-4 sm:gap-4 sm:px-4 lg:gap-5 lg:px-6">
+        <div key={activeTab} className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+          {activeTab === "digital" && <DigitalTwinView />}
+          {activeTab === "operations" && <OperationsView />}
+          {activeTab === "safety" && <SafetyView />}
         </div>
-      </div>
-    </header>
+      </main>
+      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+        {c.footer}
+        <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
+        <a className="font-medium text-primary hover:underline" href="https://www.cairo-airport.com/en-us/Airport/Airport-Information" target="_blank" rel="noreferrer">
+          {c.resources}
+        </a>
+      </footer>
+    </div>
+    </LocaleContext.Provider>
   );
 }
 
@@ -669,7 +626,48 @@ function TimeChip({ label, value }: { label: string; value: string }) {
   );
 }
 
+function Hero({ activeTab, setActiveTab, language }: { activeTab: ManagerTab; setActiveTab: (tab: ManagerTab) => void; language: Language }) {
+  const c = copy[language];
+  const { tr } = useLocale();
+  const tabs: { id: ManagerTab; label: string; icon: LucideIcon }[] = [
+    { id: "digital", label: c.digital, icon: Radar },
+    { id: "operations", label: c.operations, icon: Activity },
+    { id: "safety", label: c.safety, icon: ShieldCheck },
+  ];
 
+  return (
+    <section className="manager-hero panel overflow-hidden p-4 sm:p-6">
+      <img
+        src={HERO_PLANE}
+        alt="EgyptAir aircraft in flight"
+        className="pointer-events-none absolute right-12 rtl:left-12 rtl:right-auto rtl:-scale-x-100 top-1/2 z-[1] hidden h-24 w-auto max-w-[35%] -translate-y-1/2 object-contain opacity-80 drop-shadow-[0_8px_16px_rgba(0,0,0,0.12)] dark:opacity-95 dark:drop-shadow-[0_16px_24px_rgba(0,0,0,0.45)] sm:block md:h-28 lg:right-20 lg:rtl:left-20 lg:rtl:right-auto lg:h-32 xl:h-40"
+      />
+      <div className="relative z-10 min-w-0">
+        <p className="break-words font-mono text-[11px] uppercase tracking-[0.28em] text-primary">{c.manager}</p>
+        <h1 className="mt-2 max-w-3xl text-2xl font-semibold tracking-tight sm:text-4xl">{c.heroTitle}</h1>
+        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-muted-foreground sm:text-base">{c.heroBody}</p>
+        <nav className="mt-5 grid w-full max-w-full grid-cols-1 gap-3 rounded-xl border border-border bg-background/45 p-2.5 backdrop-blur-md sm:inline-flex sm:w-auto sm:flex-wrap" role="tablist" aria-label={tr("Manager dashboard sections")}>
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex h-12 items-center justify-center gap-3 rounded-lg px-6 text-sm font-semibold transition-all duration-300 sm:justify-start ${activeTab === tab.id ? "bg-[#3154D4] dark:bg-primary text-white shadow-[0_8px_20px_rgba(49,84,212,0.22)] dark:shadow-none" : "bg-transparent text-slate-600 hover:bg-secondary/60 hover:text-foreground dark:text-muted-foreground"}`}
+              >
+                <Icon aria-hidden="true" className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    </section>
+  );
+}
 
 function useIncomingCaiFlights() {
   const [flights, setFlights] = useState<IncomingFlight[]>(sampleIncomingFlights);
