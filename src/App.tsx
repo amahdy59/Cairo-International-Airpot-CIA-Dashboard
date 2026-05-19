@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   ArrowRight,
   ArrowUp,
-  BaggageClaim,
   BarChart3,
   Camera,
   Clock3,
@@ -307,15 +306,14 @@ const copy = {
 
 const scenes: AirportScene[] = [
   {
-    id: "terminal-3",
-    label: "Terminal 3",
-    title: "Terminal 3 Operations",
-    summary: "Main international terminal with gate, flow, and connection monitoring.",
-    image: "/manager-assets/terminal-3.jpg",
-    darkImage: "/manager-assets/terminal-3-dark-new.jpg",
+    id: "terminal-1",
+    label: "Terminal 1",
+    title: "Terminal 1 Operations",
+    summary: "Separate terminal area serving selected domestic and international operations.",
+    image: "/manager-assets/terminal-1.jpg",
+    darkImage: "/manager-assets/landside-dark-new.jpg",
     hotspots: [
-      { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Smooth processing across T3.", evidence: "Wait times < 5 mins.", source: "Ops Sensor", updatedAt: "14:04" },
-      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Delay", category: "Operations", impact: "Passengers may miss connection.", evidence: "Aircraft delayed by 18 mins.", action: "Assign ramp runner.", source: "Gate Agent", updatedAt: "14:10" }
+      { id: "t1-stand-turnaround", cx: 60.0, cy: 35.0, status: "warning", title: "Remote Stand Turnaround Pressure", category: "Airside", impact: "Two narrow-body turns may exceed the planned ground time if fueling and catering overlap.", evidence: "Stand team is 9 minutes behind the service milestone.", action: "Move one ground support unit from the adjacent stand.", source: "Turnaround control", updatedAt: "14:00" }
     ]
   },
   {
@@ -326,18 +324,19 @@ const scenes: AirportScene[] = [
     image: "/manager-assets/terminal-2.jpg",
     darkImage: "/manager-assets/terminal-2-dark-new.jpg",
     hotspots: [
-      { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Potential delays for departing passengers.", evidence: "Wait time 17 mins.", action: "Open extra lane.", source: "Ops Sensor", updatedAt: "14:15" }
+      { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Departing passengers may reach passport control late during the next arrival/departure overlap.", evidence: "Security wait is 17 minutes and trending up.", action: "Open one extra screening lane for 30 minutes.", source: "Queue sensor", updatedAt: "14:15" }
     ]
   },
   {
-    id: "terminal-1",
-    label: "Terminal 1",
-    title: "Terminal 1 Operations",
-    summary: "Separate terminal area serving selected domestic and international operations.",
-    image: "/manager-assets/terminal-1.jpg",
-    darkImage: "/manager-assets/terminal-1-dark-new.jpg",
+    id: "terminal-3",
+    label: "Terminal 3",
+    title: "Terminal 3 Operations",
+    summary: "Main international terminal with gate, flow, and connection monitoring.",
+    image: "/manager-assets/terminal-3.jpg",
+    darkImage: "/manager-assets/terminal-3-dark-new.jpg",
     hotspots: [
-      { id: "t1-apron", cx: 60.0, cy: 35.0, status: "info", title: "Apron Normal", category: "Airside", source: "Ground Radar", updatedAt: "14:00" }
+      { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Passenger processing is stable across check-in, passport control, and departure gates.", evidence: "Average wait is below 5 minutes.", source: "Queue sensor", updatedAt: "14:04" },
+      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Risk", category: "Operations", impact: "A late inbound aircraft may compress boarding time and create connection pressure.", evidence: "Inbound aircraft is 18 minutes behind stand target.", action: "Assign a ramp runner and pre-stage boarding staff.", source: "Gate control", updatedAt: "14:10" }
     ]
   },
   {
@@ -346,9 +345,9 @@ const scenes: AirportScene[] = [
     title: "Landside Access",
     summary: "Parking, access roads, curbside flow, and public-side movement.",
     image: "/manager-assets/landside.jpg",
-    darkImage: "/manager-assets/landside-dark-new.jpg",
+    darkImage: "/manager-assets/terminal-1-dark-new.jpg",
     hotspots: [
-      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Congestion", category: "Landside", impact: "Drivers experiencing delays entering parking.", evidence: "Queue > 15 vehicles.", action: "Deploy traffic wardens.", source: "Traffic Cam", updatedAt: "14:02" }
+      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Entry Queue", category: "Landside", impact: "Curbside access may slow for passengers arriving by car or shuttle.", evidence: "Entry queue is above 15 vehicles.", action: "Deploy two traffic wardens at the parking entry split.", source: "Traffic camera", updatedAt: "14:02" }
     ]
   },
   {
@@ -359,7 +358,7 @@ const scenes: AirportScene[] = [
     image: "/manager-assets/support-services.jpg",
     darkImage: "/manager-assets/support-services-dark-new.jpg",
     hotspots: [
-      { id: "catering-facility", cx: 70.0, cy: 40.0, status: "good", title: "Catering Operations Normal", category: "Services", source: "Facilities", updatedAt: "14:10" }
+      { id: "catering-facility", cx: 70.0, cy: 40.0, status: "good", title: "Catering Dispatch Stable", category: "Services", impact: "Catering dispatch is meeting the planned departure wave.", evidence: "All priority flights have catering assigned.", source: "Facilities control", updatedAt: "14:10" }
     ]
   }
 ];
@@ -391,30 +390,6 @@ const influxForecastRows = [
   { time: "+2h", current: 1380, forecast: 1540 },
   { time: "+3h", current: 1180, forecast: 1460 },
   { time: "+4h", current: 980, forecast: 1120 },
-];
-
-const baggageRows = [
-  { belt: "Belt 2", flight: "MS786", status: { en: "Loading", ar: "تحميل" }, tone: "info" as Tone },
-  { belt: "Belt 4", flight: "EK927", status: { en: "Near capacity", ar: "قريب من السعة" }, tone: "warn" as Tone },
-  { belt: "Belt 6", flight: "SV301", status: { en: "Ready", ar: "جاهز" }, tone: "ok" as Tone },
-];
-
-const securityThroughputRows = [
-  { lane: "T1", open: 6, total: 8, paxPerHour: 720 },
-  { lane: "T2", open: 7, total: 10, paxPerHour: 860 },
-  { lane: "T3", open: 14, total: 16, paxPerHour: 1540 },
-];
-
-const gateChangeFrequencyRows = [
-  { terminal: "T1", changes: 2 },
-  { terminal: "T2", changes: 5 },
-  { terminal: "T3", changes: 3 },
-];
-
-const decisions = [
-  { title: "T2 security queue", detail: "Open one more lane", badge: "17m", tone: "warn" as Tone },
-  { title: "Gate F11 boarding", detail: "Send floor agent", badge: "72%", tone: "info" as Tone },
-  { title: "T2-B scanner", detail: "Escalate maintenance", badge: "Offline", tone: "crit" as Tone },
 ];
 
 const departures: FlightRow[] = [
@@ -702,6 +677,9 @@ function DigitalTwinView() {
   const incoming = useIncomingCaiFlights();
 
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
+  const jumpScenes = ["terminal-1", "terminal-2", "terminal-3", "services", "landside"]
+    .map((id) => scenes.find((scene) => scene.id === id))
+    .filter((scene): scene is AirportScene => Boolean(scene));
   const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
   const selectedHotspot = activeScene.hotspots.find(h => h.id === selectedHotspotId);
 
@@ -775,8 +753,8 @@ function DigitalTwinView() {
         <nav className="border-b border-border bg-card/70 p-3" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
             <span className="shrink-0 px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{localize({ en: "Jump to", ar: "انتقل إلى" }, language)}</span>
-            <div className="flex min-w-max items-center gap-1 rounded-2xl border border-border bg-secondary/35 p-1 shadow-inner">
-              {scenes.map((scene) => {
+            <div className="flex min-w-max items-center gap-2">
+              {jumpScenes.map((scene) => {
                 const active = scene.id === activeSceneId;
                 return (
                   <button
@@ -787,8 +765,8 @@ function DigitalTwinView() {
                       setSelectedHotspotId(null);
                     }}
                     aria-current={active ? "page" : undefined}
-                    className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                      active ? "bg-primary/[0.16] text-foreground ring-1 ring-primary/45 shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "text-muted-foreground hover:bg-background/65 hover:text-foreground"
+                    className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                      active ? "border-primary/50 bg-primary/[0.16] text-foreground shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "border-transparent text-muted-foreground hover:border-border hover:bg-background/65 hover:text-foreground"
                     }`}
                   >
                     {tr(scene.label)}
@@ -897,7 +875,11 @@ function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot
           ? localize({ en: "Offline", ar: "متوقف" }, language)
           : localize({ en: "Info", ar: "معلومة" }, language);
   const alignToStart = hotspot.cx > 58;
-  const alignUp = hotspot.cy > 58;
+  const popoverWidth = "min(360px, calc(100% - 2rem))";
+  const popoverLeft = alignToStart
+    ? `max(1rem, calc(${hotspot.cx}% - min(360px, calc(100% - 2rem)) - 1.25rem))`
+    : `min(calc(100% - min(360px, calc(100% - 2rem)) - 1rem), calc(${hotspot.cx}% + 1.25rem))`;
+  const popoverTop = `clamp(1rem, calc(${hotspot.cy}% - 8rem), calc(100% - min(33rem, calc(100% - 2rem))))`;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -910,11 +892,13 @@ function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot
   return (
     <div className="absolute inset-0 z-20" onClick={onClose} aria-hidden={false}>
       <div
-        className="hotspot-popover panel absolute w-[min(420px,calc(100%-2rem))] overflow-hidden p-0 shadow-2xl"
+        className="hotspot-popover panel absolute overflow-hidden p-0 shadow-2xl"
         style={{
-          left: `${hotspot.cx}%`,
-          top: `${hotspot.cy}%`,
-          transform: `translate(${alignToStart ? "calc(-100% - 24px)" : "24px"}, ${alignUp ? "calc(-100% + 16px)" : "-20%"})`,
+          left: popoverLeft,
+          top: popoverTop,
+          width: popoverWidth,
+          maxHeight: "calc(100% - 2rem)",
+          overflowY: "auto",
         }}
         role="dialog"
         aria-modal="false"
@@ -972,7 +956,7 @@ function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot
             type="button"
             className="inline-flex min-h-12 items-center justify-center gap-3 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            {localize({ en: "View full flow analytics", ar: "عرض تحليلات التدفق كاملة" }, language)}
+            {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
             <ArrowRight aria-hidden="true" className="h-5 w-5 rtl:rotate-180" />
           </button>
         </div>
@@ -1079,11 +1063,8 @@ function DigitalOperationalGrid() {
       <div className="grid gap-4 lg:gap-6">
         <PassengerInfluxForecast />
         <GateWaitChart />
-        <SecurityThroughputPanel />
       </div>
       <div className="grid gap-4 lg:gap-6">
-        <BaggageClaimStatus />
-        <GateChangeFrequencyPanel />
         <AnomalyWarningsPanel />
       </div>
     </section>
@@ -1203,72 +1184,6 @@ function GateWaitChart() {
   );
 }
 
-function BaggageClaimStatus() {
-  const { language } = useLocale();
-  return (
-    <SectionPanel title={localize({ en: "Baggage claim status", ar: "حالة استلام الأمتعة" }, language)} action={<StatusPill tone="neutral">{localize({ en: "Sample", ar: "عينة" }, language)}</StatusPill>}>
-      <div className="grid gap-3">
-        {baggageRows.map((row) => (
-          <article key={row.belt} className="panel-inner flex items-center justify-between gap-3 p-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-background/60">
-                <BaggageClaim aria-hidden="true" className="h-4 w-4 text-primary" />
-              </span>
-              <div>
-                <h3 className="text-sm font-semibold">{row.belt}</h3>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">{row.flight}</p>
-              </div>
-            </div>
-            <StatusPill tone={row.tone}>{localize(row.status, language)}</StatusPill>
-          </article>
-        ))}
-      </div>
-    </SectionPanel>
-  );
-}
-
-function SecurityThroughputPanel() {
-  const { language } = useLocale();
-  return (
-    <SectionPanel title={localize({ en: "Security lane throughput", ar: "إنتاجية مسارات الأمن" }, language)}>
-      <div className="grid gap-4">
-        {securityThroughputRows.map((row) => (
-          <div key={row.lane}>
-            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-              <span className="font-semibold">{row.lane}</span>
-              <span className="text-muted-foreground">{row.open}/{row.total} · {row.paxPerHour} pax/h</span>
-            </div>
-            <ProgressBar value={row.open} max={row.total} color="var(--cyan)" />
-          </div>
-        ))}
-      </div>
-    </SectionPanel>
-  );
-}
-
-function GateChangeFrequencyPanel() {
-  const { language } = useLocale();
-  const max = Math.max(...gateChangeFrequencyRows.map((row) => row.changes));
-  return (
-    <SectionPanel title={localize({ en: "Gate change frequency", ar: "تكرار تغيير البوابات" }, language)}>
-      <p className="mb-4 text-sm text-muted-foreground">
-        {localize({ en: "Tracking the number of gate changes to minimize passenger disruption.", ar: "تتبع عدد تغييرات البوابات لتقليل إزعاج الركاب." }, language)}
-      </p>
-      <div className="grid grid-cols-3 items-end gap-4">
-        {gateChangeFrequencyRows.map((row) => (
-          <div key={row.terminal} className="text-center">
-            <div className="mx-auto flex h-28 max-w-20 items-end rounded-lg bg-secondary/70 p-2">
-              <div className="w-full rounded-md bg-cyan" style={{ height: `${32 + (row.changes / max) * 64}%` }} />
-            </div>
-            <p className="mt-2 text-lg font-semibold">{row.changes}</p>
-            <p className="font-mono text-xs text-muted-foreground">{row.terminal}</p>
-          </div>
-        ))}
-      </div>
-    </SectionPanel>
-  );
-}
-
 function AnomalyWarningsPanel() {
   const { language } = useLocale();
   const warnings = [
@@ -1321,22 +1236,6 @@ function OperationsView() {
         <FlightBoard title={tr("Arrivals")} direction="from" rows={arrivals} />
       </div>
 
-      {/* Bottom: Actionable decisions */}
-      <SectionPanel title={tr("Needs a decision now")} action={<StatusPill tone="warn">{tr("3 items")}</StatusPill>}>
-        <div className="grid gap-3 md:grid-cols-3">
-          {decisions.map((decision) => (
-            <article key={decision.title} className="panel-inner p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold">{tr(decision.title)}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{tr(decision.detail)}</p>
-                </div>
-                <StatusPill tone={decision.tone}>{tr(decision.badge)}</StatusPill>
-              </div>
-            </article>
-          ))}
-        </div>
-      </SectionPanel>
       <DigitalOperationalGrid />
     </div>
   );
