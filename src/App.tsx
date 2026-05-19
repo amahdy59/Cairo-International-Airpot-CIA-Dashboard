@@ -85,6 +85,7 @@ export type AirportScene = {
   title: string;
   summary: string;
   image: string;
+  darkImage: string;
   objectPosition?: string;
   hotspots: MapHotspot[];
 };
@@ -311,6 +312,7 @@ const scenes: AirportScene[] = [
     title: "Terminal 3 Operations",
     summary: "Main international terminal with gate, flow, and connection monitoring.",
     image: "/manager-assets/terminal-3.jpg",
+    darkImage: "/manager-assets/terminal-3-dark-new.jpg",
     hotspots: [
       { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Smooth processing across T3.", evidence: "Wait times < 5 mins.", source: "Ops Sensor", updatedAt: "14:04" },
       { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Delay", category: "Operations", impact: "Passengers may miss connection.", evidence: "Aircraft delayed by 18 mins.", action: "Assign ramp runner.", source: "Gate Agent", updatedAt: "14:10" }
@@ -322,6 +324,7 @@ const scenes: AirportScene[] = [
     title: "Terminal 2 Operations",
     summary: "International terminal connected operationally with Terminal 3.",
     image: "/manager-assets/terminal-2.jpg",
+    darkImage: "/manager-assets/terminal-2-dark-new.jpg",
     hotspots: [
       { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Potential delays for departing passengers.", evidence: "Wait time 17 mins.", action: "Open extra lane.", source: "Ops Sensor", updatedAt: "14:15" }
     ]
@@ -332,6 +335,7 @@ const scenes: AirportScene[] = [
     title: "Terminal 1 Operations",
     summary: "Separate terminal area serving selected domestic and international operations.",
     image: "/manager-assets/terminal-1.jpg",
+    darkImage: "/manager-assets/terminal-1-dark-new.jpg",
     hotspots: [
       { id: "t1-apron", cx: 60.0, cy: 35.0, status: "info", title: "Apron Normal", category: "Airside", source: "Ground Radar", updatedAt: "14:00" }
     ]
@@ -342,6 +346,7 @@ const scenes: AirportScene[] = [
     title: "Landside Access",
     summary: "Parking, access roads, curbside flow, and public-side movement.",
     image: "/manager-assets/landside.jpg",
+    darkImage: "/manager-assets/landside-dark-new.jpg",
     hotspots: [
       { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Congestion", category: "Landside", impact: "Drivers experiencing delays entering parking.", evidence: "Queue > 15 vehicles.", action: "Deploy traffic wardens.", source: "Traffic Cam", updatedAt: "14:02" }
     ]
@@ -352,6 +357,7 @@ const scenes: AirportScene[] = [
     title: "Support Services",
     summary: "Maintenance, catering, and airport support facilities.",
     image: "/manager-assets/support-services.jpg",
+    darkImage: "/manager-assets/support-services-dark-new.jpg",
     hotspots: [
       { id: "catering-facility", cx: 70.0, cy: 40.0, status: "good", title: "Catering Operations Normal", category: "Services", source: "Facilities", updatedAt: "14:10" }
     ]
@@ -754,9 +760,9 @@ function DigitalTwinView() {
   };
 
   const imageFilter = [
-    imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none",
     selectedHotspot ? "blur(2px)" : "",
-  ].filter(Boolean).join(" ");
+  ].filter(Boolean).join(" ") || "none";
+  const sceneImage = imageMode === "dark" ? activeScene.darkImage : activeScene.image;
 
   return (
     <div className="grid min-w-0 gap-4 lg:gap-6">
@@ -806,7 +812,7 @@ function DigitalTwinView() {
             <div className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
               <title>{activeScene.title} operational image map</title>
-              <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
+              <image href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
 
               {/* Render Hotspots */}
               {activeScene.hotspots.map(renderHotspotMarker)}
