@@ -305,8 +305,8 @@ const scenes: AirportScene[] = [
   {
     id: "terminal-3",
     label: "Terminal 3",
-    title: "Terminal 3 Aerial",
-    summary: "Airside and landside view of the main international hub.",
+    title: "Terminal 3 Operations",
+    summary: "Main international terminal with gate, flow, and connection monitoring.",
     image: "/manager-assets/terminal-3.jpg",
     hotspots: [
       { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Smooth processing across T3.", evidence: "Wait times < 5 mins.", source: "Ops Sensor", updatedAt: "14:04" },
@@ -316,7 +316,7 @@ const scenes: AirportScene[] = [
   {
     id: "terminal-2",
     label: "Terminal 2",
-    title: "Terminal 2 Aerial",
+    title: "Terminal 2 Operations",
     summary: "International terminal connected operationally with Terminal 3.",
     image: "/manager-assets/terminal-2.jpg",
     hotspots: [
@@ -326,7 +326,7 @@ const scenes: AirportScene[] = [
   {
     id: "terminal-1",
     label: "Terminal 1",
-    title: "Terminal 1 Aerial",
+    title: "Terminal 1 Operations",
     summary: "Separate terminal area serving selected domestic and international operations.",
     image: "/manager-assets/terminal-1.jpg",
     hotspots: [
@@ -335,9 +335,9 @@ const scenes: AirportScene[] = [
   },
   {
     id: "landside",
-    label: "Landside Buildings",
-    title: "Landside Buildings Aerial",
-    summary: "Parking facilities, access roads, and landside infrastructure.",
+    label: "Landside Access",
+    title: "Landside Access",
+    summary: "Parking, access roads, curbside flow, and public-side movement.",
     image: "/manager-assets/landside.jpg",
     hotspots: [
       { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Congestion", category: "Landside", impact: "Drivers experiencing delays entering parking.", evidence: "Queue > 15 vehicles.", action: "Deploy traffic wardens.", source: "Traffic Cam", updatedAt: "14:02" }
@@ -345,8 +345,8 @@ const scenes: AirportScene[] = [
   },
   {
     id: "services",
-    label: "Support & Services",
-    title: "Support & Services Aerial",
+    label: "Support Services",
+    title: "Support Services",
     summary: "Maintenance, catering, and airport support facilities.",
     image: "/manager-assets/support-services.jpg",
     hotspots: [
@@ -360,14 +360,6 @@ const sampleIncomingFlights: IncomingFlight[] = [
   { airline: "Qatar Airways", flight: "QR1303", eta: "14:05", gate: "T2 / B03", status: "Landing", tone: "info", origin: "Doha (DOH)" },
   { airline: "Emirates", flight: "EK927", eta: "14:25", gate: "T2 / B12", status: "Delayed +18m", tone: "warn", origin: "Dubai (DXB)" },
   { airline: "Saudia", flight: "SV301", eta: "14:55", gate: "T1 / A04", status: "On time", tone: "ok", origin: "Jeddah (JED)" },
-];
-
-const densityZones = [
-  { label: "T1", x: "21%", y: "58%", size: 96, tone: "ok" as Tone, value: "Low" },
-  { label: "T2", x: "70%", y: "47%", size: 116, tone: "warn" as Tone, value: "Medium" },
-  { label: "T3", x: "46%", y: "40%", size: 132, tone: "high" as Tone, value: "High" },
-  { label: "Security", x: "52%", y: "56%", size: 104, tone: "crit" as Tone, value: "Critical" },
-  { label: "Baggage", x: "57%", y: "72%", size: 92, tone: "warn" as Tone, value: "Medium" },
 ];
 
 const zoneStatusRows = [
@@ -697,23 +689,12 @@ function DigitalTwinView() {
   const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
-  const [filterMode, setFilterMode] = useState<HotspotStatus | "all">("all");
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const incoming = useIncomingCaiFlights();
 
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
   const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
-  
-  // Filter hotspots based on selected filter
-  const visibleHotspots = activeScene.hotspots.filter(h => filterMode === "all" || h.status === filterMode);
   const selectedHotspot = activeScene.hotspots.find(h => h.id === selectedHotspotId);
-
-  // Status Summary
-  const stats = {
-    critical: activeScene.hotspots.filter(h => h.status === "critical").length,
-    warning: activeScene.hotspots.filter(h => h.status === "warning").length,
-    good: activeScene.hotspots.filter(h => h.status === "good").length,
-  };
 
   const getStatusColor = (status: HotspotStatus) => {
     switch (status) {
@@ -773,44 +754,44 @@ function DigitalTwinView() {
     <div className="grid min-w-0 gap-4 lg:gap-6">
       <SectionPanel className="overflow-hidden p-0" title="">
         <div className="min-w-0 border-b border-border p-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <h2 className="text-xl font-semibold sm:text-2xl">{localize({ en: "Airport Operational Insight Map", ar: "خريطة الرؤية التشغيلية للمطار" }, language)}</h2>
-              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#D92D20]" /> {stats.critical} Critical</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#F79009]" /> {stats.warning} Needs attention</span>
-                <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#12B76A]" /> {stats.good} Good</span>
-                <span className="border-l border-border pl-4">Updated: 14:04</span>
-                <span>Mode: Live</span>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              <div className="hidden items-center gap-2 md:flex" aria-label="Density legend">
-                <DensityLegend tone="ok" label="Low" />
-                <DensityLegend tone="warn" label="Medium" />
-                <DensityLegend tone="crit" label="High" />
-              </div>
-              {(["all", "critical", "warning", "good", "info"] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFilterMode(f)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${filterMode === f ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
-                >
-                  {f === "all" ? "All insights" : f === "warning" ? "Needs attention" : f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
-                className="ml-2 inline-flex items-center justify-center gap-2 rounded-full border border-border px-4 py-1.5 text-xs font-semibold hover:bg-secondary"
-              >
-                <ImageModeIcon className="h-3.5 w-3.5" />
-                {imageMode === "dark" ? "Light mode" : "Dark mode"}
-              </button>
-            </div>
-          </div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{localize({ en: "Interactive airport image map", ar: "خريطة تفاعلية للمطار" }, language)}</p>
+          <h2 className="mt-2 text-xl font-semibold sm:text-2xl">{localize({ en: "Cairo Airport visual command map", ar: "خريطة القيادة المرئية لمطار القاهرة" }, language)}</h2>
         </div>
+
+        <nav className="border-b border-border bg-card/70 p-3" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+          <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+            <span className="shrink-0 px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{localize({ en: "Jump to", ar: "انتقل إلى" }, language)}</span>
+            <div className="flex min-w-max items-center gap-1 rounded-2xl border border-border bg-secondary/35 p-1 shadow-inner">
+              {scenes.map((scene) => {
+                const active = scene.id === activeSceneId;
+                return (
+                  <button
+                    key={scene.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveSceneId(scene.id);
+                      setSelectedHotspotId(null);
+                    }}
+                    aria-current={active ? "page" : undefined}
+                    className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                      active ? "bg-primary/[0.16] text-foreground ring-1 ring-primary/45 shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "text-muted-foreground hover:bg-background/65 hover:text-foreground"
+                    }`}
+                  >
+                    {tr(scene.label)}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
+              className="ms-auto inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-background/70 px-4 text-sm font-semibold hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <ImageModeIcon className="h-4 w-4" />
+              {localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
+            </button>
+          </div>
+        </nav>
 
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
@@ -818,118 +799,14 @@ function DigitalTwinView() {
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
               <title>{activeScene.title} operational image map</title>
               <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none" }} />
-              
-              {/* Optional Density Overlays inside SVG */}
-              {activeScene.id === "terminal-3" && (
-                 <g opacity="0.3">
-                    <circle cx="800" cy="500" r="150" fill="url(#density-high)" />
-                    <circle cx="400" cy="600" r="100" fill="url(#density-medium)" />
-                 </g>
-              )}
-
-              {/* Definitions for overlays */}
-              <defs>
-                 <radialGradient id="density-high">
-                    <stop offset="0%" stopColor="#B42318" />
-                    <stop offset="100%" stopColor="#B42318" stopOpacity="0" />
-                 </radialGradient>
-                 <radialGradient id="density-medium">
-                    <stop offset="0%" stopColor="#B54708" />
-                    <stop offset="100%" stopColor="#B54708" stopOpacity="0" />
-                 </radialGradient>
-              </defs>
 
               {/* Render Hotspots */}
-              {visibleHotspots.map(renderHotspotMarker)}
+              {activeScene.hotspots.map(renderHotspotMarker)}
             </svg>
-            <DensityOverlay />
-          </div>
-          
-          {/* Map Navigation Bar */}
-          <div className="flex w-full items-center gap-2 overflow-x-auto bg-card p-3 scrollbar-hide">
-            {activeScene.id !== "terminal-3" ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveSceneId("terminal-3");
-                  setSelectedHotspotId(null);
-                }}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-semibold shadow-sm hover:bg-secondary"
-              >
-                ← Reset to Airport Overview
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="shrink-0 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Jump to:</span>
-                {scenes.filter(s => s.id !== "overview").map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                        setActiveSceneId(s.id);
-                        setSelectedHotspotId(null);
-                    }}
-                    className="shrink-0 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-semibold shadow-sm hover:bg-secondary hover:text-foreground transition-colors"
-                  >
-                    {s.title}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+            </div>
         </div>
 
           <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[800px] overflow-y-auto">
-            {selectedHotspot ? (
-              <div className="p-6">
-                <button 
-                  onClick={() => setSelectedHotspotId(null)}
-                  className="mb-6 inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
-                >
-                  ← Back to {activeScene.title}
-                </button>
-                
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white" style={{ backgroundColor: getStatusColor(selectedHotspot.status) }}>
-                    {selectedHotspot.status === "warning" ? "Needs attention" : selectedHotspot.status.charAt(0).toUpperCase() + selectedHotspot.status.slice(1)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{selectedHotspot.category}</span>
-                  <span className="text-xs text-muted-foreground">• Updated {selectedHotspot.updatedAt}</span>
-                </div>
-
-                <h3 className="text-2xl font-bold tracking-tight mb-6">{selectedHotspot.title}</h3>
-
-                <div className="space-y-6">
-                  {selectedHotspot.impact && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Impact</h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedHotspot.impact}</p>
-                    </div>
-                  )}
-                  {selectedHotspot.evidence && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Evidence</h4>
-                      <div className="rounded-md bg-secondary/50 p-3 border border-border/50">
-                        <p className="text-sm font-mono text-secondary-foreground">{selectedHotspot.evidence}</p>
-                      </div>
-                    </div>
-                  )}
-                  {selectedHotspot.action && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Recommended Action</h4>
-                      <div className="rounded-md border-l-2 border-primary bg-primary/5 p-4">
-                        <p className="text-sm font-medium text-primary">{selectedHotspot.action}</p>
-                      </div>
-                    </div>
-                  )}
-                  {selectedHotspot.source && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-1">Source</h4>
-                      <p className="text-xs text-muted-foreground">{selectedHotspot.source}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
               <div className="p-6">
                 <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-primary">{tr("Area Overview")}</p>
                 <h3 className="mt-3 text-2xl font-bold tracking-tight">{tr(activeScene.title)}</h3>
@@ -942,8 +819,9 @@ function DigitalTwinView() {
                       activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").map(h => (
                         <button 
                           key={h.id} 
+                          type="button"
                           onClick={() => setSelectedHotspotId(h.id)}
-                          className="flex items-start gap-3 rounded-md border border-border p-3 text-left transition hover:border-primary hover:bg-secondary/50"
+                          className="flex items-start gap-3 rounded-md border border-border p-3 text-start transition hover:border-primary hover:bg-secondary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         >
                           <span className="mt-0.5 block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: getStatusColor(h.status) }} />
                           <div>
@@ -958,9 +836,7 @@ function DigitalTwinView() {
                   </div>
                 </div>
               </div>
-            )}
             
-            {!selectedHotspot && (
                <div className="mt-auto border-t border-border p-6 bg-surface-2/50">
                   <h4 className="text-xs font-semibold uppercase tracking-wider mb-3">Incoming Operations</h4>
                   <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
@@ -968,7 +844,6 @@ function DigitalTwinView() {
                     <ZoneStatusPanel />
                   </div>
                </div>
-            )}
           </aside>
         </div>
       </SectionPanel>
@@ -1046,42 +921,6 @@ function HotspotInsightDetails({ hotspot, statusColor }: { hotspot: MapHotspot; 
           </section>
         )}
       </div>
-    </div>
-  );
-}
-
-function DensityLegend({ tone, label }: { tone: Tone; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-md border border-border bg-background/55 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
-      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: toneCssVar(tone), boxShadow: `0 0 12px ${toneCssVar(tone)}` }} />
-      {label}
-    </span>
-  );
-}
-
-function DensityOverlay() {
-  const { language } = useLocale();
-  return (
-    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-      {densityZones.map((zone) => {
-        const color = toneCssVar(zone.tone);
-        return (
-          <div key={zone.label} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: zone.x, top: zone.y }}>
-            <span
-              className="absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px]"
-              style={{
-                width: zone.size,
-                height: zone.size,
-                background: `radial-gradient(circle, ${color} 0%, color-mix(in oklab, ${color} 55%, transparent) 36%, transparent 72%)`,
-                opacity: 0.72,
-              }}
-            />
-            <span className="relative inline-flex rounded-md border border-white/30 bg-background/70 px-2 py-1 text-[10px] font-semibold text-foreground shadow-lg backdrop-blur">
-              {zone.label} · {localize({ en: zone.value, ar: zone.value === "Low" ? "منخفض" : zone.value === "Medium" ? "متوسط" : zone.value === "High" ? "مرتفع" : "حرج" }, language)}
-            </span>
-          </div>
-        );
-      })}
     </div>
   );
 }
