@@ -449,8 +449,8 @@ html.light body {
   }
   .cctv-loop {
     position: relative;
-    aspect-ratio: 16 / 7;
-    min-height: 9rem;
+    aspect-ratio: 16 / 8.5;
+    min-height: 7.25rem;
     color: rgba(226, 245, 255, 0.82);
   }
   .cctv-frame {
@@ -588,9 +588,9 @@ html.light body {
 
 @media (max-width: 640px) {
   .hotspot-popover {
-    left: 1rem !important;
-    right: 1rem !important;
-    top: 1rem !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    top: 0.5rem !important;
     width: auto !important;
     transform: none !important;
   }

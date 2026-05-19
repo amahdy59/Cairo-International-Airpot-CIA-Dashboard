@@ -875,11 +875,11 @@ function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot
           ? localize({ en: "Offline", ar: "متوقف" }, language)
           : localize({ en: "Info", ar: "معلومة" }, language);
   const alignToStart = hotspot.cx > 58;
-  const popoverWidth = "min(360px, calc(100% - 2rem))";
+  const popoverWidth = "min(280px, calc(100% - 1rem))";
   const popoverLeft = alignToStart
-    ? `max(1rem, calc(${hotspot.cx}% - min(360px, calc(100% - 2rem)) - 1.25rem))`
-    : `min(calc(100% - min(360px, calc(100% - 2rem)) - 1rem), calc(${hotspot.cx}% + 1.25rem))`;
-  const popoverTop = `clamp(1rem, calc(${hotspot.cy}% - 8rem), calc(100% - min(33rem, calc(100% - 2rem))))`;
+    ? `max(0.5rem, calc(${hotspot.cx}% - min(280px, calc(100% - 1rem)) - 0.75rem))`
+    : `min(calc(100% - min(280px, calc(100% - 1rem)) - 0.5rem), calc(${hotspot.cx}% + 0.75rem))`;
+  const popoverTop = `clamp(0.5rem, calc(${hotspot.cy}% - 5rem), calc(100% - min(24rem, calc(100% - 1rem))))`;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -897,7 +897,7 @@ function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot
           left: popoverLeft,
           top: popoverTop,
           width: popoverWidth,
-          maxHeight: "calc(100% - 2rem)",
+          maxHeight: "calc(100% - 1rem)",
           overflowY: "auto",
         }}
         role="dialog"
@@ -905,59 +905,54 @@ function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot
         aria-labelledby="hotspot-popover-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-border p-5">
-          <h2 id="hotspot-popover-title" className="text-xl font-semibold tracking-tight">{tr(hotspot.title)}</h2>
+        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 id="hotspot-popover-title" className="truncate text-base font-semibold tracking-tight">{tr(hotspot.title)}</h2>
+            <span className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-white" style={{ backgroundColor: statusColor }}>
+              {statusLabel}
+            </span>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-background/70 hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border bg-background/70 hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             aria-label={tr("Close")}
           >
-            <X aria-hidden="true" className="h-5 w-5" />
+            <X aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="grid gap-4 p-5">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="rounded-full px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-white" style={{ backgroundColor: statusColor }}>
-              {statusLabel}
-            </span>
-            <span className="font-mono text-sm font-semibold text-muted-foreground">{hotspot.category}</span>
-            {hotspot.updatedAt && (
-              <span className="inline-flex items-center gap-2 font-mono text-sm font-semibold text-muted-foreground">
-                <Clock3 aria-hidden="true" className="h-4 w-4" />
-                {localize({ en: "Updated", ar: "آخر تحديث" }, language)} {hotspot.updatedAt}
-              </span>
-            )}
-          </div>
-
+        <div className="grid gap-2 p-3">
           {hotspot.impact && (
-            <section className="panel-inner p-4">
-              <h3 className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <BarChart3 aria-hidden="true" className="h-4 w-4" />
+            <section className="panel-inner p-3">
+              <h3 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <BarChart3 aria-hidden="true" className="h-3.5 w-3.5" />
                 {localize({ en: "Operational impact", ar: "الأثر التشغيلي" }, language)}
               </h3>
-              <p className="mt-3 text-base leading-relaxed text-foreground">{hotspot.impact}</p>
+              <p className="mt-1 text-xs leading-relaxed text-foreground">{hotspot.impact}</p>
+              {hotspot.updatedAt && (
+                <p className="mt-1 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                  <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
+                  {localize({ en: "Updated", ar: "آخر تحديث" }, language)} {hotspot.updatedAt}
+                </p>
+              )}
             </section>
           )}
 
-          <section className="panel-inner p-4">
-            <h3 className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              <Camera aria-hidden="true" className="h-4 w-4" />
-              {localize({ en: "CCTV sample", ar: "عينة كاميرا مراقبة" }, language)}
+          <section className="panel-inner p-3">
+            <h3 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Camera aria-hidden="true" className="h-3.5 w-3.5" />
+              CCTV
             </h3>
-            <p className="mt-3 text-2xl font-semibold text-foreground" style={{ color: statusColor }}>
-              {hotspot.evidence ?? localize({ en: "No unusual activity detected.", ar: "لا توجد حركة غير معتادة." }, language)}
-            </p>
             <CctvTerminalLoop />
           </section>
 
           <button
             type="button"
-            className="inline-flex min-h-12 items-center justify-center gap-3 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
-            <ArrowRight aria-hidden="true" className="h-5 w-5 rtl:rotate-180" />
+            <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
           </button>
         </div>
       </div>
