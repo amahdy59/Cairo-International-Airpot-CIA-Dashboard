@@ -2,17 +2,16 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import {
   Activity,
   AlertTriangle,
+  ArrowUp,
   BaggageClaim,
   Clock3,
   Contrast,
   DoorOpen,
-  Eye,
   Flame,
   Gauge,
   Languages,
   Moon,
   Plane,
-  PlaneLanding,
   Radar,
   RadioTower,
   ShieldCheck,
@@ -22,7 +21,6 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from "@/components/command-center/MetricWidgets";
 
 type ManagerTab = "digital" | "operations" | "safety";
@@ -87,8 +85,6 @@ export type AirportScene = {
   objectPosition?: string;
   hotspots: MapHotspot[];
 };
-
-const HERO_PLANE = "/manager-assets/hero-egyptair-plane.webp";
 
 const LocaleContext = createContext<Language>("en");
 
@@ -366,63 +362,6 @@ const sampleIncomingFlights: IncomingFlight[] = [
   { airline: "Saudia", flight: "SV301", eta: "14:55", gate: "T1 / A04", status: "On time", tone: "ok", origin: "Jeddah (JED)" },
 ];
 
-const operationalAlerts = [
-  {
-    title: { en: "T2 security queue rising", ar: "ارتفاع طابور الأمن في مبنى 2" },
-    detail: { en: "Open one extra lane before the 14:00 arrival wave.", ar: "افتح مسارا إضافيا قبل موجة الوصول الساعة 14:00." },
-    badge: { en: "17 min", ar: "17 دقيقة" },
-    tone: "warn" as Tone,
-  },
-  {
-    title: { en: "Baggage belt 4 nearing capacity", ar: "سير الأمتعة 4 يقترب من السعة القصوى" },
-    detail: { en: "Assign ramp runner for EK927 and QR1303 overlap.", ar: "عيّن منسق ساحة لتداخل رحلتي EK927 و QR1303." },
-    badge: { en: "High", ar: "مرتفع" },
-    tone: "high" as Tone,
-  },
-  {
-    title: { en: "T3 staff buffer is healthy", ar: "احتياطي موظفي مبنى 3 جيد" },
-    detail: { en: "Keep two floating agents near passport control.", ar: "أبق موظفين متحركين قرب الجوازات." },
-    badge: { en: "Stable", ar: "مستقر" },
-    tone: "ok" as Tone,
-  },
-];
-
-const digitalMetrics = [
-  {
-    label: { en: "Current passengers", ar: "الركاب الحاليون" },
-    value: "2,850",
-    hint: { en: "Across T1/T2/T3", ar: "عبر مباني 1 و2 و3" },
-    delta: "+12%",
-    icon: Users,
-    tone: "ok" as Tone,
-  },
-  {
-    label: { en: "Active flights", ar: "الرحلات النشطة" },
-    value: "15",
-    hint: { en: "Next 2 hours", ar: "خلال الساعتين القادمتين" },
-    delta: { en: "8 arrivals", ar: "8 وصول" },
-    icon: PlaneLanding,
-    tone: "info" as Tone,
-  },
-  {
-    label: { en: "Avg wait per gate", ar: "متوسط الانتظار لكل بوابة" },
-    value: "22",
-    unit: "min",
-    hint: { en: "Security + passport", ar: "الأمن والجوازات" },
-    delta: "+5 min",
-    icon: Clock3,
-    tone: "warn" as Tone,
-  },
-  {
-    label: { en: "Ground crew available", ar: "طاقم أرضي متاح" },
-    value: "120",
-    hint: { en: "On duty now", ar: "في الخدمة الآن" },
-    delta: { en: "14 floaters", ar: "14 دعم متحرك" },
-    icon: UserCheck,
-    tone: "ok" as Tone,
-  },
-];
-
 const densityZones = [
   { label: "T1", x: "21%", y: "58%", size: 96, tone: "ok" as Tone, value: "Low" },
   { label: "T2", x: "70%", y: "47%", size: 116, tone: "warn" as Tone, value: "Medium" },
@@ -554,8 +493,23 @@ export function App() {
           {c.resources}
         </a>
       </footer>
+      <BackToTopButton />
     </div>
     </LocaleContext.Provider>
+  );
+}
+
+function BackToTopButton() {
+  const { language } = useLocale();
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className="fixed bottom-5 end-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-border bg-primary text-primary-foreground shadow-[0_14px_34px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_color-mix(in_oklab,var(--primary)_36%,transparent)]"
+      aria-label={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
+    >
+      <ArrowUp aria-hidden="true" className="h-5 w-5" />
+    </button>
   );
 }
 
@@ -600,8 +554,8 @@ function Header({
         </a>
 
         {/* Navigation Tabs */}
-        <nav className="flex flex-1 justify-center order-3 w-full sm:order-none sm:w-auto mt-2 sm:mt-0" role="tablist" aria-label={tr("Manager dashboard sections")}>
-          <div className="flex items-center gap-1 rounded-xl bg-secondary/30 p-1 backdrop-blur-md">
+        <nav className="order-3 flex w-full flex-1 justify-center sm:order-none sm:mt-0 sm:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
+          <div className="flex min-h-12 w-full items-center justify-center gap-1 rounded-xl border border-border bg-secondary/35 p-1 shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-md sm:w-auto">
             {[
               { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
               { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
@@ -616,13 +570,13 @@ function Header({
                   aria-selected={isActive}
                   aria-controls="main-content"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex min-w-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+                  className={`group relative flex min-w-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:min-w-36 ${
                     isActive
-                      ? "bg-[#3154D4] text-white shadow-[0_8px_20px_rgba(49,84,212,0.22)] dark:shadow-none"
-                      : "bg-transparent text-[#475569] hover:bg-secondary/60 hover:text-foreground dark:text-slate-400"
+                      ? "bg-primary text-primary-foreground shadow-[0_10px_28px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
+                      : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
                   }`}
                 >
-                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <Icon aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
                   <span className="truncate">{tab.label}</span>
                 </button>
               );
@@ -655,9 +609,9 @@ function Header({
 
 function TimeChip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-baseline gap-1.5">
+    <span className="inline-flex items-center gap-1.5">
       <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
-      <span className="font-mono text-xs font-semibold">{value}</span>
+      <span className="font-mono text-sm font-semibold leading-none">{value}</span>
     </span>
   );
 }
@@ -781,6 +735,15 @@ function DigitalTwinView() {
         key={hotspot.id} 
         transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
         onClick={() => setSelectedHotspotId(hotspot.id)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setSelectedHotspotId(hotspot.id);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label={`${hotspot.title}. ${hotspot.status}`}
         className="cursor-pointer"
       >
         {/* Outer Glow */}
@@ -823,6 +786,11 @@ function DigitalTwinView() {
             </div>
             
             <div className="flex flex-wrap gap-2">
+              <div className="hidden items-center gap-2 md:flex" aria-label="Density legend">
+                <DensityLegend tone="ok" label="Low" />
+                <DensityLegend tone="warn" label="Medium" />
+                <DensityLegend tone="crit" label="High" />
+              </div>
               {(["all", "critical", "warning", "good", "info"] as const).map(f => (
                 <button
                   key={f}
@@ -847,7 +815,8 @@ function DigitalTwinView() {
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
             <div className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
-            <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full">
+            <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
+              <title>{activeScene.title} operational image map</title>
               <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none" }} />
               
               {/* Optional Density Overlays inside SVG */}
@@ -873,6 +842,7 @@ function DigitalTwinView() {
               {/* Render Hotspots */}
               {visibleHotspots.map(renderHotspotMarker)}
             </svg>
+            <DensityOverlay />
           </div>
           
           {/* Map Navigation Bar */}
@@ -994,11 +964,20 @@ function DigitalTwinView() {
                <div className="mt-auto border-t border-border p-6 bg-surface-2/50">
                   <h4 className="text-xs font-semibold uppercase tracking-wider mb-3">Incoming Operations</h4>
                   <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
+                  <div className="mt-3">
+                    <ZoneStatusPanel />
+                  </div>
                </div>
             )}
           </aside>
         </div>
       </SectionPanel>
+
+      {selectedHotspot && (
+        <Modal title={selectedHotspot.title} onClose={() => setSelectedHotspotId(null)}>
+          <HotspotInsightDetails hotspot={selectedHotspot} statusColor={getStatusColor(selectedHotspot.status)} />
+        </Modal>
+      )}
     </div>
   );
 }
@@ -1015,51 +994,59 @@ function toneCssVar(tone: Tone) {
   return map[tone];
 }
 
-function DigitalAlertStrip() {
+function HotspotInsightDetails({ hotspot, statusColor }: { hotspot: MapHotspot; statusColor: string }) {
   const { language } = useLocale();
-  return (
-    <section className="grid gap-3 md:grid-cols-3" aria-label={localize({ en: "Operational decision alerts", ar: "تنبيهات قرارات التشغيل" }, language)}>
-      {operationalAlerts.map((alert) => (
-        <article key={alert.title.en} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-          <div className="flex min-w-0 gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-background/60">
-              <AlertTriangle aria-hidden="true" className="h-4 w-4" style={{ color: toneCssVar(alert.tone) }} />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold">{localize(alert.title, language)}</h2>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{localize(alert.detail, language)}</p>
-            </div>
-          </div>
-          <StatusPill tone={alert.tone}>{localize(alert.badge, language)}</StatusPill>
-        </article>
-      ))}
-    </section>
-  );
-}
+  const statusLabel = hotspot.status === "warning"
+    ? localize({ en: "Needs attention", ar: "يحتاج انتباها" }, language)
+    : hotspot.status === "critical"
+      ? localize({ en: "Critical", ar: "حرج" }, language)
+      : hotspot.status === "good"
+        ? localize({ en: "Good", ar: "جيد" }, language)
+        : hotspot.status === "offline"
+          ? localize({ en: "Offline", ar: "متوقف" }, language)
+          : localize({ en: "Info", ar: "معلومة" }, language);
 
-function DigitalKpiGrid() {
-  const { language } = useLocale();
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={localize({ en: "Digital twin key metrics", ar: "المؤشرات الرئيسية للتوأم الرقمي" }, language)}>
-      {digitalMetrics.map((metric) => {
-        const delta = typeof metric.delta === "string" ? metric.delta : localize(metric.delta, language);
-        const accent = metric.tone === "warn" || metric.tone === "high" ? "warn" : metric.tone === "ok" ? "ok" : "cyan";
-        const deltaTone = metric.tone === "warn" || metric.tone === "high" ? "warn" : metric.tone === "ok" ? "ok" : "info";
-        return (
-          <MetricCard
-            key={metric.label.en}
-            label={localize(metric.label, language)}
-            value={metric.value}
-            unit={metric.unit}
-            hint={localize(metric.hint, language)}
-            delta={delta}
-            deltaTone={deltaTone}
-            icon={metric.icon}
-            accent={accent}
-          />
-        );
-      })}
-    </section>
+    <div className="max-h-[76vh] overflow-y-auto pe-1">
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <span className="rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ backgroundColor: statusColor }}>
+          {statusLabel}
+        </span>
+        <span className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">{hotspot.category}</span>
+        {hotspot.updatedAt && (
+          <span className="text-xs text-muted-foreground">
+            {localize({ en: "Updated", ar: "آخر تحديث" }, language)} {hotspot.updatedAt}
+          </span>
+        )}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {hotspot.impact && (
+          <section className="panel-inner p-4">
+            <h3 className="text-sm font-semibold">{localize({ en: "Operational impact", ar: "الأثر التشغيلي" }, language)}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{hotspot.impact}</p>
+          </section>
+        )}
+        {hotspot.evidence && (
+          <section className="panel-inner p-4">
+            <h3 className="text-sm font-semibold">{localize({ en: "Evidence", ar: "الدليل" }, language)}</h3>
+            <p className="mt-2 font-mono text-sm leading-relaxed text-muted-foreground">{hotspot.evidence}</p>
+          </section>
+        )}
+        {hotspot.action && (
+          <section className="panel-inner border-primary/50 bg-primary/10 p-4 md:col-span-2">
+            <h3 className="text-sm font-semibold text-primary">{localize({ en: "Recommended action", ar: "الإجراء المقترح" }, language)}</h3>
+            <p className="mt-2 text-sm font-medium leading-relaxed">{hotspot.action}</p>
+          </section>
+        )}
+        {hotspot.source && (
+          <section className="panel-inner p-4 md:col-span-2">
+            <h3 className="text-sm font-semibold">{localize({ en: "Source", ar: "المصدر" }, language)}</h3>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hotspot.source}</p>
+          </section>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1399,29 +1386,10 @@ function AnomalyWarningsPanel() {
   );
 }
 
-function Hotspot({ left, top, label, active, onClick }: { left: string; top: string; label: string; active: boolean; onClick: () => void }) {
-  const { tr } = useLocale();
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 p-2 shadow-[0_0_28px_var(--cyan)] transition hover:scale-110 ${active ? "border-white bg-primary text-primary-foreground" : "border-primary bg-primary/45 text-white"}`}
-      style={{ left, top }}
-      aria-label={`${tr("Open detailed view")}: ${tr(label)}`}
-    >
-      <span className="block h-4 w-4 rounded-full bg-current" />
-      <span className="sr-only">{label}</span>
-    </button>
-  );
-}
-
 function OperationsView() {
   const { tr } = useLocale();
   return (
     <div className="grid gap-6">
-      <DigitalAlertStrip />
-      <DigitalKpiGrid />
-      {/* Top: Key Metrics */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
         <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
         <MetricCard label={tr("Aircraft movements")} value="412" unit="/ 540" hint={tr("390 average")} delta={tr("On schedule")} icon={Activity} accent="cyan" />
@@ -1601,22 +1569,28 @@ function SafetyView() {
 function DecisionRecommendations() {
   const { tr } = useLocale();
   const rows = [
-    { title: "Rebalance security staff", detail: "-4 min expected wait", badge: "Ops" },
-    { title: "Fast-track F11 passengers", detail: "Protects departure time", badge: "Gates" },
-    { title: "Confirm SU-GBP parts", detail: "Reduces tomorrow risk", badge: "Maintenance" },
+    { title: "Rebalance security staff", detail: "-4 min expected wait", badge: "Ops", icon: Users, tone: "info" as Tone },
+    { title: "Fast-track F11 passengers", detail: "Protects departure time", badge: "Gates", icon: Plane, tone: "ok" as Tone },
+    { title: "Confirm SU-GBP parts", detail: "Reduces tomorrow risk", badge: "Maintenance", icon: Wrench, tone: "warn" as Tone },
   ];
   return (
     <SectionPanel title={tr("Decision recommendations")}>
-      <div className="space-y-3">
-        {rows.map((row) => (
-          <article key={row.title} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-            <div>
-              <h3 className="font-semibold">{tr(row.title)}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{tr(row.detail)}</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {rows.map((row) => {
+          const Icon = row.icon;
+          return (
+          <article key={row.title} className="panel-inner p-4 text-center">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-border bg-background/65">
+              <Icon aria-hidden="true" className="h-5 w-5" style={{ color: toneCssVar(row.tone) }} />
             </div>
-            <StatusPill tone="neutral">{tr(row.badge)}</StatusPill>
+            <h3 className="mt-3 text-sm font-semibold">{tr(row.title)}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{tr(row.detail)}</p>
+            <div className="mt-3 flex justify-center">
+              <StatusPill tone={row.tone}>{tr(row.badge)}</StatusPill>
+            </div>
           </article>
-        ))}
+          );
+        })}
       </div>
     </SectionPanel>
   );
@@ -1625,22 +1599,28 @@ function DecisionRecommendations() {
 function SafetyControls() {
   const { tr } = useLocale();
   const rows = [
-    { title: "Accumulation risk", detail: "3 findings open longer than 24h", badge: "Medium", tone: "warn" as Tone },
-    { title: "Action owner", detail: "Every safety item has an owner and due time", badge: "Assigned", tone: "ok" as Tone },
-    { title: "Auto-escalation", detail: "Escalates if action has not started", badge: "90 min", tone: "info" as Tone },
+    { title: "Accumulation risk", detail: "3 findings open longer than 24h", badge: "Medium", tone: "warn" as Tone, icon: AlertTriangle },
+    { title: "Action owner", detail: "Every safety item has an owner and due time", badge: "Assigned", tone: "ok" as Tone, icon: UserCheck },
+    { title: "Auto-escalation", detail: "Escalates if action has not started", badge: "90 min", tone: "info" as Tone, icon: Clock3 },
   ];
   return (
     <SectionPanel title={tr("Controls to prevent issue build-up")}>
-      <div className="space-y-3">
-        {rows.map((row) => (
-          <article key={row.title} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-            <div>
-              <h3 className="font-semibold">{tr(row.title)}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{tr(row.detail)}</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {rows.map((row) => {
+          const Icon = row.icon;
+          return (
+          <article key={row.title} className="panel-inner p-4 text-center">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-border bg-background/65">
+              <Icon aria-hidden="true" className="h-5 w-5" style={{ color: toneCssVar(row.tone) }} />
             </div>
-            <StatusPill tone={row.tone}>{tr(row.badge)}</StatusPill>
+            <h3 className="mt-3 text-sm font-semibold">{tr(row.title)}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{tr(row.detail)}</p>
+            <div className="mt-3 flex justify-center">
+              <StatusPill tone={row.tone}>{tr(row.badge)}</StatusPill>
+            </div>
           </article>
-        ))}
+          );
+        })}
       </div>
     </SectionPanel>
   );
@@ -1828,13 +1808,11 @@ function useHeaderClock() {
         hour: "2-digit",
         minute: "2-digit",
         timeZone: "Africa/Cairo",
-        timeZoneName: "short",
       }).format(now),
       utc: new Intl.DateTimeFormat("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
         timeZone: "UTC",
-        timeZoneName: "short",
       }).format(now),
     }),
     [now],
