@@ -1,9 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  ArrowRight,
   ArrowUp,
   BaggageClaim,
+  BarChart3,
+  Camera,
   Clock3,
   Contrast,
   DoorOpen,
@@ -750,6 +753,11 @@ function DigitalTwinView() {
     );
   };
 
+  const imageFilter = [
+    imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none",
+    selectedHotspot ? "blur(2px)" : "",
+  ].filter(Boolean).join(" ");
+
   return (
     <div className="grid min-w-0 gap-4 lg:gap-6">
       <SectionPanel className="overflow-hidden p-0" title="">
@@ -798,11 +806,18 @@ function DigitalTwinView() {
             <div className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
               <title>{activeScene.title} operational image map</title>
-              <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageMode === "dark" ? "brightness(0.6) contrast(1.2)" : "none" }} />
+              <image href={activeScene.image} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
 
               {/* Render Hotspots */}
               {activeScene.hotspots.map(renderHotspotMarker)}
             </svg>
+            {selectedHotspot && (
+              <HotspotPopover
+                hotspot={selectedHotspot}
+                statusColor={getStatusColor(selectedHotspot.status)}
+                onClose={() => setSelectedHotspotId(null)}
+              />
+            )}
             </div>
         </div>
 
@@ -848,11 +863,6 @@ function DigitalTwinView() {
         </div>
       </SectionPanel>
 
-      {selectedHotspot && (
-        <Modal title={selectedHotspot.title} onClose={() => setSelectedHotspotId(null)}>
-          <HotspotInsightDetails hotspot={selectedHotspot} statusColor={getStatusColor(selectedHotspot.status)} />
-        </Modal>
-      )}
     </div>
   );
 }
@@ -869,8 +879,8 @@ function toneCssVar(tone: Tone) {
   return map[tone];
 }
 
-function HotspotInsightDetails({ hotspot, statusColor }: { hotspot: MapHotspot; statusColor: string }) {
-  const { language } = useLocale();
+function HotspotPopover({ hotspot, statusColor, onClose }: { hotspot: MapHotspot; statusColor: string; onClose: () => void }) {
+  const { language, tr } = useLocale();
   const statusLabel = hotspot.status === "warning"
     ? localize({ en: "Needs attention", ar: "يحتاج انتباها" }, language)
     : hotspot.status === "critical"
@@ -880,46 +890,103 @@ function HotspotInsightDetails({ hotspot, statusColor }: { hotspot: MapHotspot; 
         : hotspot.status === "offline"
           ? localize({ en: "Offline", ar: "متوقف" }, language)
           : localize({ en: "Info", ar: "معلومة" }, language);
+  const alignToStart = hotspot.cx > 58;
+  const alignUp = hotspot.cy > 58;
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   return (
-    <div className="max-h-[76vh] overflow-y-auto pe-1">
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        <span className="rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ backgroundColor: statusColor }}>
-          {statusLabel}
-        </span>
-        <span className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">{hotspot.category}</span>
-        {hotspot.updatedAt && (
-          <span className="text-xs text-muted-foreground">
-            {localize({ en: "Updated", ar: "آخر تحديث" }, language)} {hotspot.updatedAt}
-          </span>
-        )}
-      </div>
+    <div className="absolute inset-0 z-20" onClick={onClose} aria-hidden={false}>
+      <div
+        className="hotspot-popover panel absolute w-[min(420px,calc(100%-2rem))] overflow-hidden p-0 shadow-2xl"
+        style={{
+          left: `${hotspot.cx}%`,
+          top: `${hotspot.cy}%`,
+          transform: `translate(${alignToStart ? "calc(-100% - 24px)" : "24px"}, ${alignUp ? "calc(-100% + 16px)" : "-20%"})`,
+        }}
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="hotspot-popover-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-4 border-b border-border p-5">
+          <h2 id="hotspot-popover-title" className="text-xl font-semibold tracking-tight">{tr(hotspot.title)}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-background/70 hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            aria-label={tr("Close")}
+          >
+            <X aria-hidden="true" className="h-5 w-5" />
+          </button>
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {hotspot.impact && (
+        <div className="grid gap-4 p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="rounded-full px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-white" style={{ backgroundColor: statusColor }}>
+              {statusLabel}
+            </span>
+            <span className="font-mono text-sm font-semibold text-muted-foreground">{hotspot.category}</span>
+            {hotspot.updatedAt && (
+              <span className="inline-flex items-center gap-2 font-mono text-sm font-semibold text-muted-foreground">
+                <Clock3 aria-hidden="true" className="h-4 w-4" />
+                {localize({ en: "Updated", ar: "آخر تحديث" }, language)} {hotspot.updatedAt}
+              </span>
+            )}
+          </div>
+
+          {hotspot.impact && (
+            <section className="panel-inner p-4">
+              <h3 className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <BarChart3 aria-hidden="true" className="h-4 w-4" />
+                {localize({ en: "Operational impact", ar: "الأثر التشغيلي" }, language)}
+              </h3>
+              <p className="mt-3 text-base leading-relaxed text-foreground">{hotspot.impact}</p>
+            </section>
+          )}
+
           <section className="panel-inner p-4">
-            <h3 className="text-sm font-semibold">{localize({ en: "Operational impact", ar: "الأثر التشغيلي" }, language)}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{hotspot.impact}</p>
+            <h3 className="inline-flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <Camera aria-hidden="true" className="h-4 w-4" />
+              {localize({ en: "CCTV sample", ar: "عينة كاميرا مراقبة" }, language)}
+            </h3>
+            <p className="mt-3 text-2xl font-semibold text-foreground" style={{ color: statusColor }}>
+              {hotspot.evidence ?? localize({ en: "No unusual activity detected.", ar: "لا توجد حركة غير معتادة." }, language)}
+            </p>
+            <CctvTerminalLoop />
           </section>
-        )}
-        {hotspot.evidence && (
-          <section className="panel-inner p-4">
-            <h3 className="text-sm font-semibold">{localize({ en: "Evidence", ar: "الدليل" }, language)}</h3>
-            <p className="mt-2 font-mono text-sm leading-relaxed text-muted-foreground">{hotspot.evidence}</p>
-          </section>
-        )}
-        {hotspot.action && (
-          <section className="panel-inner border-primary/50 bg-primary/10 p-4 md:col-span-2">
-            <h3 className="text-sm font-semibold text-primary">{localize({ en: "Recommended action", ar: "الإجراء المقترح" }, language)}</h3>
-            <p className="mt-2 text-sm font-medium leading-relaxed">{hotspot.action}</p>
-          </section>
-        )}
-        {hotspot.source && (
-          <section className="panel-inner p-4 md:col-span-2">
-            <h3 className="text-sm font-semibold">{localize({ en: "Source", ar: "المصدر" }, language)}</h3>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hotspot.source}</p>
-          </section>
-        )}
+
+          <button
+            type="button"
+            className="inline-flex min-h-12 items-center justify-center gap-3 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            {localize({ en: "View full flow analytics", ar: "عرض تحليلات التدفق كاملة" }, language)}
+            <ArrowRight aria-hidden="true" className="h-5 w-5 rtl:rotate-180" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CctvTerminalLoop() {
+  return (
+    <div className="cctv-loop mt-4 overflow-hidden rounded-lg border border-border bg-black" aria-label="Generic three second airport terminal CCTV sample without visible faces">
+      <div className="cctv-frame">
+        <span className="cctv-ceiling" />
+        <span className="cctv-floor" />
+        <span className="cctv-left-wall" />
+        <span className="cctv-right-wall" />
+        <span className="cctv-gate cctv-gate-a" />
+        <span className="cctv-gate cctv-gate-b" />
+        <span className="cctv-scanline" />
+        <span className="cctv-timestamp">CAI CCTV · 00:03 LOOP</span>
       </div>
     </div>
   );
@@ -1605,31 +1672,6 @@ function Legend({ color, label }: { color: string; label: string }) {
       <span className={`h-2 w-2 rounded-full ${color}`} />
       {label}
     </span>
-  );
-}
-
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  const { tr } = useLocale();
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/75 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="panel max-h-[92vh] w-full max-w-5xl overflow-hidden p-4">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 id="modal-title" className="text-lg font-semibold">{tr(title)}</h2>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-lg border border-border hover:bg-secondary" aria-label={tr("Close")}>
-            <X aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
   );
 }
 
