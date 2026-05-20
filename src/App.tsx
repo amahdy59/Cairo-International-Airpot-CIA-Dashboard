@@ -26,6 +26,7 @@ import {
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from "@/components/command-center/MetricWidgets";
 
 type ManagerTab = "digital" | "operations" | "safety";
+type PageView = "dashboard" | "resources";
 type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 type Language = "en" | "ar";
 type ThemeMode = "dark" | "light";
@@ -282,7 +283,7 @@ const copy = {
     operations: "Operations",
     safety: "Safety",
     resources: "Resources and audit notes",
-    footer: "Cairo International Airport - Operated by Cairo Airport Company - IATA: CIA - ICAO: HECA",
+    footer: "Cairo International Airport - Operated by Cairo Airport Company - IATA: CAI - ICAO: HECA",
     contrast: "Toggle high contrast",
     theme: "Switch color theme",
     language: "Switch language",
@@ -297,7 +298,7 @@ const copy = {
     operations: "التشغيل",
     safety: "السلامة",
     resources: "المصادر وملاحظات التدقيق",
-    footer: "مطار القاهرة الدولي - تديره شركة ميناء القاهرة الجوي - IATA: CIA - ICAO: HECA",
+    footer: "مطار القاهرة الدولي - تديره شركة ميناء القاهرة الجوي - IATA: CAI - ICAO: HECA",
     contrast: "تبديل التباين العالي",
     theme: "تبديل نمط الألوان",
     language: "تبديل اللغة",
@@ -435,8 +436,16 @@ const aircraftRiskRows = [
   { reg: "SU-GEK", type: "B787-9", events: 3, mtbf: "320h", issue: "Cabin sensors", risk: 38 },
 ];
 
+function getInitialPageView(): PageView {
+  if (typeof window === "undefined") {
+    return "dashboard";
+  }
+  return window.location.hash === "#resources" ? "resources" : "dashboard";
+}
+
 export function App() {
   const [activeTab, setActiveTab] = useState<ManagerTab>("digital");
+  const [activePage, setActivePage] = useState<PageView>(() => getInitialPageView());
   const [language, setLanguage] = useState<Language>("en");
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [highContrast, setHighContrast] = useState(false);
@@ -451,21 +460,47 @@ export function App() {
     document.documentElement.classList.toggle("hc", highContrast);
   }, [highContrast, language, theme]);
 
+  useEffect(() => {
+    const onHashChange = () => setActivePage(getInitialPageView());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const showDashboard = () => {
+    setActivePage("dashboard");
+    window.history.pushState(null, "", `${window.location.pathname}${window.location.search}`);
+    window.requestAnimationFrame(() => {
+      document.getElementById("main")?.scrollIntoView({ block: "start" });
+    });
+  };
+
+  const showResources = () => {
+    setActivePage("resources");
+    window.history.pushState(null, "", "#resources");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <LocaleContext.Provider value={language}>
     <div className="min-h-screen overflow-x-hidden">
-      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard} />
       <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-4 overflow-x-hidden px-2 py-4 sm:gap-4 sm:px-4 lg:gap-5 lg:px-6">
-        <div key={activeTab} className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+        {activePage === "resources" ? (
+          <div id="main-content">
+            <ResourcesAuditPage />
+          </div>
+        ) : (
+        <div key={activeTab} id="main-content" className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
           {activeTab === "digital" && <DigitalTwinView />}
           {activeTab === "operations" && <OperationsView />}
           {activeTab === "safety" && <SafetyView />}
         </div>
+        )}
       </main>
       <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
         {c.footer}
         <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
-        <a className="font-medium text-primary hover:underline" href="https://www.cairo-airport.com/en-us/Airport/Airport-Information" target="_blank" rel="noreferrer">
+        <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
           {c.resources}
         </a>
       </footer>
@@ -489,6 +524,227 @@ function BackToTopButton() {
   );
 }
 
+function ResourcesAuditPage() {
+  const { language } = useLocale();
+
+  const featureCards = [
+    {
+      icon: Radar,
+      title: { en: "Decision surface", ar: "سطح قرار تشغيلي" },
+      detail: { en: "Digital twin, operations and safety views are separated so managers can move from overview to action quickly.", ar: "تفصل التجربة بين التوأم الرقمي والتشغيل والسلامة حتى ينتقل المدير من النظرة العامة إلى الإجراء بسرعة." },
+    },
+    {
+      icon: Languages,
+      title: { en: "Arabic and English", ar: "العربية والإنجليزية" },
+      detail: { en: "The interface supports RTL Arabic and English labels so the same dashboard can serve local and international teams.", ar: "تدعم الواجهة العربية باتجاه RTL والإنجليزية لخدمة الفرق المحلية والدولية." },
+    },
+    {
+      icon: Sun,
+      title: { en: "Light and dark modes", ar: "الوضعان الفاتح والداكن" },
+      detail: { en: "Theme controls preserve contrast and give managers readable views across control rooms, laptops and presentation screens.", ar: "تحافظ أنماط الألوان على التباين والقراءة في غرف التحكم والحواسب وشاشات العرض." },
+    },
+    {
+      icon: Gauge,
+      title: { en: "Responsive layout", ar: "تخطيط متجاوب" },
+      detail: { en: "Cards, tables and controls reflow from large command screens to tablets without hiding critical decisions.", ar: "تتكيف البطاقات والجداول وعناصر التحكم من الشاشات الكبيرة إلى الأجهزة اللوحية دون إخفاء القرارات المهمة." },
+    },
+  ];
+
+  const capabilityCards = [
+    {
+      icon: Plane,
+      title: { en: "Flight movement awareness", ar: "متابعة حركة الرحلات" },
+      detail: { en: "Incoming and departing flight boards can use public flight APIs now and an official FIDS/AODB feed later.", ar: "يمكن للوحات الوصول والمغادرة استخدام واجهات رحلات عامة الآن وربط FIDS/AODB رسمي لاحقا." },
+    },
+    {
+      icon: Users,
+      title: { en: "Passenger flow sensing", ar: "استشعار تدفق الركاب" },
+      detail: { en: "Passenger density, queue pressure and wait-time cards help managers rebalance staff before congestion accumulates.", ar: "تساعد كثافة الركاب وضغط الطوابير وأوقات الانتظار المديرين على إعادة توزيع الفرق قبل تراكم الازدحام." },
+    },
+    {
+      icon: ShieldCheck,
+      title: { en: "Safety control rhythm", ar: "إيقاع متابعة السلامة" },
+      detail: { en: "Safety checks, alert aging and aircraft attention lists highlight unresolved items before they become operating risk.", ar: "تبرز فحوصات السلامة وعمر التنبيهات وقوائم الطائرات التي تحتاج انتباها البنود غير المغلقة قبل تحولها إلى خطر تشغيلي." },
+    },
+    {
+      icon: Activity,
+      title: { en: "Actionable recommendations", ar: "توصيات قابلة للتنفيذ" },
+      detail: { en: "Recommendation panels translate metrics into clear next actions such as opening lanes or assigning floor staff.", ar: "تحول لوحات التوصيات المؤشرات إلى إجراءات واضحة مثل فتح مسارات إضافية أو تعيين مشرفي صالة." },
+    },
+  ];
+
+  const sourceLinks = [
+    {
+      title: "Cairo Airport Company - Airport Information",
+      href: "https://www.cairo-airport.com/en-us/Airport/Airport-Information",
+      note: "Official airport context, operator reference and public airport information.",
+    },
+    {
+      title: "Cairo Airport - Terminal Information",
+      href: "https://www.cairo-airport.com/en-us/Services/Passenger-Guide/Terminal-Information",
+      note: "Terminal-level passenger guidance used to shape terminal and services content.",
+    },
+    {
+      title: "Cairo Airport - Shops and Services",
+      href: "https://www.cairo-airport.com/en-us/Airport/Shops",
+      note: "Passenger service references for retail, food and terminal amenity assumptions.",
+    },
+    {
+      title: "Cairo Airport - Lost and Found",
+      href: "https://www.cairo-airport.com/en-us/Services/Passenger-Guide/Lost-Found",
+      note: "Passenger support context for assistance and disruption guidance.",
+    },
+    {
+      title: "Aviationstack API Documentation",
+      href: "https://aviationstack.com/documentation",
+      note: "Public flight-data API reference used for the live flight integration path.",
+    },
+    {
+      title: "FlightAware AeroAPI",
+      href: "https://www.flightaware.com/commercial/aeroapi/",
+      note: "Potential production-grade aviation data option if richer operational feeds are needed.",
+    },
+    {
+      title: "W3C WCAG 2.2",
+      href: "https://www.w3.org/TR/WCAG22/",
+      note: "Accessibility baseline for keyboard access, text alternatives, focus order and contrast.",
+    },
+    {
+      title: "WCAG Understanding 1.4.3 Contrast Minimum",
+      href: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html",
+      note: "Contrast guidance used when reviewing dark and light interface states.",
+    },
+  ];
+
+  const auditNotes = [
+    {
+      label: { en: "Data integrity", ar: "سلامة البيانات" },
+      text: { en: "Flight lists can update through Aviationstack when a valid key is configured. Cards marked sample, modelled or viewing sample are intentionally labelled as demo data until Cairo Airport provides official operational feeds.", ar: "يمكن تحديث قوائم الرحلات عبر Aviationstack عند ضبط مفتاح صالح. وتظل البطاقات الموسومة كعينة أو نموذجية واضحة بأنها بيانات عرض إلى أن يتوفر ربط تشغيلي رسمي من المطار." },
+    },
+    {
+      label: { en: "Accessibility", ar: "إتاحة الوصول" },
+      text: { en: "The app uses semantic regions, visible focus states, keyboard-friendly controls, descriptive image text, contrast-conscious status colors and a skip-to-content link.", ar: "تستخدم الواجهة مناطق دلالية وحالات تركيز مرئية وعناصر قابلة للوحة المفاتيح ونصوصا وصفية للصور وألوان حالة مدروسة ورابط تخطي للمحتوى." },
+    },
+    {
+      label: { en: "Navigation", ar: "سهولة التنقل" },
+      text: { en: "The sticky header, aligned controls, jump buttons, back-to-top action and footer resource link keep the dashboard easy to scan during presentations and daily operations.", ar: "يساعد الرأس الثابت وتناسق عناصر التحكم وأزرار الانتقال وزر العودة للأعلى ورابط المصادر في سهولة التصفح أثناء العروض والعمل اليومي." },
+    },
+    {
+      label: { en: "Creative workflow", ar: "سير العمل الإبداعي" },
+      text: { en: "The application was shaped with Figma for prototyping, Lovable for early visual iteration, Google Antigravity for targeted fixes and Codex for implementation, cleanup, verification and GitHub delivery.", ar: "تم تشكيل التطبيق باستخدام Figma للنمذجة، وLovable للتجارب البصرية الأولية، وGoogle Antigravity للإصلاحات المستهدفة، وCodex للتنفيذ والتنظيف والتحقق والتسليم عبر GitHub." },
+    },
+  ];
+
+  return (
+    <div className="grid min-w-0 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <section className="panel overflow-hidden p-0">
+        <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:p-6">
+          <div>
+            <StatusPill tone="info">{localize({ en: "Client appendix", ar: "ملحق للعميل" }, language)}</StatusPill>
+            <h1 className="mt-4 max-w-4xl text-3xl font-bold tracking-tight sm:text-4xl">
+              {localize({ en: "Resources and audit notes", ar: "المصادر وملاحظات التدقيق" }, language)}
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {localize({
+                en: "A concise evidence page for the CAI Command Hub prototype: what informed the work, what the dashboard can do, where live data can connect, and how the experience demonstrates accessible, presentation-ready UX.",
+                ar: "صفحة موجزة توضح أدلة نموذج CAI Command Hub: ما الذي استند إليه العمل، وما الذي يمكن للوحة فعله، وأين يمكن ربط البيانات الحية، وكيف تعرض التجربة مهارات تصميم وتجربة استخدام قابلة للعرض.",
+              }, language)}
+            </p>
+          </div>
+          <div className="grid gap-3 rounded-xl border border-border bg-background/45 p-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-lg border border-primary/30 bg-primary/15">
+                <BarChart3 aria-hidden="true" className="h-5 w-5 text-primary" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold">{localize({ en: "Audit snapshot", ar: "لقطة تدقيق" }, language)}</p>
+                <p className="text-xs text-muted-foreground">{localize({ en: "Reviewed 20 May 2026", ar: "تمت المراجعة في 20 مايو 2026" }, language)}</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {localize({
+                en: "Designed as a management demo, not a certified airport operations system. Production use should connect official CAI feeds, FIDS/AODB data and internal safety systems.",
+                ar: "مصمم كنموذج إداري وليس كنظام تشغيل مطار معتمد. يتطلب الاستخدام الإنتاجي ربط مصادر CAI الرسمية وبيانات FIDS/AODB وأنظمة السلامة الداخلية.",
+              }, language)}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label={localize({ en: "Experience highlights", ar: "أبرز ملامح التجربة" }, language)}>
+        {featureCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <article key={item.title.en} className="panel grid gap-3 p-4">
+              <span className="grid h-10 w-10 place-items-center rounded-lg border border-primary/30 bg-primary/12">
+                <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
+              </span>
+              <div>
+                <h2 className="text-base font-semibold">{localize(item.title, language)}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{localize(item.detail, language)}</p>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <SectionPanel title={localize({ en: "Potential dashboard functions", ar: "وظائف محتملة للوحة" }, language)}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {capabilityCards.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title.en} className="rounded-xl border border-border bg-background/45 p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-primary/25 bg-primary/12">
+                      <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold">{localize(item.title, language)}</h3>
+                      <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{localize(item.detail, language)}</p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </SectionPanel>
+
+        <SectionPanel title={localize({ en: "Audit notes and UX rationale", ar: "ملاحظات التدقيق ومنطق تجربة المستخدم" }, language)}>
+          <div className="grid gap-3">
+            {auditNotes.map((note) => (
+              <article key={note.label.en} className="rounded-xl border border-border bg-background/45 p-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">{localize(note.label, language)}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{localize(note.text, language)}</p>
+              </article>
+            ))}
+          </div>
+        </SectionPanel>
+      </div>
+
+      <SectionPanel title={localize({ en: "Cited resources and documentation", ar: "المصادر والوثائق المشار إليها" }, language)}>
+        <div className="grid gap-3 md:grid-cols-2">
+          {sourceLinks.map((source) => (
+            <a
+              key={source.href}
+              href={source.href}
+              target="_blank"
+              rel="noreferrer"
+              className="group rounded-xl border border-border bg-background/45 p-4 transition hover:border-primary/50 hover:bg-secondary/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-sm font-semibold text-foreground">{source.title}</h3>
+                <ArrowRight aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-primary transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{source.note}</p>
+            </a>
+          ))}
+        </div>
+      </SectionPanel>
+    </div>
+  );
+}
+
 function Header({
   language,
   setLanguage,
@@ -499,6 +755,7 @@ function Header({
   times,
   activeTab,
   setActiveTab,
+  onShowDashboard,
 }: {
   language: Language;
   setLanguage: (language: Language) => void;
@@ -509,6 +766,7 @@ function Header({
   times: { cairo: string; utc: string };
   activeTab: ManagerTab;
   setActiveTab: (tab: ManagerTab) => void;
+  onShowDashboard: () => void;
 }) {
   const c = copy[language];
   const { tr } = useLocale();
@@ -519,7 +777,7 @@ function Header({
         {tr("Skip to content")}
       </a>
       <div className="mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}>
+        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
           </span>
@@ -545,7 +803,10 @@ function Header({
                   role="tab"
                   aria-selected={isActive}
                   aria-controls="main-content"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    onShowDashboard();
+                  }}
                   className={`group relative flex h-9 min-w-0 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:min-w-32 lg:min-w-36 ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-[0_8px_22px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
