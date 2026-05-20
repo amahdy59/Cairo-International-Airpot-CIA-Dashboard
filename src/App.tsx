@@ -311,7 +311,7 @@ const scenes: AirportScene[] = [
     title: "Terminal 1 Operations",
     summary: "Separate terminal area serving selected domestic and international operations.",
     image: "/manager-assets/terminal-1.jpg",
-    darkImage: "/manager-assets/landside-dark-new.jpg",
+    darkImage: "/manager-assets/terminal-1-dark-new.jpg",
     hotspots: [
       { id: "t1-stand-turnaround", cx: 60.0, cy: 35.0, status: "warning", title: "Remote Stand Turnaround Pressure", category: "Airside", impact: "Two narrow-body turns may exceed the planned ground time if fueling and catering overlap.", evidence: "Stand team is 9 minutes behind the service milestone.", action: "Move one ground support unit from the adjacent stand.", source: "Turnaround control", updatedAt: "14:00" }
     ]
@@ -322,7 +322,7 @@ const scenes: AirportScene[] = [
     title: "Terminal 2 Operations",
     summary: "International terminal connected operationally with Terminal 3.",
     image: "/manager-assets/terminal-2.jpg",
-    darkImage: "/manager-assets/terminal-2-dark-new.jpg",
+    darkImage: "/manager-assets/terminal-3-dark-new.jpg",
     hotspots: [
       { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Departing passengers may reach passport control late during the next arrival/departure overlap.", evidence: "Security wait is 17 minutes and trending up.", action: "Open one extra screening lane for 30 minutes.", source: "Queue sensor", updatedAt: "14:15" }
     ]
@@ -333,7 +333,7 @@ const scenes: AirportScene[] = [
     title: "Terminal 3 Operations",
     summary: "Main international terminal with gate, flow, and connection monitoring.",
     image: "/manager-assets/terminal-3.jpg",
-    darkImage: "/manager-assets/terminal-3-dark-new.jpg",
+    darkImage: "/manager-assets/terminal-2-dark-new.jpg",
     hotspots: [
       { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Passenger processing is stable across check-in, passport control, and departure gates.", evidence: "Average wait is below 5 minutes.", source: "Queue sensor", updatedAt: "14:04" },
       { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Risk", category: "Operations", impact: "A late inbound aircraft may compress boarding time and create connection pressure.", evidence: "Inbound aircraft is 18 minutes behind stand target.", action: "Assign a ramp runner and pre-stage boarding staff.", source: "Gate control", updatedAt: "14:10" }
@@ -345,7 +345,7 @@ const scenes: AirportScene[] = [
     title: "Landside Access",
     summary: "Parking, access roads, curbside flow, and public-side movement.",
     image: "/manager-assets/landside.jpg",
-    darkImage: "/manager-assets/terminal-1-dark-new.jpg",
+    darkImage: "/manager-assets/landside-dark-new.jpg",
     hotspots: [
       { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Entry Queue", category: "Landside", impact: "Curbside access may slow for passengers arriving by car or shuttle.", evidence: "Entry queue is above 15 vehicles.", action: "Deploy two traffic wardens at the parking entry split.", source: "Traffic camera", updatedAt: "14:02" }
     ]
@@ -531,7 +531,7 @@ function Header({
 
         {/* Navigation Tabs */}
         <nav className="order-3 flex w-full flex-1 justify-center sm:order-none sm:mt-0 sm:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
-          <div className="flex min-h-12 w-full items-center justify-center gap-1 rounded-xl border border-border bg-secondary/35 p-1 shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-md sm:w-auto">
+          <div className="flex h-10 w-full items-center justify-center gap-1 rounded-lg border border-border bg-secondary/40 p-0.5 shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_8%,transparent)] backdrop-blur-md sm:w-auto">
             {[
               { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
               { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
@@ -546,9 +546,9 @@ function Header({
                   aria-selected={isActive}
                   aria-controls="main-content"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`group relative flex min-w-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:min-w-36 ${
+                  className={`group relative flex h-9 min-w-0 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:min-w-32 lg:min-w-36 ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-[0_10px_28px_color-mix(in_oklab,var(--primary)_28%,transparent)]"
+                      ? "bg-primary text-primary-foreground shadow-[0_8px_22px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
                       : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
                   }`}
                 >
