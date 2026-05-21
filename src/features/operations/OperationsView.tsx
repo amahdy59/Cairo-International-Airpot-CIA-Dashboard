@@ -34,7 +34,6 @@ function PassengerInfluxForecast() {
   return (
     <SectionPanel
       title={localize({ en: "Passenger influx forecast", ar: "توقع تدفق الركاب" }, language)}
-      action={<StatusPill tone="neutral">{localize({ en: "Modelled", ar: "نمذجة" }, language)}</StatusPill>}
     >
       <p className="mb-4 text-sm text-muted-foreground">
         {localize({ en: "Forecasted trend of passenger flow over the next 4 hours.", ar: "الاتجاه المتوقع لتدفق الركاب خلال الـ 4 ساعات القادمة." }, language)}
@@ -145,8 +144,8 @@ function GateWaitChart() {
 function AnomalyWarningsPanel() {
   const { language } = useLocale();
   const warnings = [
-    { icon: Gauge, title: { en: "Threshold warning", ar: "تحذير حد تشغيلي" }, detail: { en: "Security may exceed 25 minutes within the next hour.", ar: "قد يتجاوز الأمن 25 دقيقة خلال الساعة القادمة." }, tone: "warn" as Tone },
-    { icon: RadioTower, title: { en: "Ground crew buffer", ar: "احتياطي الطاقم الأرضي" }, detail: { en: "Coverage is healthy; keep floaters near T3 passport.", ar: "التغطية جيدة؛ أبق الدعم المتحرك قرب جوازات مبنى 3." }, tone: "ok" as Tone },
+    { icon: Gauge, title: { en: "Threshold warning", ar: "تحذير حد تشغيلي" }, detail: { en: "Deploy 3 additional screening staff to T2 security immediately.", ar: "قم بتوجيه 3 موظفي فحص إضافيين لأمن مبنى 2 فوراً." }, tone: "warn" as Tone },
+    { icon: RadioTower, title: { en: "Ground crew buffer", ar: "احتياطي الطاقم الأرضي" }, detail: { en: "Hold floaters at T3 passport control for incoming wave.", ar: "أبق الدعم المتحرك متمركزاً قرب جوازات مبنى 3 للموجة القادمة." }, tone: "ok" as Tone },
     { icon: DoorOpen, title: { en: "Open counter recommendation", ar: "توصية فتح كاونتر" }, detail: { en: "Open two counters before the +2h forecast peak.", ar: "افتح كاونترين قبل ذروة التوقع بعد ساعتين." }, tone: "info" as Tone },
   ];
   return (
@@ -178,7 +177,7 @@ function OperationsView() {
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
         <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
         <MetricCard label={tr("Aircraft movements")} value="412" unit="/ 540" hint={tr("390 average")} delta={tr("On schedule")} icon={Activity} accent="cyan" />
-        <MetricCard label={tr("Avg taxi-out")} value="14" unit="min" hint={tr("CIA operations sample")} delta="-2 min" deltaTone="warn" icon={Clock3} accent="warn" />
+        <MetricCard label={tr("Avg taxi-out")} value="14" unit="min" hint={tr("CIA operations")} delta="-2 min" deltaTone="warn" icon={Clock3} accent="warn" />
         <MetricCard label={tr("Active alerts")} value="3" hint={tr("2 medium, 1 high")} delta={tr("Needs review")} deltaTone="warn" icon={AlertTriangle} accent="warn" />
       </section>
 
@@ -202,7 +201,7 @@ function OperationsView() {
 function FlightBoard({ title, direction, rows }: { title: string; direction: "to" | "from"; rows: FlightRow[] }) {
   const { tr } = useLocale();
   return (
-    <SectionPanel title={title} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info">{tr("Next 60 min")}</StatusPill><StatusPill tone="neutral">{tr("Sample data")}</StatusPill></div>}>
+    <SectionPanel title={title} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info">{tr("Next 60 min")}</StatusPill></div>}>
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[580px] text-sm">
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -234,7 +233,7 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
 function PassengerFlowChart() {
   const { tr, language } = useLocale();
   return (
-    <SectionPanel title={tr("Passenger flow")} action={<StatusPill tone="neutral">{tr("Modelled")}</StatusPill>}>
+    <SectionPanel title={tr("Passenger flow")}>
       <h3 className="text-base font-semibold">{tr("Passenger flow rises into the midday wave")}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{localize({ en: "Hourly progression of passenger throughput across all terminals.", ar: "التطور الساعي لتدفق الركاب عبر جميع المباني." }, language)}</p>
       <div className="mt-4">

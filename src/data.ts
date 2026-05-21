@@ -304,9 +304,9 @@ export const sampleIncomingFlights: IncomingFlight[] = [
 ];
 
 export const zoneStatusRows = [
-  { zone: "Terminal 1", status: { en: "Smooth", ar: "سلس" }, detail: { en: "8 min average queue", ar: "متوسط الطابور 8 دقائق" }, tone: "ok" as Tone },
-  { zone: "Terminal 2", status: { en: "Moderate", ar: "متوسط" }, detail: { en: "Security pressure building", ar: "ضغط متزايد على الأمن" }, tone: "warn" as Tone },
-  { zone: "Terminal 3", status: { en: "Busy", ar: "مزدحم" }, detail: { en: "Passport wave from F gates", ar: "موجة جوازات من بوابات F" }, tone: "high" as Tone },
+  { zone: "Terminal 1", status: { en: "Smooth", ar: "سلس" }, detail: { en: "Maintain current baseline staffing.", ar: "حافظ على مستويات التوظيف الحالية." }, tone: "ok" as Tone },
+  { zone: "Terminal 2", status: { en: "Moderate", ar: "متوسط" }, detail: { en: "Open 2 secondary lanes immediately.", ar: "افتح مسارين إضافيين فوراً." }, tone: "warn" as Tone },
+  { zone: "Terminal 3", status: { en: "Busy", ar: "مزدحم" }, detail: { en: "Pre-stage floaters at passport control.", ar: "قم بتوجيه الدعم إلى مراقبة الجوازات." }, tone: "high" as Tone },
 ];
 
 export const gateWaitRows = [
@@ -346,11 +346,11 @@ export const queueRows = [
 ];
 
 export const safetyChecks = [
-  { icon: Flame, title: "Fire suppression - T1/T2/T3", detail: "Inspected 2h ago", badge: "Operational", tone: "ok" as Tone },
-  { icon: Wrench, title: "Runway water response", detail: "Last drill 6 days ago", badge: "Standby", tone: "info" as Tone },
-  { icon: Activity, title: "ATC backup comms", detail: "Heartbeat OK", badge: "Operational", tone: "ok" as Tone },
-  { icon: ShieldCheck, title: "Apron worker PPE compliance", detail: "12 audits today", badge: "98% compliant", tone: "ok" as Tone },
-  { icon: ShieldCheck, title: "Security checkpoint scanners", detail: "Tech dispatched", badge: "1 offline (T2-B)", tone: "warn" as Tone },
+  { icon: Flame, title: "Fire suppression - T1/T2/T3", detail: "Maintain 4h inspection cycle", badge: "Operational", tone: "ok" as Tone },
+  { icon: Wrench, title: "Runway water response", detail: "Schedule drill within 24h", badge: "Standby", tone: "info" as Tone },
+  { icon: Activity, title: "ATC backup comms", detail: "Maintain 15m polling", badge: "Operational", tone: "ok" as Tone },
+  { icon: ShieldCheck, title: "Apron worker PPE compliance", detail: "Increase audits in sector B", badge: "98% compliant", tone: "ok" as Tone },
+  { icon: ShieldCheck, title: "Security checkpoint scanners", detail: "Expedite tech to T2-B", badge: "1 offline (T2-B)", tone: "warn" as Tone },
 ];
 
 export const maintenanceRows = [

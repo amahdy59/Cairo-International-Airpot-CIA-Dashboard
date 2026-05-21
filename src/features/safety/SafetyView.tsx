@@ -112,7 +112,7 @@ function SafetyAlertAge() {
   ];
   const max = Math.max(...buckets.map((item) => item.value));
   return (
-    <SectionPanel title={tr("Safety alert age")} action={<div className="flex shrink-0 flex-wrap justify-end gap-2"><StatusPill tone="neutral">{tr("Sample")}</StatusPill><StatusPill tone="warn">{tr("1 overdue")}</StatusPill></div>} className="h-fit self-start">
+    <SectionPanel title={tr("Safety alert age")} action={<div className="flex shrink-0 flex-wrap justify-end gap-2"><StatusPill tone="warn">{tr("1 overdue")}</StatusPill></div>} className="h-fit self-start">
       <p className="mb-5 text-sm text-muted-foreground">{tr("Aging buckets show whether issues are accumulating before they become critical.")}</p>
       <div className="grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
         {buckets.map((bucket) => {
@@ -165,7 +165,7 @@ function SafetyChecks() {
 function MaintenanceTable() {
   const { tr } = useLocale();
   return (
-    <SectionPanel title={tr("Recent aircraft maintenance")} action={<StatusPill tone="neutral">{tr("Viewing sample")}</StatusPill>}>
+    <SectionPanel title={tr("Recent aircraft maintenance")}>
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[620px] text-sm">
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -197,7 +197,7 @@ function MaintenanceTable() {
 function AircraftRiskTable() {
   const { tr } = useLocale();
   return (
-    <SectionPanel title={tr("Aircraft requiring attention")} action={<div className="flex flex-wrap gap-2"><StatusPill tone="neutral">{tr("Modelled")}</StatusPill><span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span></div>}>
+    <SectionPanel title={tr("Aircraft requiring attention")} action={<div className="flex flex-wrap gap-2"><span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span></div>}>
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[780px] text-sm">
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">

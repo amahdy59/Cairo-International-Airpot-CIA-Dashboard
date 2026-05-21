@@ -355,7 +355,7 @@ function IncomingFlightsPanel({
     ? localize({ en: "Live API", ar: "API مباشر" }, language)
     : source === "loading"
       ? localize({ en: "Loading", ar: "جار التحميل" }, language)
-      : localize({ en: "Sample data", ar: "بيانات عينة" }, language);
+      : localize({ en: "Offline Mode", ar: "وضع عدم الاتصال" }, language);
   const sourceTone: Tone = source === "live" ? "ok" : source === "loading" ? "info" : "neutral";
 
   return (
