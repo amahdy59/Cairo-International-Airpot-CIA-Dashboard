@@ -1,5 +1,6 @@
 import { useId, memo, type ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 
 type StatusTone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 
@@ -45,25 +46,31 @@ export function MetricCard({
 
   const isPositive = deltaTone === "ok" && delta != null && !delta.trim().startsWith("-");
 
+  const numericValue = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));
+  const isNumeric = !isNaN(numericValue) && String(value).trim() !== "";
+  
+  const animatedValue = useAnimatedNumber(
+    isNumeric ? numericValue : 0,
+    1000,
+    (v) => (isNumeric ? Math.floor(v).toLocaleString("en-US") : String(value))
+  );
+
   return (
-    <article className="panel relative overflow-hidden p-4 transition-all duration-300 hover:shadow-md bg-card">
-      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full opacity-0 dark:opacity-15 blur-2xl pointer-events-none" style={{ backgroundColor: accentHex }} />
-      <div className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100`} />
+    <article className="panel relative overflow-hidden p-4 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.6)] group bg-card">
+      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full opacity-0 dark:opacity-15 blur-2xl pointer-events-none transition-opacity duration-500 group-hover:opacity-20 dark:group-hover:opacity-30" style={{ backgroundColor: accentHex }} />
+      <div className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100 transition-transform duration-500 origin-top group-hover:scale-y-110`} />
       <div className="relative z-10 flex items-start justify-between gap-3 pl-1">
         <div className="min-w-0">
-          <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+          <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">{label}</p>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">{value}</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">{isNumeric ? animatedValue : value}</span>
             {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
           </div>
           {hint && <p className="mt-1 text-xs text-muted-foreground font-medium">{hint}</p>}
         </div>
         {Icon && (
-          <div 
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border/50 shadow-sm backdrop-blur-md" 
-            style={{ backgroundColor: `color-mix(in srgb, ${accentHex} 12%, transparent)` }}
-          >
-            <Icon aria-hidden="true" className="h-4 w-4" style={{ color: accentHex }} />
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border/50 bg-secondary/30 transition-transform duration-500 group-hover:scale-110 group-hover:bg-secondary/50">
+            <Icon className="h-5 w-5 opacity-80 transition-opacity duration-300 group-hover:opacity-100" style={{ color: accentHex }} aria-hidden="true" />
           </div>
         )}
       </div>
