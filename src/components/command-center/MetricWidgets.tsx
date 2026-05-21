@@ -51,12 +51,12 @@ export function MetricCard({
       <div className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100`} />
       <div className="relative z-10 flex items-start justify-between gap-3 pl-1">
         <div className="min-w-0">
-          <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+          <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold tracking-tight text-foreground lg:text-3xl">{value}</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">{value}</span>
             {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
           </div>
-          {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
+          {hint && <p className="mt-1 text-xs text-muted-foreground font-medium">{hint}</p>}
         </div>
         {Icon && (
           <div 
@@ -96,7 +96,7 @@ export function StatusPill({
   }[tone];
 
   return (
-    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${toneClass}`}>
+    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono text-xs font-semibold uppercase tracking-wider ${toneClass}`}>
       {icon}
       {children}
     </span>
@@ -123,7 +123,7 @@ export function SectionPanel({
           {title && (
             <div className="flex min-w-0 items-center gap-2">
               <span className="h-3 w-[3px] shrink-0 rounded bg-primary" />
-              <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+              <h2 className="text-base font-bold tracking-tight text-foreground">{title}</h2>
             </div>
           )}
           {action}
@@ -134,7 +134,7 @@ export function SectionPanel({
   );
 }
 
-export function Sparkline({ data, color = "var(--cyan)", height = 44 }: { data: number[]; color?: string; height?: number }) {
+export function Sparkline({ data, color = "var(--cyan)", height = 44, "aria-label": ariaLabel }: { data: number[]; color?: string; height?: number; "aria-label"?: string }) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const width = 100;
   const min = Math.min(...data);
@@ -150,7 +150,7 @@ export function Sparkline({ data, color = "var(--cyan)", height = 44 }: { data: 
   const lastPoint = points[points.length - 1];
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none" style={{ height }} aria-hidden="true">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none" style={{ height }} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel} aria-hidden={ariaLabel ? undefined : true}>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={color} stopOpacity="0.35" />
