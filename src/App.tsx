@@ -23,6 +23,7 @@ import DigitalTwinView from './features/digital-twin/DigitalTwinView';
 import OperationsView from './features/operations/OperationsView';
 import SafetyView from './features/safety/SafetyView';
 import { Header, BackToTopButton } from './components/layout/Header';
+import { ErrorBoundary } from './components/layout/ErrorBoundary';
 type AviationStackFlight = {
   airline?: { name?: string };
   flight?: { iata?: string; number?: string };
@@ -85,13 +86,17 @@ export function App() {
       <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-3 overflow-x-hidden px-2 pb-4 pt-24 sm:gap-3 sm:px-4 lg:gap-4 lg:px-6">
         {activePage === "resources" ? (
           <div id="main-content">
-            <ResourcesAuditPage />
+            <ErrorBoundary>
+              <ResourcesAuditPage />
+            </ErrorBoundary>
           </div>
         ) : (
         <div key={activeTab} id="main-content" className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-          {activeTab === "digital" && <DigitalTwinView />}
-          {activeTab === "operations" && <OperationsView />}
-          {activeTab === "safety" && <SafetyView />}
+          <ErrorBoundary>
+            {activeTab === "digital" && <DigitalTwinView />}
+            {activeTab === "operations" && <OperationsView />}
+            {activeTab === "safety" && <SafetyView />}
+          </ErrorBoundary>
         </div>
         )}
       </main>

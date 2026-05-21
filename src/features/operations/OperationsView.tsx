@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen } from 'lucide-react';
 import { localize, toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
@@ -47,7 +48,7 @@ function PassengerInfluxForecast() {
   );
 }
 
-function ForecastLineChart() {
+const ForecastLineChart = memo(function ForecastLineChart() {
   const values = influxForecastRows.flatMap((row) => [row.current, row.forecast]);
   const min = Math.min(...values) - 100;
   const max = Math.max(...values) + 100;
@@ -116,7 +117,7 @@ function ForecastLineChart() {
       ))}
     </svg>
   );
-}
+});
 
 function GateWaitChart() {
   const { language } = useLocale();

@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { useId, memo, type ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
 
 type StatusTone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
@@ -134,7 +134,7 @@ export function SectionPanel({
   );
 }
 
-export function Sparkline({ data, color = "var(--cyan)", height = 44, "aria-label": ariaLabel }: { data: number[]; color?: string; height?: number; "aria-label"?: string }) {
+export const Sparkline = memo(function Sparkline({ data, color = "var(--cyan)", height = 44, "aria-label": ariaLabel }: { data: number[]; color?: string; height?: number; "aria-label"?: string }) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const width = 100;
   const min = Math.min(...data);
@@ -162,7 +162,7 @@ export function Sparkline({ data, color = "var(--cyan)", height = 44, "aria-labe
       {lastPoint && <circle cx={lastPoint[0]} cy={lastPoint[1]} r="1.8" fill={color} />}
     </svg>
   );
-}
+});
 
 export function ProgressBar({ value, max = 100, color = "var(--cyan)", className = "" }: { value: number; max?: number; color?: string; className?: string }) {
   const percent = Math.min(100, Math.max(0, (value / max) * 100));
