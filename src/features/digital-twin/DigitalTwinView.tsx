@@ -258,9 +258,9 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Move focus into the popover when it mounts
+  // Move focus into the popover when it mounts without scrolling the page
   useEffect(() => {
-    popoverRef.current?.focus();
+    popoverRef.current?.focus({ preventScroll: true });
   }, []);
 
   return (
@@ -278,7 +278,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border/50 bg-card px-4 py-3">
+        <div className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <h2 id="hotspot-popover-title" className="truncate text-base font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
             <StatusPill tone={tone}>{statusLabel}</StatusPill>
@@ -293,7 +293,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
           </button>
         </div>
 
-        <div className="grid gap-3 p-4 bg-card/50">
+        <div className="grid gap-3 p-4">
           {hotspot.impact && (
             <section className="panel-inner p-3">
               <h3 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
