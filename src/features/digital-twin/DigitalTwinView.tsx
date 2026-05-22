@@ -420,7 +420,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
                 <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
               </div>
               
-              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40 w-full max-w-[250px]">
+              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40 w-full">
                 <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
                   <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
                   <div className="flex items-center gap-1.5">
@@ -566,16 +566,18 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
 
   return (
     <div className="fixed z-[200] pointer-events-none" style={{ left: anchor.x, top: anchor.y - 14, transform: "translate(-50%, -100%)" }}>
-      <div className="panel overflow-hidden p-3 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl flex flex-col gap-2 w-max max-w-[280px]">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-bold tracking-tight text-foreground truncate">{tr(hotspot.title)}</h3>
+      <div className="panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[320px]">
+        <div className="flex items-center justify-between gap-4 p-3 pb-2 whitespace-nowrap">
+          <h3 className="text-sm font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h3>
           <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${toneStyles}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${toneColor}`}></span>
             {statusLabel}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2">{hotspot.impact}</p>
-        <div className="text-[10px] text-primary/80 uppercase tracking-widest font-mono mt-1">{localize({en: "Click hotspot to expand", ar: "انقر للتوسيع"}, language)}</div>
+        <div className="flex flex-col p-3 pt-0 w-0 min-w-full whitespace-normal">
+          <p className="text-xs text-muted-foreground line-clamp-2">{hotspot.impact}</p>
+          <div className="text-[10px] text-primary/80 uppercase tracking-widest font-mono mt-2">{localize({en: "Click hotspot to expand", ar: "انقر للتوسيع"}, language)}</div>
+        </div>
       </div>
       <svg className="absolute left-1/2 bottom-[-14px] transform -translate-x-1/2 pointer-events-none" width="2" height="14">
         <line x1="1" y1="0" x2="1" y2="14" stroke="var(--primary)" strokeWidth="1.5" strokeDasharray="2 2" className="opacity-60" />
