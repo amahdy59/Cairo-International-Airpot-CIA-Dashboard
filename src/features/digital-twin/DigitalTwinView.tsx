@@ -225,7 +225,6 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       : hotspot.status === "good"
         ? localize({ en: "Good", ar: "جيد" }, language)
         : hotspot.status === "offline"
-        : hotspot.status === "offline"
           ? localize({ en: "Offline", ar: "متوقف" }, language)
           : localize({ en: "Info", ar: "معلومة" }, language);
 
