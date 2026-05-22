@@ -11,6 +11,7 @@ function DigitalTwinView() {
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
+  const [hotspotAnchor, setHotspotAnchor] = useState<{x: number, y: number} | null>(null);
   const incoming = useIncomingCaiFlights();
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -40,11 +41,16 @@ function DigitalTwinView() {
       <g 
         key={hotspot.id} 
         transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
-        onClick={() => setSelectedHotspotId(hotspot.id)}
+        onClick={(e) => {
+          setSelectedHotspotId(hotspot.id);
+          setHotspotAnchor({ x: e.clientX, y: e.clientY });
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             setSelectedHotspotId(hotspot.id);
+            const rect = (event.target as Element).getBoundingClientRect();
+            setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
           }
         }}
         role="button"
@@ -98,6 +104,7 @@ function DigitalTwinView() {
                     onClick={() => {
                       setActiveSceneId(scene.id);
                       setSelectedHotspotId(null);
+                      setHotspotAnchor(null);
                     }}
                     aria-current={active ? "page" : undefined}
                     className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
@@ -133,12 +140,14 @@ function DigitalTwinView() {
             </svg>
             </div>
           {/* Popover renders OUTSIDE overflow-hidden — fixed to viewport, never cropped */}
-          {selectedHotspot && (
+          {selectedHotspot && hotspotAnchor && (
             <HotspotPopover
               hotspot={selectedHotspot}
-              statusColor={getStatusColor(selectedHotspot.status)}
-              onClose={() => setSelectedHotspotId(null)}
-              imageRef={imageContainerRef}
+              anchor={hotspotAnchor}
+              onClose={() => {
+                setSelectedHotspotId(null);
+                setHotspotAnchor(null);
+              }}
             />
           )}
           </div>
@@ -157,7 +166,14 @@ function DigitalTwinView() {
                         <button 
                           key={h.id} 
                           type="button"
-                          onClick={() => setSelectedHotspotId(h.id)}
+                          onClick={() => {
+                            setSelectedHotspotId(h.id);
+                            // If opening from the aside menu, center it roughly
+                            if (imageContainerRef.current) {
+                              const rect = imageContainerRef.current.getBoundingClientRect();
+                              setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                            }
+                          }}
                           className="flex items-start gap-3 rounded-md border border-border p-3 text-start transition hover:border-primary hover:bg-secondary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         >
                           <span className="mt-0.5 block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: getStatusColor(h.status) }} />
@@ -191,7 +207,7 @@ function DigitalTwinView() {
 
 
 
-function HotspotPopover({ hotspot, statusColor, onClose, imageRef }: { hotspot: MapHotspot; statusColor: string; onClose: () => void; imageRef?: React.RefObject<HTMLDivElement | null> }) {
+function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anchor: {x: number, y: number}; onClose: () => void; }) {
   const { language, tr } = useLocale();
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -205,39 +221,34 @@ function HotspotPopover({ hotspot, statusColor, onClose, imageRef }: { hotspot: 
           ? localize({ en: "Offline", ar: "متوقف" }, language)
           : localize({ en: "Info", ar: "معلومة" }, language);
 
-  // Compute position: map hotspot cx/cy (0–100) onto the image container's
-  // DOMRect, then clamp to keep the popover fully on-screen.
+  const tone: Tone = hotspot.status === "warning" ? "warn" : hotspot.status === "critical" ? "crit" : hotspot.status === "good" ? "ok" : hotspot.status === "offline" ? "neutral" : "info";
+
+  // Compute position
   const style = useMemo(() => {
     const POPOVER_W = 290;
     const POPOVER_H = 340; // generous estimate
     const PAD = 12;
 
-    if (!imageRef?.current) {
-      // Fallback: center of viewport
-      return { position: "fixed" as const, top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: POPOVER_W, zIndex: 200 };
-    }
-
-    const rect = imageRef.current.getBoundingClientRect();
-    const anchorX = rect.left + (hotspot.cx / 100) * rect.width;
-    const anchorY = rect.top  + (hotspot.cy / 100) * rect.height;
+    const anchorX = anchor.x;
+    const anchorY = anchor.y;
 
     // Prefer to open to the right, flip left if near right edge
-    let left = anchorX + 12;
+    let left = anchorX + 24;
     if (left + POPOVER_W > window.innerWidth - PAD) {
-      left = anchorX - POPOVER_W - 12;
+      left = anchorX - POPOVER_W - 24;
     }
     // Clamp to viewport bounds
     left = Math.max(PAD, Math.min(left, window.innerWidth - POPOVER_W - PAD));
 
-    // Prefer to open downward, flip up if near bottom edge
-    let top = anchorY - 60;
+    // Prefer to open downward slightly, flip up if near bottom edge
+    let top = anchorY - 40;
     if (top + POPOVER_H > window.innerHeight - PAD) {
-      top = anchorY - POPOVER_H + 60;
+      top = anchorY - POPOVER_H + 40;
     }
     top = Math.max(PAD, Math.min(top, window.innerHeight - POPOVER_H - PAD));
 
     return { position: "fixed" as const, top, left, width: POPOVER_W, zIndex: 200 };
-  }, [hotspot.cx, hotspot.cy, imageRef]);
+  }, [anchor.x, anchor.y]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -259,32 +270,30 @@ function HotspotPopover({ hotspot, statusColor, onClose, imageRef }: { hotspot: 
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel overflow-hidden p-0 shadow-2xl"
-        style={{ ...style, maxHeight: "min(380px, calc(100vh - 24px))", overflowY: "auto" }}
+        className="hotspot-popover panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-border"
+        style={{ ...style, maxHeight: "min(400px, calc(100vh - 24px))", overflowY: "auto" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotspot-popover-title"
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <h2 id="hotspot-popover-title" className="truncate text-base font-semibold tracking-tight">{tr(hotspot.title)}</h2>
-            <span className="shrink-0 rounded-full px-2.5 py-0.5 font-mono text-xs font-semibold uppercase tracking-[0.1em] text-white" style={{ backgroundColor: statusColor }}>
-              {statusLabel}
-            </span>
+        <div className="flex items-center justify-between gap-2 border-b border-border/50 bg-card px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <h2 id="hotspot-popover-title" className="truncate text-base font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
+            <StatusPill tone={tone}>{statusLabel}</StatusPill>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border bg-background/70 hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded border border-transparent hover:bg-secondary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
             aria-label={tr("Close")}
           >
-            <X aria-hidden="true" className="h-4 w-4" />
+            <X aria-hidden="true" className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           </button>
         </div>
 
-        <div className="grid gap-2 p-3">
+        <div className="grid gap-3 p-4 bg-card/50">
           {hotspot.impact && (
             <section className="panel-inner p-3">
               <h3 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">

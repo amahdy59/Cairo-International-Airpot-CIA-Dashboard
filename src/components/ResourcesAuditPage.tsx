@@ -255,10 +255,16 @@ export default function ResourcesAuditPage() {
         </div>
       </section>
 
-      {/* 2. About the Designer Card */}
+      {/* 2. About the Creator Card */}
       <section className="panel bg-primary/5 border border-primary/20 p-6 flex flex-col justify-between relative overflow-hidden gap-4">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
         <div className="grid gap-3.5 z-10 relative">
+          <div className="flex items-center gap-2 mb-1">
+            <User className="h-4 w-4 text-primary" aria-hidden="true" />
+            <h2 className="text-sm font-mono uppercase tracking-[0.1em] text-primary font-semibold">
+              {localize({ en: "About the creator of the site", ar: "نبذة عن منشئ الموقع" }, language)}
+            </h2>
+          </div>
           <div className="flex items-center gap-3.5">
             <img 
               src="/ahmed-mahdy.png" 
@@ -266,16 +272,27 @@ export default function ResourcesAuditPage() {
               className="h-16 w-16 rounded-xl object-cover border border-primary/25 bg-background shrink-0 shadow-sm"
             />
             <div>
-              <h2 className="text-lg font-bold text-foreground">Ahmed Mahdy</h2>
+              <h3 className="text-lg font-bold text-foreground">Ahmed Mahdy</h3>
               <p className="text-sm text-muted-foreground font-mono">UX Designer & Data Analyst</p>
             </div>
           </div>
-          <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
+          <p className="text-sm sm:text-base leading-relaxed text-muted-foreground mt-1">
             {localize({
               en: "UX Designer & Data Analyst with 4+ years of experience at Advansys IS. Specializes in turning user needs into decision-ready visual systems.",
               ar: "مصمم تجربة مستخدم ومحلل بيانات بخبرة +٤ سنوات في Advansys IS. متخصص في تحويل احتياجات المستخدمين لأنظمة تفاعلية متكاملة.",
             }, language)}
           </p>
+          <div className="mt-3 rounded-lg border border-border/50 bg-background/50 p-3.5 flex flex-col gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+              {localize({ en: "Tools used to create this site", ar: "الأدوات المستخدمة في إنشاء الموقع" }, language)}
+            </h4>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {localize({
+                en: "This project was built using a combination of human UX direction and advanced AI tooling, including Antigravity, OpenAI Codex, Figma, and Lovable.",
+                ar: "تم بناء هذا المشروع باستخدام مزيج من توجيهات تجربة المستخدم البشرية وأدوات الذكاء الاصطناعي المتقدمة، بما في ذلك Antigravity، OpenAI Codex، Figma، و Lovable.",
+              }, language)}
+            </p>
+          </div>
         </div>
         
         {/* Certifications Badge row */}
