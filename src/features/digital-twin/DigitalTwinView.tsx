@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, BarChart3, Clock3, Camera, ArrowRight } from 'lucide-react';
+import { Sun, Moon, X, BarChart3, Clock3, Camera, ArrowRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { localize, formatCairoTime, toneCssVar, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone, sampleIncomingFlights } from '../../data';
@@ -15,8 +15,13 @@ function DigitalTwinView() {
   
   const [hoveredHotspotId, setHoveredHotspotId] = useState<string | null>(null);
   const [hoverAnchor, setHoverAnchor] = useState<{x: number, y: number} | null>(null);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const incoming = useIncomingCaiFlights();
   const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsImageLoaded(false);
+  }, [activeSceneId, imageMode]);
 
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
   const jumpScenes = ["terminal-1", "terminal-2", "terminal-3", "services", "landside"]
@@ -139,10 +144,10 @@ function DigitalTwinView() {
             <div ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[350px] lg:min-h-[500px] xl:min-h-[560px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
               <title>{activeScene.title} operational image map</title>
-              <image href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
+              <image onLoad={() => setIsImageLoaded(true)} href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
 
               {/* Render Hotspots */}
-              {activeScene.hotspots.map(renderHotspotMarker)}
+              {isImageLoaded && activeScene.hotspots.map(renderHotspotMarker)}
             </svg>
             </div>
           {/* Popover renders OUTSIDE overflow-hidden — fixed to viewport, never cropped */}
@@ -250,39 +255,28 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
     hotspot.status === 'critical' ? 'bg-status-crit' :
     'bg-status-info';
 
-  const [modalSize, setModalSize] = useState({ w: 340, h: 440 });
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [modalSize, setModalSize] = useState({ w: 280, h: 440 });
 
   useEffect(() => {
     if (popoverRef.current) {
-      const rect = popoverRef.current.getBoundingClientRect();
-      setModalSize({ w: rect.width, h: rect.height });
+      const observer = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          setModalSize({ w: entry.contentRect.width, h: entry.contentRect.height });
+        }
+      });
+      observer.observe(popoverRef.current);
+      return () => observer.disconnect();
     }
-  }, [hotspot.id, language]);
+  }, [hotspot.id, language, isExpanded]);
 
   // Compute initial position and keep it in state for dragging
   const [pos, setPos] = useState(() => {
-    const PAD = 12;
-
-    const anchorX = anchor.x;
-    const anchorY = anchor.y;
-
-    // Prefer to open above the hotspot, centered
-    let left = anchorX - 170;
-    let top = anchorY - 480;
-    
-    if (top < PAD) {
-      // If no room above, place to the right
-      top = Math.max(PAD, anchorY - 220);
-      left = anchorX + 40;
-      if (left + 340 > window.innerWidth - PAD) {
-        left = anchorX - 340 - 40;
-      }
-    }
-    
-    // Clamp to viewport bounds
-    left = Math.max(PAD, Math.min(left, window.innerWidth - 340 - PAD));
-    top = Math.max(PAD, Math.min(top, window.innerHeight - 440 - PAD));
-
+    const W = 280;
+    const H = 400;
+    // Always start perfectly centered on screen to avoid being "far away" on huge monitors
+    const left = (window.innerWidth / 2) - (W / 2);
+    const top = (window.innerHeight / 2) - (H / 2);
     return { x: left, y: top };
   });
 
@@ -358,8 +352,8 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[400px]"
-        style={{ ...style, maxHeight: "min(500px, calc(100vh - 24px))", overflowY: "hidden" }}
+        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[280px]"
+        style={{ ...style, resize: "both", minWidth: 200, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotspot-popover-title"
@@ -373,18 +367,31 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          <h2 id="hotspot-popover-title" className="truncate text-lg font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
-            aria-label={tr("Close")}
-          >
-            <X aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-          </button>
+          <h2 id="hotspot-popover-title" className="truncate text-lg font-bold tracking-tight text-foreground">
+            {tr(hotspot.title).split(" ").slice(0, 4).join(" ")}
+            {tr(hotspot.title).split(" ").length > 4 ? "..." : ""}
+          </h2>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+              aria-label={isExpanded ? tr("Collapse") : tr("Expand")}
+            >
+              {isExpanded ? <ChevronUp aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" /> : <ChevronDown aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+              aria-label={tr("Close")}
+            >
+              <X aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex flex-col p-4">
+        <div className="flex flex-col p-4 pt-2">
           {hotspot.impact && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
@@ -405,27 +412,45 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
             </div>
           )}
 
-          {hotspot.impact && hotspot.category && (
-            <hr className="border-border/40 my-1 mb-4" />
+          {isExpanded && hotspot.impact && hotspot.category && (
+            <hr className="border-border/40 my-3" />
           )}
 
-          <div>
-            <div className="flex items-center gap-2 text-muted-foreground mb-3">
-              <Camera aria-hidden="true" className="h-4 w-4" />
-              <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
-            </div>
-            
-            <div className="flex flex-col rounded-lg overflow-hidden border border-border/40">
-              <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
-                <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-status-crit animate-pulse"></span>
-                  <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
-                </div>
+          {isExpanded && (
+            <div>
+              <div className="flex items-center gap-2 text-muted-foreground mb-3">
+                <Camera aria-hidden="true" className="h-4 w-4" />
+                <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
               </div>
-              <img src="/manager-assets/cctv-placeholder.png" alt="CCTV Feed" className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity" />
+              
+              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40">
+                <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
+                  <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-status-crit animate-pulse"></span>
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
+                  </div>
+                </div>
+                <img 
+                  src="/manager-assets/cctv-placeholder.png" 
+                  alt="CCTV Feed" 
+                  className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity" 
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {isExpanded && (
+            <div className="mt-4">
+              <button
+                type="button"
+                className="inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
+                <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
