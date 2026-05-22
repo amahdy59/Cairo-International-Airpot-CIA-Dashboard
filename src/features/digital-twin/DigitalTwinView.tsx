@@ -271,7 +271,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   // Compute initial position and keep it in state for dragging
   const [pos, setPos] = useState(() => {
-    const W = 360;
+    const W = 320;
     const H = 400;
     const container = document.getElementById("digital-twin-image-container");
     if (container) {
@@ -288,7 +288,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
   // Re-sync position if anchor wildly changes (e.g. they clicked a different hotspot)
   useEffect(() => {
     setPos(() => {
-      const W = 360;
+      const W = 320;
       const H = 400;
       const container = document.getElementById("digital-twin-image-container");
       if (container) {
@@ -349,8 +349,8 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-full max-w-[360px]"
-        style={{ ...style, resize: "both", minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
+        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[320px]"
+        style={{ ...style, minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotspot-popover-title"
@@ -364,7 +364,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          <h2 id="hotspot-popover-title" className="truncate text-lg font-bold tracking-tight text-foreground">
+          <h2 id="hotspot-popover-title" className="text-base font-bold tracking-tight text-foreground whitespace-normal break-words leading-tight">
             {tr(hotspot.title).split(" ").slice(0, 4).join(" ")}
             {tr(hotspot.title).split(" ").length > 4 ? "..." : ""}
           </h2>
@@ -420,7 +420,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
                 <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
               </div>
               
-              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40">
+              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40 w-full max-w-[250px]">
                 <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
                   <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
                   <div className="flex items-center gap-1.5">
