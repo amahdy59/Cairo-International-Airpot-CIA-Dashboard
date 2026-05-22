@@ -52,36 +52,38 @@
 :root {
   --radius: 0.75rem;
 
-  --background: oklch(0.97 0.012 235);
-  --foreground: oklch(0.20 0.04 250);
+  /* Vibrant, airy aviation light mode */
+  --background: oklch(0.98 0.015 240);
+  --foreground: oklch(0.25 0.04 250);
 
-  --surface: oklch(0.96 0.018 235 / 0.86);
-  --surface-2: oklch(0.91 0.025 238 / 0.82);
+  --surface: oklch(0.96 0.025 245 / 0.86);
+  --surface-2: oklch(0.93 0.035 250 / 0.82);
 
-  --card: oklch(0.98 0.012 235 / 0.84);
-  --card-foreground: oklch(0.20 0.04 250);
-  --popover: oklch(0.99 0.01 235);
-  --popover-foreground: oklch(0.20 0.04 250);
+  --card: oklch(0.99 0.01 240 / 0.84);
+  --card-foreground: oklch(0.25 0.04 250);
+  
+  --popover: oklch(0.99 0.01 240);
+  --popover-foreground: oklch(0.25 0.04 250);
 
-  --primary: oklch(0.48 0.14 220);
-  --primary-foreground: oklch(0.99 0.01 235);
-  --primary-glow: oklch(0.68 0.14 210);
+  --primary: oklch(0.45 0.16 250); /* Deep aviation blue */
+  --primary-foreground: oklch(0.99 0.01 240);
+  --primary-glow: oklch(0.65 0.14 240);
 
-  --secondary: oklch(0.91 0.025 238);
-  --secondary-foreground: oklch(0.20 0.04 250);
+  --secondary: oklch(0.92 0.03 255);
+  --secondary-foreground: oklch(0.25 0.04 250);
 
-  --muted: oklch(0.91 0.02 238);
-  --muted-foreground: oklch(0.44 0.035 248);
+  --muted: oklch(0.94 0.02 250);
+  --muted-foreground: oklch(0.48 0.04 255);
 
-  --accent: oklch(0.52 0.20 335);
-  --accent-foreground: oklch(0.99 0.01 235);
+  --accent: oklch(0.65 0.18 45); /* Amber/orange accent */
+  --accent-foreground: oklch(0.99 0.01 240);
 
-  --destructive: oklch(0.52 0.20 25);
-  --destructive-foreground: oklch(0.99 0.01 235);
+  --destructive: oklch(0.55 0.20 25);
+  --destructive-foreground: oklch(0.99 0.01 240);
 
-  --border: oklch(0.72 0.035 240 / 0.55);
-  --input: oklch(0.72 0.035 240 / 0.55);
-  --ring: oklch(0.48 0.14 220);
+  --border: oklch(0.85 0.03 250 / 0.6);
+  --input: oklch(0.85 0.03 250 / 0.6);
+  --ring: oklch(0.45 0.16 250);
 
   --status-ok: oklch(0.50 0.15 155);
   --status-info: oklch(0.48 0.14 220);
@@ -107,6 +109,54 @@
   --sidebar-border: oklch(0.72 0.035 240 / 0.55);
   --sidebar-ring: var(--primary);
   color-scheme: light;
+}
+
+/* Clean, WCAG compliant Light Mode */
+.light {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  
+  --surface: #FFFFFF;
+  --surface-2: #F9FAFB;
+  
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  
+  --primary: #1D4ED8;
+  --primary-foreground: #FFFFFF;
+  --primary-glow: #1D4ED8;
+  
+  --accent: #2563EB;
+  --accent-foreground: #FFFFFF;
+  
+  --secondary: #EFF6FF;
+  --secondary-foreground: #1D4ED8;
+  
+  --border: #E2E8F0;
+  --muted: #F8FAFC;
+  --muted-foreground: #475569; /* Better contrast secondary text */
+
+  --status-ok: #047857;
+  --status-info: #1D4ED8;
+  --status-warn: #B45309;
+  --status-high: #B91C1C;
+  --status-crit: #B91C1C;
+
+  --cyan: #1D4ED8; /* Info */
+  --magenta: #6D28D9; /* AI / Insight */
+}
+
+html.light body {
+  background-color: #F8FAFC;
+  background-image: 
+    radial-gradient(circle at 50% 50%, transparent 15%, rgba(37, 99, 235, 0.02) 16%, transparent 17%),
+    radial-gradient(circle at 50% 50%, transparent 30%, rgba(37, 99, 235, 0.02) 31%, transparent 32%),
+    radial-gradient(circle at 50% 50%, transparent 45%, rgba(37, 99, 235, 0.02) 46%, transparent 47%),
+    linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+  background-size: 100vw 100vw, 100vw 100vw, 100vw 100vw, 32px 32px, 32px 32px;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 .dark {
@@ -169,8 +219,8 @@
   color-scheme: dark;
 }
 
-/* High contrast mode */
-.hc {
+/* High contrast mode (Dark) */
+.dark.hc, html:not(.light).hc {
   --background: oklch(0.08 0.02 250);
   --foreground: oklch(1 0 0);
   --surface: oklch(0.12 0.03 250);
@@ -180,6 +230,25 @@
   --muted-foreground: oklch(0.92 0.01 230);
   --primary: oklch(0.92 0.18 200);
   --accent: oklch(0.82 0.30 340);
+}
+
+/* High contrast mode (Light) */
+.light.hc {
+  --foreground: #000000;
+  --card-foreground: #000000;
+  --muted-foreground: #000000;
+  --border: #000000;
+  --primary: #0000EE;
+  --status-info: #0000EE;
+  --status-ok: #005A00;
+  --status-warn: #8B4500;
+  --status-crit: #B00000;
+  --status-high: #B00000;
+}
+
+.light.hc .panel, .light.hc .panel-inner {
+  border: 1px solid var(--border);
+  box-shadow: none;
 }
 
 /* Reduced motion */
@@ -253,6 +322,9 @@
   input[type="button"],
   input[type="submit"] {
     cursor: pointer;
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   }
 
   input,
@@ -288,6 +360,9 @@
       0 18px 44px -28px color-mix(in oklab, black 80%, transparent);
     backdrop-filter: blur(14px) saturate(145%);
     -webkit-backdrop-filter: blur(14px) saturate(145%);
+    transition: border-color 220ms cubic-bezier(0.2, 0, 0, 1),
+      box-shadow 220ms cubic-bezier(0.2, 0, 0, 1),
+      transform 220ms cubic-bezier(0.2, 0, 0, 1);
   }
   .panel-inner {
     max-width: 100%;
@@ -297,6 +372,21 @@
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
     backdrop-filter: blur(10px) saturate(130%);
     -webkit-backdrop-filter: blur(10px) saturate(130%);
+    transition: border-color 180ms cubic-bezier(0.2, 0, 0, 1),
+      background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+      transform 180ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .panel:hover {
+    border-color: color-mix(in oklab, var(--primary) 22%, var(--border));
+  }
+  .dark .panel {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  }
+  .dark .panel-inner {
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02),
+      0 4px 12px rgba(0, 0, 0, 0.5);
   }
   .grid-bg {
     background-image:
@@ -315,6 +405,15 @@
     background-size: cover, auto, cover;
     background-position: center, center, center 46%;
   }
+  html.light .manager-hero {
+    background-color: #F8FAFC;
+    background-image:
+      linear-gradient(270deg, rgba(232,247,250,0.35) 0%, rgba(245,252,255,0.88) 50%, rgba(248,253,255,0.96) 100%),
+      url("/manager-assets/hero-command-bg.webp");
+    background-blend-mode: normal;
+    background-size: cover, cover;
+    background-position: center, center 46%;
+  }
   html[dir="rtl"] .manager-hero {
     background:
       linear-gradient(270deg, color-mix(in oklab, var(--background) 94%, transparent), color-mix(in oklab, var(--background) 70%, transparent), color-mix(in oklab, var(--background) 90%, transparent)),
@@ -322,6 +421,15 @@
       url("/manager-assets/hero-command-bg.webp");
     background-size: cover, auto, cover;
     background-position: center, center, center 46%;
+  }
+  html[dir="rtl"].light .manager-hero {
+    background-color: #F8FAFC;
+    background-image:
+      linear-gradient(90deg, rgba(232,247,250,0.35) 0%, rgba(245,252,255,0.88) 50%, rgba(248,253,255,0.96) 100%),
+      url("/manager-assets/hero-command-bg.webp");
+    background-blend-mode: normal;
+    background-size: cover, cover;
+    background-position: center, center 46%;
   }
   .manager-hero::before {
     content: "";
@@ -344,6 +452,109 @@
       color-mix(in oklab, var(--muted) 68%, transparent));
     background-size: 220% 100%;
     animation: skeleton-sweep 1.2s ease-in-out infinite;
+  }
+  .hotspot-popover {
+    animation: popover-in 180ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .cctv-loop {
+    position: relative;
+    aspect-ratio: 16 / 8.5;
+    min-height: 7.25rem;
+    color: rgba(226, 245, 255, 0.82);
+  }
+  .cctv-frame {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.01) 18%, rgba(0,0,0,0.5) 100%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 42px),
+      radial-gradient(ellipse at 50% 12%, rgba(160, 220, 255, 0.22), transparent 42%),
+      #071018;
+    perspective: 520px;
+  }
+  .cctv-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 6px, rgba(255,255,255,0.025) 6px 7px),
+      linear-gradient(90deg, rgba(0,0,0,0.46), transparent 20%, transparent 80%, rgba(0,0,0,0.46));
+    opacity: 0.72;
+    pointer-events: none;
+  }
+  .cctv-ceiling,
+  .cctv-floor {
+    position: absolute;
+    left: 50%;
+    width: 72%;
+    transform: translateX(-50%) rotateX(62deg);
+    transform-origin: center;
+    border: 1px solid rgba(210, 230, 235, 0.16);
+  }
+  .cctv-ceiling {
+    top: -20%;
+    height: 56%;
+    background:
+      repeating-linear-gradient(90deg, rgba(225,245,255,0.12) 0 1px, transparent 1px 58px),
+      linear-gradient(180deg, rgba(255,255,255,0.14), transparent);
+  }
+  .cctv-floor {
+    bottom: -34%;
+    height: 78%;
+    background:
+      repeating-linear-gradient(90deg, rgba(225,245,255,0.1) 0 1px, transparent 1px 52px),
+      linear-gradient(0deg, rgba(255,255,255,0.12), transparent);
+  }
+  .cctv-left-wall,
+  .cctv-right-wall {
+    position: absolute;
+    top: 18%;
+    width: 36%;
+    height: 74%;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0 2px, rgba(255,255,255,0.02) 2px 32px);
+    opacity: 0.7;
+  }
+  .cctv-left-wall {
+    left: -6%;
+    transform: skewY(-26deg);
+  }
+  .cctv-right-wall {
+    right: -6%;
+    transform: skewY(26deg);
+  }
+  .cctv-gate {
+    position: absolute;
+    bottom: 22%;
+    width: 18%;
+    height: 26%;
+    border: 1px solid rgba(210, 230, 235, 0.2);
+    background: rgba(20, 32, 42, 0.66);
+    box-shadow: inset 0 0 24px rgba(88, 214, 255, 0.08);
+  }
+  .cctv-gate-a {
+    left: 19%;
+    transform: skewY(-8deg);
+  }
+  .cctv-gate-b {
+    right: 19%;
+    transform: skewY(8deg);
+  }
+  .cctv-scanline {
+    position: absolute;
+    inset-inline: 0;
+    top: -20%;
+    height: 34%;
+    background: linear-gradient(180deg, transparent, rgba(88, 214, 255, 0.12), transparent);
+    animation: cctv-scan 3s linear infinite;
+  }
+  .cctv-timestamp {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    bottom: 0.6rem;
+    font: 600 0.65rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    letter-spacing: 0.12em;
+    color: rgba(226, 245, 255, 0.68);
   }
   .sr-only {
     position: absolute;
@@ -368,9 +579,45 @@
   100% { background-position: -120% 0; }
 }
 
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes cctv-scan {
+  0% { transform: translateY(-40%); }
+  100% { transform: translateY(420%); }
+}
+
+@media (max-width: 640px) {
+  .hotspot-popover {
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    top: 0.5rem !important;
+    width: auto !important;
+    transform: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
   .skeleton-line,
-  .flow-line {
+  .flow-line,
+  .cctv-scanline {
     animation: none;
   }
 }

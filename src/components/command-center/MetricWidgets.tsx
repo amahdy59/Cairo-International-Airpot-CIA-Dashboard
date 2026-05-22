@@ -1,5 +1,6 @@
-import { useId, type ReactNode } from "react";
+import { useId, memo, type ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 
 type StatusTone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 
@@ -36,28 +37,45 @@ export function MetricCard({
     ok: "from-status-ok to-status-ok/0",
   }[accent];
 
+  const accentHex = {
+    cyan: "var(--cyan)",
+    magenta: "var(--magenta)",
+    warn: "var(--status-warn)",
+    ok: "var(--status-ok)",
+  }[accent];
+
   const isPositive = deltaTone === "ok" && delta != null && !delta.trim().startsWith("-");
 
+  const numericValue = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));
+  const isNumeric = !isNaN(numericValue) && String(value).trim() !== "";
+  
+  const animatedValue = useAnimatedNumber(
+    isNumeric ? numericValue : 0,
+    1000,
+    (v) => (isNumeric ? Math.floor(v).toLocaleString("en-US") : String(value))
+  );
+
   return (
-    <article className="panel relative overflow-hidden p-4">
-      <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
-      <div className="flex items-start justify-between gap-3">
+    <article className="panel relative overflow-hidden p-4 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.6)] group bg-card">
+      <div className="absolute -top-12 -left-12 h-32 w-32 rounded-full opacity-0 dark:opacity-15 blur-2xl pointer-events-none transition-opacity duration-500 group-hover:opacity-20 dark:group-hover:opacity-30" style={{ backgroundColor: accentHex }} />
+      <div className={`absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100 transition-transform duration-500 origin-top group-hover:scale-y-110`} />
+      <div className="relative z-10 flex items-start justify-between gap-3 pl-1">
         <div className="min-w-0">
-          <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
+          <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">{label}</p>
           <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-semibold tracking-tight lg:text-3xl">{value}</span>
+            <span className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">{isNumeric ? animatedValue : value}</span>
             {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
           </div>
-          {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
+          {hint && <p className="mt-1 text-xs text-muted-foreground font-medium">{hint}</p>}
         </div>
         {Icon && (
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-background/60">
-            <Icon aria-hidden="true" className="h-4 w-4 text-primary" />
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border/50 bg-secondary/30 transition-transform duration-500 group-hover:scale-110 group-hover:bg-secondary/50">
+            <Icon className="h-5 w-5 opacity-80 transition-opacity duration-300 group-hover:opacity-100" style={{ color: accentHex }} aria-hidden="true" />
           </div>
         )}
       </div>
       {delta && (
-        <p className={`mt-2 inline-flex items-center gap-1 text-xs ${toneClass}`}>
+        <p className={`relative z-10 mt-2 inline-flex items-center gap-1 text-xs ${toneClass}`}>
           {isPositive ? <ArrowUpRight aria-hidden="true" className="h-3 w-3" /> : <ArrowDownRight aria-hidden="true" className="h-3 w-3" />}
           <span className="font-mono">{delta}</span>
         </p>
@@ -85,7 +103,7 @@ export function StatusPill({
   }[tone];
 
   return (
-    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${toneClass}`}>
+    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono text-xs font-semibold uppercase tracking-wider ${toneClass}`}>
       {icon}
       {children}
     </span>
@@ -112,7 +130,7 @@ export function SectionPanel({
           {title && (
             <div className="flex min-w-0 items-center gap-2">
               <span className="h-3 w-[3px] shrink-0 rounded bg-primary" />
-              <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
+              <h2 className="text-base font-bold tracking-tight text-foreground">{title}</h2>
             </div>
           )}
           {action}
@@ -123,7 +141,7 @@ export function SectionPanel({
   );
 }
 
-export function Sparkline({ data, color = "var(--cyan)", height = 44 }: { data: number[]; color?: string; height?: number }) {
+export const Sparkline = memo(function Sparkline({ data, color = "var(--cyan)", height = 44, "aria-label": ariaLabel }: { data: number[]; color?: string; height?: number; "aria-label"?: string }) {
   const gradientId = `sparkline-${useId().replace(/:/g, "")}`;
   const width = 100;
   const min = Math.min(...data);
@@ -139,7 +157,7 @@ export function Sparkline({ data, color = "var(--cyan)", height = 44 }: { data: 
   const lastPoint = points[points.length - 1];
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none" style={{ height }} aria-hidden="true">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none" style={{ height }} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel} aria-hidden={ariaLabel ? undefined : true}>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={color} stopOpacity="0.35" />
@@ -151,7 +169,7 @@ export function Sparkline({ data, color = "var(--cyan)", height = 44 }: { data: 
       {lastPoint && <circle cx={lastPoint[0]} cy={lastPoint[1]} r="1.8" fill={color} />}
     </svg>
   );
-}
+});
 
 export function ProgressBar({ value, max = 100, color = "var(--cyan)", className = "" }: { value: number; max?: number; color?: string; className?: string }) {
   const percent = Math.min(100, Math.max(0, (value / max) * 100));
