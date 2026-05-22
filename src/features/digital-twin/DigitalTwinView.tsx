@@ -143,7 +143,6 @@ function DigitalTwinView() {
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
             <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[350px] lg:min-h-[500px] xl:min-h-[560px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
-              <title>{activeScene.title} operational image map</title>
               <image onLoad={() => setIsImageLoaded(true)} href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
 
               {/* Render Hotspots */}
@@ -272,7 +271,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   // Compute initial position and keep it in state for dragging
   const [pos, setPos] = useState(() => {
-    const W = 400;
+    const W = 360;
     const H = 400;
     const container = document.getElementById("digital-twin-image-container");
     if (container) {
@@ -289,7 +288,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
   // Re-sync position if anchor wildly changes (e.g. they clicked a different hotspot)
   useEffect(() => {
     setPos(() => {
-      const W = 400;
+      const W = 360;
       const H = 400;
       const container = document.getElementById("digital-twin-image-container");
       if (container) {
@@ -347,24 +346,10 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       {/* Full-screen click-to-close backdrop */}
       <div className="fixed inset-0 z-[198]" onClick={onClose} aria-hidden="true" />
       
-      {/* Futuristic connecting dotted line */}
-      <svg className="fixed inset-0 pointer-events-none z-[199]" style={{ width: '100vw', height: '100vh' }}>
-        <line 
-          x1={anchor.x} y1={anchor.y} 
-          x2={pos.x + modalSize.w / 2} 
-          y2={pos.y + modalSize.h / 2} 
-          stroke="var(--primary)" 
-          strokeWidth="1.5" 
-          strokeDasharray="4 4" 
-          className="opacity-60"
-        />
-        <circle cx={anchor.x} cy={anchor.y} r="4" fill="var(--primary)" className="animate-pulse" />
-      </svg>
-
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-fit max-w-[400px]"
+        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-full max-w-[360px]"
         style={{ ...style, resize: "both", minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
         role="dialog"
         aria-modal="true"
