@@ -24,6 +24,7 @@ import {
   Globe,
   ChevronDown,
   ChevronUp,
+  Linkedin,
 } from "lucide-react";
 import { StatusPill } from "./command-center/MetricWidgets";
 import { useLocale } from "../context/locale";
@@ -296,23 +297,40 @@ export default function ResourcesAuditPage() {
         </div>
         
         {/* Certifications Badge row */}
-        <div className="flex flex-wrap gap-1.5 text-xs font-mono z-10 relative">
-          <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google UX</span>
-          <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google Data Analytics</span>
-          <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Tableau BI</span>
+        <div className="z-10 relative">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+            {localize({ en: "Certifications & Skills", ar: "الشهادات والمهارات" }, language)}
+          </h4>
+          <div className="flex flex-wrap gap-1.5 text-xs font-mono">
+            <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google UX</span>
+            <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google Data Analytics</span>
+            <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Tableau BI</span>
+          </div>
         </div>
 
         <div className="border-t border-border/50 pt-3.5 flex justify-between items-center text-sm z-10 relative">
           <span className="font-mono text-muted-foreground">Cairo, Egypt</span>
-          <a 
-            href="https://mahdy-resume.vercel.app/"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 text-primary hover:underline font-semibold"
-          >
-            <span>{localize({ en: "View Resume", ar: "عرض السيرة الذاتية" }, language)}</span>
-            <ExternalLink className="h-4 w-4" />
-          </a>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://www.linkedin.com/in/ahmedmahdy/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors font-medium"
+              aria-label="LinkedIn"
+            >
+              <Linkedin className="h-4 w-4" />
+              <span className="hidden sm:inline">LinkedIn</span>
+            </a>
+            <a 
+              href="https://mahdy-resume.vercel.app/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-primary hover:underline font-semibold"
+            >
+              <span>{localize({ en: "View Resume", ar: "عرض السيرة الذاتية" }, language)}</span>
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </section>
 
