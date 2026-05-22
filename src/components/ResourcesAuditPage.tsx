@@ -312,7 +312,7 @@ export default function ResourcesAuditPage() {
           <span className="font-mono text-muted-foreground">Cairo, Egypt</span>
           <div className="flex items-center gap-4">
             <a 
-              href="https://www.linkedin.com/in/ahmedmahdy/"
+              href="https://www.linkedin.com/in/creativemahdy"
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors font-medium"
