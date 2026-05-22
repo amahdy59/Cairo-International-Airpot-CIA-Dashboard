@@ -358,13 +358,13 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
         onClick={(event) => event.stopPropagation()}
       >
         <div 
-          className="flex items-center justify-between gap-2 border-b border-border/30 px-4 py-4 cursor-move select-none"
+          className="flex items-center justify-between gap-4 border-b border-border/30 px-4 py-4 cursor-move select-none whitespace-nowrap"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          <h2 id="hotspot-popover-title" className="text-base font-bold tracking-tight text-foreground whitespace-normal break-words leading-tight">
+          <h2 id="hotspot-popover-title" className="text-base font-bold tracking-tight text-foreground">
             {tr(hotspot.title).split(" ").slice(0, 4).join(" ")}
             {tr(hotspot.title).split(" ").length > 4 ? "..." : ""}
           </h2>
@@ -388,7 +388,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
           </div>
         </div>
 
-        <div className="flex flex-col p-4 pt-2">
+        <div className="flex flex-col p-4 pt-2 w-0 min-w-full whitespace-normal">
           {hotspot.impact && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
