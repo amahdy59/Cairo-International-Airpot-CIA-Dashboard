@@ -12,6 +12,9 @@ function DigitalTwinView() {
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
   const [hotspotAnchor, setHotspotAnchor] = useState<{x: number, y: number} | null>(null);
+  
+  const [hoveredHotspotId, setHoveredHotspotId] = useState<string | null>(null);
+  const [hoverAnchor, setHoverAnchor] = useState<{x: number, y: number} | null>(null);
   const incoming = useIncomingCaiFlights();
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -46,15 +49,16 @@ function DigitalTwinView() {
           setSelectedHotspotId(hotspot.id);
           const rect = e.currentTarget.getBoundingClientRect();
           setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+          setHoveredHotspotId(null);
         }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setSelectedHotspotId(hotspot.id);
-            const rect = (event.target as Element).getBoundingClientRect();
-            setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+        onPointerEnter={(e) => {
+          if (selectedHotspotId !== hotspot.id) {
+            setHoveredHotspotId(hotspot.id);
+            const rect = e.currentTarget.getBoundingClientRect();
+            setHoverAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
           }
         }}
+        onPointerLeave={() => setHoveredHotspotId(null)}
         role="button"
         tabIndex={0}
         aria-label={`${hotspot.title}. ${hotspot.status}`}
@@ -142,6 +146,12 @@ function DigitalTwinView() {
             </svg>
             </div>
           {/* Popover renders OUTSIDE overflow-hidden — fixed to viewport, never cropped */}
+          {activeScene.hotspots.find(h => h.id === hoveredHotspotId) && hoverAnchor && !selectedHotspot && (
+            <BriefPopover 
+              hotspot={activeScene.hotspots.find(h => h.id === hoveredHotspotId)!} 
+              anchor={hoverAnchor} 
+            />
+          )}
           {selectedHotspot && hotspotAnchor && (
             <HotspotPopover
               hotspot={selectedHotspot}
@@ -240,29 +250,38 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
     hotspot.status === 'critical' ? 'bg-status-crit' :
     'bg-status-info';
 
+  const [modalSize, setModalSize] = useState({ w: 340, h: 440 });
+
+  useEffect(() => {
+    if (popoverRef.current) {
+      const rect = popoverRef.current.getBoundingClientRect();
+      setModalSize({ w: rect.width, h: rect.height });
+    }
+  }, [hotspot.id, language]);
+
   // Compute initial position and keep it in state for dragging
   const [pos, setPos] = useState(() => {
-    const POPOVER_W = 290;
-    const POPOVER_H = 340; 
     const PAD = 12;
 
     const anchorX = anchor.x;
     const anchorY = anchor.y;
 
-    // Prefer to open to the right (safe area in the design)
-    let left = anchorX + 60;
-    if (left + POPOVER_W > window.innerWidth - PAD) {
-      left = anchorX - POPOVER_W - 60;
+    // Prefer to open above the hotspot, centered
+    let left = anchorX - 170;
+    let top = anchorY - 480;
+    
+    if (top < PAD) {
+      // If no room above, place to the right
+      top = Math.max(PAD, anchorY - 220);
+      left = anchorX + 40;
+      if (left + 340 > window.innerWidth - PAD) {
+        left = anchorX - 340 - 40;
+      }
     }
+    
     // Clamp to viewport bounds
-    left = Math.max(PAD, Math.min(left, window.innerWidth - POPOVER_W - PAD));
-
-    // Prefer to open downward slightly
-    let top = anchorY - 40;
-    if (top + POPOVER_H > window.innerHeight - PAD) {
-      top = anchorY - POPOVER_H + 40;
-    }
-    top = Math.max(PAD, Math.min(top, window.innerHeight - POPOVER_H - PAD));
+    left = Math.max(PAD, Math.min(left, window.innerWidth - 340 - PAD));
+    top = Math.max(PAD, Math.min(top, window.innerHeight - 440 - PAD));
 
     return { x: left, y: top };
   });
@@ -301,7 +320,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
   };
 
   const style = useMemo(() => {
-    return { position: "fixed" as const, top: pos.y, left: pos.x, width: 290, zIndex: 200 };
+    return { position: "fixed" as const, top: pos.y, left: pos.x, zIndex: 200 };
   }, [pos.x, pos.y]);
 
   useEffect(() => {
@@ -326,21 +345,20 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       <svg className="fixed inset-0 pointer-events-none z-[199]" style={{ width: '100vw', height: '100vh' }}>
         <line 
           x1={anchor.x} y1={anchor.y} 
-          x2={pos.x > anchor.x ? pos.x - 4 : pos.x + 294} 
-          y2={pos.y + 24} 
+          x2={pos.x + modalSize.w / 2} 
+          y2={pos.y + modalSize.h / 2} 
           stroke="var(--primary)" 
           strokeWidth="1.5" 
           strokeDasharray="4 4" 
           className="opacity-60"
         />
         <circle cx={anchor.x} cy={anchor.y} r="4" fill="var(--primary)" className="animate-pulse" />
-        <circle cx={pos.x > anchor.x ? pos.x - 4 : pos.x + 294} cy={pos.y + 24} r="4" fill="var(--primary)" />
       </svg>
 
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl"
+        className="hotspot-popover panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[400px]"
         style={{ ...style, maxHeight: "min(500px, calc(100vh - 24px))", overflowY: "hidden" }}
         role="dialog"
         aria-modal="true"
@@ -507,3 +525,39 @@ function ZoneStatusPanel() {
 }
 
 export default DigitalTwinView;
+
+function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: number, y: number} }) {
+  const { language, tr } = useLocale();
+  const toneStyles = 
+    hotspot.status === 'good' ? 'border-status-ok/30 bg-status-ok/10 text-status-ok' :
+    hotspot.status === 'warning' ? 'border-status-warn/30 bg-status-warn/10 text-status-warn' :
+    hotspot.status === 'critical' ? 'border-status-crit/30 bg-status-crit/10 text-status-crit' :
+    'border-status-info/30 bg-status-info/10 text-status-info';
+  
+  const toneColor = 
+    hotspot.status === 'good' ? 'bg-status-ok' :
+    hotspot.status === 'warning' ? 'bg-status-warn' :
+    hotspot.status === 'critical' ? 'bg-status-crit' :
+    'bg-status-info';
+
+  const statusLabel = hotspot.status === "warning" ? localize({ en: "Needs attention", ar: "يحتاج انتباها" }, language) : hotspot.status === "critical" ? localize({ en: "Critical", ar: "حرج" }, language) : hotspot.status === "good" ? localize({ en: "Good", ar: "جيد" }, language) : hotspot.status === "offline" ? localize({ en: "Offline", ar: "متوقف" }, language) : localize({ en: "Info", ar: "معلومة" }, language);
+
+  return (
+    <div className="fixed z-[200] pointer-events-none" style={{ left: anchor.x, top: anchor.y - 14, transform: "translate(-50%, -100%)" }}>
+      <div className="panel overflow-hidden p-3 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl flex flex-col gap-2 w-max max-w-[280px]">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold tracking-tight text-foreground truncate">{tr(hotspot.title)}</h3>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${toneStyles}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${toneColor}`}></span>
+            {statusLabel}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground line-clamp-2">{hotspot.impact}</p>
+        <div className="text-[10px] text-primary/80 uppercase tracking-widest font-mono mt-1">{localize({en: "Click hotspot to expand", ar: "انقر للتوسيع"}, language)}</div>
+      </div>
+      <svg className="absolute left-1/2 bottom-[-14px] transform -translate-x-1/2 pointer-events-none" width="2" height="14">
+        <line x1="1" y1="0" x2="1" y2="14" stroke="var(--primary)" strokeWidth="1.5" strokeDasharray="2 2" className="opacity-60" />
+      </svg>
+    </div>
+  );
+}
