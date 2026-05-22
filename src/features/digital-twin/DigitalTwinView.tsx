@@ -83,15 +83,12 @@ function DigitalTwinView() {
   return (
     <div className="grid min-w-0 gap-3 lg:gap-4">
       <SectionPanel className="overflow-hidden p-0" title="">
-        <div className="min-w-0 border-b border-border p-4">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">{localize({ en: "Interactive airport image map", ar: "خريطة تفاعلية للمطار" }, language)}</p>
-          <h2 className="mt-2 text-xl font-bold sm:text-2xl">{localize({ en: "Cairo Airport visual command map", ar: "خريطة القيادة المرئية لمطار القاهرة" }, language)}</h2>
-        </div>
-
-        <nav className="border-b border-border bg-card/70 p-3" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
-          <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-            <span className="shrink-0 px-2 font-mono text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{localize({ en: "Jump to", ar: "انتقل إلى" }, language)}</span>
-            <div className="flex min-w-max items-center gap-2">
+        <nav className="border-b border-border bg-card/70 px-4 py-2.5" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+          <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto">
+            <div className="flex items-center gap-3">
+              <h2 className="shrink-0 font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
+              <span className="hidden sm:inline-block shrink-0 font-mono text-[10px] font-semibold uppercase text-muted-foreground/40">|</span>
+              <div className="flex min-w-max items-center gap-1.5">
               {jumpScenes.map((scene) => {
                 const active = scene.id === activeSceneId;
                 return (
@@ -111,6 +108,7 @@ function DigitalTwinView() {
                   </button>
                 );
               })}
+              </div>
             </div>
             <button
               type="button"
@@ -125,7 +123,7 @@ function DigitalTwinView() {
 
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
-            <div ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[500px] lg:min-h-[700px] xl:min-h-[800px] overflow-hidden">
+            <div ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[350px] lg:min-h-[500px] xl:min-h-[560px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
               <title>{activeScene.title} operational image map</title>
               <image href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
@@ -145,7 +143,7 @@ function DigitalTwinView() {
           )}
           </div>
 
-          <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[800px] overflow-y-auto">
+          <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[560px] overflow-y-auto">
               <div className="p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">{tr("Area Overview")}</p>
                 <h3 className="mt-3 text-xl font-bold tracking-tight">{tr(activeScene.title)}</h3>
