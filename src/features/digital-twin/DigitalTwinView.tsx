@@ -225,10 +225,21 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       : hotspot.status === "good"
         ? localize({ en: "Good", ar: "جيد" }, language)
         : hotspot.status === "offline"
+        : hotspot.status === "offline"
           ? localize({ en: "Offline", ar: "متوقف" }, language)
           : localize({ en: "Info", ar: "معلومة" }, language);
 
-  const tone: Tone = hotspot.status === "warning" ? "warn" : hotspot.status === "critical" ? "crit" : hotspot.status === "good" ? "ok" : hotspot.status === "offline" ? "neutral" : "info";
+  const toneStyles = 
+    hotspot.status === 'good' ? 'border-status-ok/30 bg-status-ok/10 text-status-ok' :
+    hotspot.status === 'warning' ? 'border-status-warn/30 bg-status-warn/10 text-status-warn' :
+    hotspot.status === 'critical' ? 'border-status-crit/30 bg-status-crit/10 text-status-crit' :
+    'border-status-info/30 bg-status-info/10 text-status-info';
+
+  const toneColor = 
+    hotspot.status === 'good' ? 'bg-status-ok' :
+    hotspot.status === 'warning' ? 'bg-status-warn' :
+    hotspot.status === 'critical' ? 'bg-status-crit' :
+    'bg-status-info';
 
   // Compute initial position and keep it in state for dragging
   const [pos, setPos] = useState(() => {
@@ -330,8 +341,8 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-border"
-        style={{ ...style, maxHeight: "min(400px, calc(100vh - 24px))", overflowY: "auto" }}
+        className="hotspot-popover panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl"
+        style={{ ...style, maxHeight: "min(500px, calc(100vh - 24px))", overflowY: "hidden" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotspot-popover-title"
@@ -339,58 +350,65 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
         onClick={(event) => event.stopPropagation()}
       >
         <div 
-          className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-3 cursor-move select-none"
+          className="flex items-center justify-between gap-2 border-b border-border/30 px-4 py-4 cursor-move select-none"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          <div className="flex min-w-0 items-center gap-3">
-            <h2 id="hotspot-popover-title" className="truncate text-sm font-semibold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
-            <StatusPill tone={tone}>{statusLabel}</StatusPill>
-          </div>
+          <h2 id="hotspot-popover-title" className="truncate text-lg font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-7 w-7 shrink-0 place-items-center rounded border border-transparent hover:bg-secondary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+            className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
             aria-label={tr("Close")}
           >
-            <X aria-hidden="true" className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            <X aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />
           </button>
         </div>
 
-        <div className="grid gap-3 p-4">
+        <div className="flex flex-col p-4">
           {hotspot.impact && (
-            <section className="panel-inner p-3">
-              <h3 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <BarChart3 aria-hidden="true" className="h-3.5 w-3.5" />
-                {localize({ en: "Operational impact", ar: "الأثر التشغيلي" }, language)}
-              </h3>
-              <p className="mt-1 text-xs leading-relaxed text-foreground">{hotspot.impact}</p>
-              {hotspot.updatedAt && (
-                <p className="mt-1 inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-                  <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
-                  {localize({ en: "Updated", ar: "آخر تحديث" }, language)} {hotspot.updatedAt}
-                </p>
-              )}
-            </section>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <BarChart3 aria-hidden="true" className="h-4 w-4" />
+                  <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "Operational Impact", ar: "التأثير التشغيلي"}, language)}</span>
+                </div>
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${toneStyles}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${toneColor}`}></span>
+                  {statusLabel}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground/90">{hotspot.impact}</p>
+              <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
+                <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
+                <span className="text-xs font-mono">{localize({en: "Updated", ar: "تم التحديث"}, language)} {hotspot.updatedAt}</span>
+              </div>
+            </div>
           )}
 
-          <section className="panel-inner p-3">
-            <h3 className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Camera aria-hidden="true" className="h-3.5 w-3.5" />
-              CCTV
-            </h3>
-            <CctvTerminalLoop />
-          </section>
+          {hotspot.impact && hotspot.category && (
+            <hr className="border-border/40 my-1 mb-4" />
+          )}
 
-          <button
-            type="button"
-            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
-            <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
-          </button>
+          <div>
+            <div className="flex items-center gap-2 text-muted-foreground mb-3">
+              <Camera aria-hidden="true" className="h-4 w-4" />
+              <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
+            </div>
+            
+            <div className="flex flex-col rounded-lg overflow-hidden border border-border/40">
+              <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
+                <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-status-crit animate-pulse"></span>
+                  <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
+                </div>
+              </div>
+              <img src="/manager-assets/cctv-placeholder.png" alt="CCTV Feed" className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
         </div>
       </div>
     </>
