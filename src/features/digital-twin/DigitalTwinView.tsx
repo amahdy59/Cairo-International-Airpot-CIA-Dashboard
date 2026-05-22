@@ -141,7 +141,7 @@ function DigitalTwinView() {
 
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
-            <div ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[350px] lg:min-h-[500px] xl:min-h-[560px] overflow-hidden">
+            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[350px] lg:min-h-[500px] xl:min-h-[560px] overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
               <title>{activeScene.title} operational image map</title>
               <image onLoad={() => setIsImageLoaded(true)} href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
@@ -272,9 +272,15 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   // Compute initial position and keep it in state for dragging
   const [pos, setPos] = useState(() => {
-    const W = 280;
+    const W = 400;
     const H = 400;
-    // Always start perfectly centered on screen to avoid being "far away" on huge monitors
+    const container = document.getElementById("digital-twin-image-container");
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      const left = rect.left + rect.width / 2 - W / 2;
+      const top = rect.top + rect.height / 2 - H / 2;
+      return { x: left, y: top };
+    }
     const left = (window.innerWidth / 2) - (W / 2);
     const top = (window.innerHeight / 2) - (H / 2);
     return { x: left, y: top };
@@ -282,15 +288,21 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   // Re-sync position if anchor wildly changes (e.g. they clicked a different hotspot)
   useEffect(() => {
-    setPos(p => {
-      // Just a simple reposition if we get a new anchor entirely
-      let left = anchor.x + 60;
-      if (left + 290 > window.innerWidth - 12) left = anchor.x - 290 - 60;
-      left = Math.max(12, Math.min(left, window.innerWidth - 290 - 12));
-      let top = anchor.y - 40;
-      if (top + 340 > window.innerHeight - 12) top = anchor.y - 340 + 40;
-      top = Math.max(12, Math.min(top, window.innerHeight - 340 - 12));
-      return { x: left, y: top };
+    setPos(() => {
+      const W = 400;
+      const H = 400;
+      const container = document.getElementById("digital-twin-image-container");
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        return { 
+          x: rect.left + rect.width / 2 - W / 2, 
+          y: rect.top + rect.height / 2 - H / 2 
+        };
+      }
+      return { 
+        x: (window.innerWidth / 2) - (W / 2), 
+        y: (window.innerHeight / 2) - (H / 2) 
+      };
     });
   }, [anchor.x, anchor.y]);
 
@@ -352,8 +364,8 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[280px]"
-        style={{ ...style, resize: "both", minWidth: 200, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
+        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-fit max-w-[400px]"
+        style={{ ...style, resize: "both", minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotspot-popover-title"
