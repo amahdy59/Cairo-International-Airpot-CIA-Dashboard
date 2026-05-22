@@ -40,10 +40,12 @@ function DigitalTwinView() {
     return (
       <g 
         key={hotspot.id} 
+        id={`hotspot-marker-${hotspot.id}`}
         transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
         onClick={(e) => {
           setSelectedHotspotId(hotspot.id);
-          setHotspotAnchor({ x: e.clientX, y: e.clientY });
+          const rect = e.currentTarget.getBoundingClientRect();
+          setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
         }}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -168,8 +170,12 @@ function DigitalTwinView() {
                           type="button"
                           onClick={() => {
                             setSelectedHotspotId(h.id);
-                            // If opening from the aside menu, center it roughly
-                            if (imageContainerRef.current) {
+                            const marker = document.getElementById(`hotspot-marker-${h.id}`);
+                            if (marker) {
+                              const rect = marker.getBoundingClientRect();
+                              setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                            } else if (imageContainerRef.current) {
+                              // fallback if marker not found
                               const rect = imageContainerRef.current.getBoundingClientRect();
                               setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
                             }
@@ -210,6 +216,7 @@ function DigitalTwinView() {
 function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anchor: {x: number, y: number}; onClose: () => void; }) {
   const { language, tr } = useLocale();
   const popoverRef = useRef<HTMLDivElement>(null);
+  const dragStart = useRef<{x: number, y: number, startX: number, startY: number} | null>(null);
 
   const statusLabel = hotspot.status === "warning"
     ? localize({ en: "Needs attention", ar: "يحتاج انتباها" }, language)
@@ -223,32 +230,69 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   const tone: Tone = hotspot.status === "warning" ? "warn" : hotspot.status === "critical" ? "crit" : hotspot.status === "good" ? "ok" : hotspot.status === "offline" ? "neutral" : "info";
 
-  // Compute position
-  const style = useMemo(() => {
+  // Compute initial position and keep it in state for dragging
+  const [pos, setPos] = useState(() => {
     const POPOVER_W = 290;
-    const POPOVER_H = 340; // generous estimate
+    const POPOVER_H = 340; 
     const PAD = 12;
 
     const anchorX = anchor.x;
     const anchorY = anchor.y;
 
-    // Prefer to open to the right, flip left if near right edge
-    let left = anchorX + 24;
+    // Prefer to open to the right (safe area in the design)
+    let left = anchorX + 60;
     if (left + POPOVER_W > window.innerWidth - PAD) {
-      left = anchorX - POPOVER_W - 24;
+      left = anchorX - POPOVER_W - 60;
     }
     // Clamp to viewport bounds
     left = Math.max(PAD, Math.min(left, window.innerWidth - POPOVER_W - PAD));
 
-    // Prefer to open downward slightly, flip up if near bottom edge
+    // Prefer to open downward slightly
     let top = anchorY - 40;
     if (top + POPOVER_H > window.innerHeight - PAD) {
       top = anchorY - POPOVER_H + 40;
     }
     top = Math.max(PAD, Math.min(top, window.innerHeight - POPOVER_H - PAD));
 
-    return { position: "fixed" as const, top, left, width: POPOVER_W, zIndex: 200 };
+    return { x: left, y: top };
+  });
+
+  // Re-sync position if anchor wildly changes (e.g. they clicked a different hotspot)
+  useEffect(() => {
+    setPos(p => {
+      // Just a simple reposition if we get a new anchor entirely
+      let left = anchor.x + 60;
+      if (left + 290 > window.innerWidth - 12) left = anchor.x - 290 - 60;
+      left = Math.max(12, Math.min(left, window.innerWidth - 290 - 12));
+      let top = anchor.y - 40;
+      if (top + 340 > window.innerHeight - 12) top = anchor.y - 340 + 40;
+      top = Math.max(12, Math.min(top, window.innerHeight - 340 - 12));
+      return { x: left, y: top };
+    });
   }, [anchor.x, anchor.y]);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Only drag from the header area, avoid dragging if clicking buttons
+    if ((e.target as HTMLElement).closest("button")) return;
+    dragStart.current = { x: e.clientX, y: e.clientY, startX: pos.x, startY: pos.y };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStart.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    setPos({ x: dragStart.current.startX + dx, y: dragStart.current.startY + dy });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragStart.current = null;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
+  const style = useMemo(() => {
+    return { position: "fixed" as const, top: pos.y, left: pos.x, width: 290, zIndex: 200 };
+  }, [pos.x, pos.y]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -266,7 +310,23 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
   return (
     <>
       {/* Full-screen click-to-close backdrop */}
-      <div className="fixed inset-0 z-[199]" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 z-[198]" onClick={onClose} aria-hidden="true" />
+      
+      {/* Futuristic connecting dotted line */}
+      <svg className="fixed inset-0 pointer-events-none z-[199]" style={{ width: '100vw', height: '100vh' }}>
+        <line 
+          x1={anchor.x} y1={anchor.y} 
+          x2={pos.x > anchor.x ? pos.x - 4 : pos.x + 294} 
+          y2={pos.y + 24} 
+          stroke="var(--primary)" 
+          strokeWidth="1.5" 
+          strokeDasharray="4 4" 
+          className="opacity-60"
+        />
+        <circle cx={anchor.x} cy={anchor.y} r="4" fill="var(--primary)" className="animate-pulse" />
+        <circle cx={pos.x > anchor.x ? pos.x - 4 : pos.x + 294} cy={pos.y + 24} r="4" fill="var(--primary)" />
+      </svg>
+
       {/* Popover card */}
       <div
         ref={popoverRef}
@@ -278,9 +338,15 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
         tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-3">
+        <div 
+          className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-3 cursor-move select-none"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
           <div className="flex min-w-0 items-center gap-3">
-            <h2 id="hotspot-popover-title" className="truncate text-base font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
+            <h2 id="hotspot-popover-title" className="truncate text-sm font-semibold tracking-tight text-foreground">{tr(hotspot.title)}</h2>
             <StatusPill tone={tone}>{statusLabel}</StatusPill>
           </div>
           <button
