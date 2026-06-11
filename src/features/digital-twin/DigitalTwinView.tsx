@@ -287,6 +287,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   // Re-sync position if anchor wildly changes (e.g. they clicked a different hotspot)
   useEffect(() => {
+    if (isMobile) return;
     setPos(() => {
       const W = 320;
       const H = 400;
@@ -303,9 +304,10 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
         y: (window.innerHeight / 2) - (H / 2) 
       };
     });
-  }, [anchor.x, anchor.y]);
+  }, [anchor.x, anchor.y, isMobile]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isMobile) return;
     // Only drag from the header area, avoid dragging if clicking buttons
     if ((e.target as HTMLElement).closest("button")) return;
     dragStart.current = { x: e.clientX, y: e.clientY, startX: pos.x, startY: pos.y };
@@ -313,20 +315,22 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragStart.current) return;
+    if (isMobile || !dragStart.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
     setPos({ x: dragStart.current.startX + dx, y: dragStart.current.startY + dy });
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isMobile) return;
     dragStart.current = null;
     e.currentTarget.releasePointerCapture(e.pointerId);
   };
 
   const style = useMemo(() => {
+    if (isMobile) return { position: "fixed" as const, inset: 0, zIndex: 250 };
     return { position: "fixed" as const, top: pos.y, left: pos.x, zIndex: 200 };
-  }, [pos.x, pos.y]);
+  }, [pos.x, pos.y, isMobile]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -343,14 +347,17 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   return (
     <>
-      {/* Full-screen click-to-close backdrop */}
-      <div className="fixed inset-0 z-[198]" onClick={onClose} aria-hidden="true" />
+      {/* Full-screen click-to-close backdrop (desktop only) */}
+      {!isMobile && <div className="fixed inset-0 z-[198]" onClick={onClose} aria-hidden="true" />}
       
       {/* Popover card */}
       <div
         ref={popoverRef}
-        className="hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[320px]"
-        style={{ ...style, minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
+        className={isMobile
+          ? "hotspot-popover fixed inset-0 z-[250] flex flex-col bg-[#0B121A] animate-in slide-in-from-bottom duration-300 w-full h-full max-w-none max-h-none border-0 rounded-none"
+          : "hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[320px]"
+        }
+        style={isMobile ? { zIndex: 250 } : { ...style, minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hotspot-popover-title"
@@ -358,37 +365,40 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
         onClick={(event) => event.stopPropagation()}
       >
         <div 
-          className="flex items-center justify-between gap-4 border-b border-border/30 px-4 py-4 cursor-move select-none whitespace-nowrap"
+          className={`flex items-center justify-between gap-4 border-b border-border/30 px-4 py-4 ${isMobile ? "" : "cursor-move select-none"} whitespace-nowrap`}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
         >
-          <h2 id="hotspot-popover-title" className="text-base font-bold tracking-tight text-foreground">
-            {tr(hotspot.title).split(" ").slice(0, 4).join(" ")}
-            {tr(hotspot.title).split(" ").length > 4 ? "..." : ""}
+          <h2 id="hotspot-popover-title" className="text-base font-bold tracking-tight text-foreground truncate">
+            {isMobile ? tr(hotspot.title) : (tr(hotspot.title).split(" ").slice(0, 4).join(" ") + (tr(hotspot.title).split(" ").length > 4 ? "..." : ""))}
           </h2>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
-              aria-label={isExpanded ? tr("Collapse") : tr("Expand")}
-            >
-              {isExpanded ? <ChevronUp aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" /> : <ChevronDown aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />}
-            </button>
+          <div className="flex items-center gap-1.5">
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+                aria-label={isExpanded ? tr("Collapse") : tr("Expand")}
+                title={isExpanded ? tr("Collapse") : tr("Expand")}
+              >
+                {isExpanded ? <ChevronUp aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" /> : <ChevronDown aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
               className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
               aria-label={tr("Close")}
+              title={tr("Close")}
             >
               <X aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />
             </button>
           </div>
         </div>
 
-        <div className="flex flex-col p-4 pt-2 w-0 min-w-full whitespace-normal">
+        <div className={`flex flex-col p-4 pt-2 ${isMobile ? "flex-1 overflow-y-auto w-full max-w-xl mx-auto pb-10" : "w-0 min-w-full whitespace-normal"}`}>
           {hotspot.impact && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-3">
@@ -409,18 +419,18 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
             </div>
           )}
 
-          {isExpanded && hotspot.impact && hotspot.category && (
+          {(isExpanded || isMobile) && hotspot.impact && hotspot.category && (
             <hr className="border-border/40 my-3" />
           )}
 
-          {isExpanded && (
+          {(isExpanded || isMobile) && (
             <div>
               <div className="flex items-center gap-2 text-muted-foreground mb-3">
                 <Camera aria-hidden="true" className="h-4 w-4" />
                 <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
               </div>
               
-              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40 w-full">
+              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40 w-full max-w-md mx-auto">
                 <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
                   <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
                   <div className="flex items-center gap-1.5">
@@ -437,7 +447,7 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
             </div>
           )}
 
-          {isExpanded && (
+          {(isExpanded || isMobile) && (
             <div className="mt-4">
               <button
                 type="button"
