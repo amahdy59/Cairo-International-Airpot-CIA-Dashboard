@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, BarChart3, Clock3, Camera, ArrowRight, ChevronUp, ChevronDown } from 'lucide-react';
-import { localize, formatCairoTime, toneCssVar, localizedFlightStatus } from '../../utils/helpers';
+import { Sun, Moon, X, BarChart3, Clock3, Camera, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
-import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone, sampleIncomingFlights } from '../../data';
+import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 
@@ -11,7 +11,7 @@ function DigitalTwinView() {
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
-  const [hotspotAnchor, setHotspotAnchor] = useState<{x: number, y: number} | null>(null);
+
   
   const [hoveredHotspotId, setHoveredHotspotId] = useState<string | null>(null);
   const [hoverAnchor, setHoverAnchor] = useState<{x: number, y: number} | null>(null);
@@ -29,6 +29,33 @@ function DigitalTwinView() {
     .filter((scene): scene is AirportScene => Boolean(scene));
   const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
   const selectedHotspot = activeScene.hotspots.find(h => h.id === selectedHotspotId);
+
+  const hotspotStatusDetails = useMemo(() => {
+    if (!selectedHotspot) return null;
+    const statusLabel = selectedHotspot.status === "warning"
+      ? localize({ en: "Needs attention", ar: "يحتاج انتباها" }, language)
+      : selectedHotspot.status === "critical"
+        ? localize({ en: "Critical", ar: "حرج" }, language)
+        : selectedHotspot.status === "good"
+          ? localize({ en: "Good", ar: "جيد" }, language)
+          : selectedHotspot.status === "offline"
+            ? localize({ en: "Offline", ar: "متوقف" }, language)
+            : localize({ en: "Info", ar: "معلومة" }, language);
+
+    const toneStyles = 
+      selectedHotspot.status === 'good' ? 'border-status-ok/30 bg-status-ok/10 text-status-ok' :
+      selectedHotspot.status === 'warning' ? 'border-status-warn/30 bg-status-warn/10 text-status-warn' :
+      selectedHotspot.status === 'critical' ? 'border-status-crit/30 bg-status-crit/10 text-status-crit' :
+      'border-status-info/30 bg-status-info/10 text-status-info';
+
+    const toneColor = 
+      selectedHotspot.status === 'good' ? 'bg-status-ok' :
+      selectedHotspot.status === 'warning' ? 'bg-status-warn' :
+      selectedHotspot.status === 'critical' ? 'bg-status-crit' :
+      'bg-status-info';
+
+    return { statusLabel, toneStyles, toneColor };
+  }, [selectedHotspot, language]);
 
   const getStatusColor = (status: HotspotStatus) => {
     switch (status) {
@@ -50,10 +77,8 @@ function DigitalTwinView() {
         key={hotspot.id} 
         id={`hotspot-marker-${hotspot.id}`}
         transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
-        onClick={(e) => {
+        onClick={() => {
           setSelectedHotspotId(hotspot.id);
-          const rect = e.currentTarget.getBoundingClientRect();
-          setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
           setHoveredHotspotId(null);
         }}
         onPointerEnter={(e) => {
@@ -92,9 +117,7 @@ function DigitalTwinView() {
     );
   };
 
-  const imageFilter = [
-    selectedHotspot ? "blur(2px)" : "",
-  ].filter(Boolean).join(" ") || "none";
+  const imageFilter = "none";
   const sceneImage = imageMode === "dark" ? activeScene.darkImage : activeScene.image;
 
   return (
@@ -115,7 +138,6 @@ function DigitalTwinView() {
                     onClick={() => {
                       setActiveSceneId(scene.id);
                       setSelectedHotspotId(null);
-                      setHotspotAnchor(null);
                     }}
                     aria-current={active ? "page" : undefined}
                     className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
@@ -158,67 +180,167 @@ function DigitalTwinView() {
               anchor={hoverAnchor} 
             />
           )}
-          {selectedHotspot && hotspotAnchor && (
-            <HotspotPopover
-              hotspot={selectedHotspot}
-              anchor={hotspotAnchor}
-              onClose={() => {
-                setSelectedHotspotId(null);
-                setHotspotAnchor(null);
-              }}
-            />
-          )}
+          {/* Selected hotspot popover modal removed in favor of sidebar dashboard panel */}
           </div>
 
           <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[560px] overflow-y-auto">
-              <div className="p-6">
-                <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">{tr("Area Overview")}</p>
-                <h3 className="mt-3 text-xl font-bold tracking-tight">{tr(activeScene.title)}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tr(activeScene.summary)}</p>
-                
-                <div className="mt-6 border-t border-border pt-5">
-                  <h4 className="text-sm font-bold mb-3 text-foreground">{localize({ en: "Active Issues", ar: "المشكلات النشطة" }, language)}</h4>
-                  <div className="grid gap-3">
-                    {activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").length > 0 ? 
-                      activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").map(h => (
-                        <button 
-                          key={h.id} 
-                          type="button"
-                          onClick={() => {
-                            setSelectedHotspotId(h.id);
-                            const marker = document.getElementById(`hotspot-marker-${h.id}`);
-                            if (marker) {
-                              const rect = marker.getBoundingClientRect();
-                              setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-                            } else if (imageContainerRef.current) {
-                              // fallback if marker not found
-                              const rect = imageContainerRef.current.getBoundingClientRect();
-                              setHotspotAnchor({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-                            }
-                          }}
-                          className="flex items-start gap-3 rounded-md border border-border p-3 text-start transition hover:border-primary hover:bg-secondary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        >
-                          <span className="mt-0.5 block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: getStatusColor(h.status) }} />
-                          <div>
-                            <p className="text-sm font-medium">{h.title}</p>
-                            <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{h.evidence}</p>
-                          </div>
-                        </button>
-                      ))
-                    : (
-                      <p className="text-sm text-muted-foreground italic">No critical issues or attention items in this area.</p>
-                    )}
+            {selectedHotspot ? (
+              <div className="p-5 flex flex-col gap-4">
+                {/* Header: Back to Overview & Close button */}
+                <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedHotspotId(null);
+                      setHotspotAnchor(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/50 px-2.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-background/80 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
+                    {tr("Back to overview")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedHotspotId(null);
+                      setHotspotAnchor(null);
+                    }}
+                    className="rounded-lg p-1 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+                    aria-label={tr("Close")}
+                  >
+                    <X className="h-4.5 w-4.5" />
+                  </button>
+                </div>
+
+                {/* Hotspot Title & Category */}
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">{selectedHotspot.category}</span>
+                  <h3 className="mt-1 text-lg font-bold tracking-tight text-foreground">{tr(selectedHotspot.title)}</h3>
+                </div>
+
+                {/* Status & Update Time */}
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/50 bg-secondary/10 p-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-medium">{localize({ en: "Status:", ar: "الحالة:" }, language)}</span>
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${hotspotStatusDetails?.toneStyles}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${hotspotStatusDetails?.toneColor} ${selectedHotspot.status === 'critical' || selectedHotspot.status === 'warning' ? 'animate-pulse' : ''}`}></span>
+                      {hotspotStatusDetails?.statusLabel}
+                    </span>
+                  </div>
+                  {selectedHotspot.updatedAt && (
+                    <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px]">
+                      <Clock3 className="h-3.5 w-3.5" />
+                      <span>{selectedHotspot.updatedAt}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Operational Impact */}
+                {selectedHotspot.impact && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <BarChart3 className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-mono uppercase tracking-widest font-bold">{localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}</span>
+                    </div>
+                    <div className="rounded-lg border border-border/50 bg-background/50 p-3.5 text-sm leading-relaxed text-foreground/90 shadow-inner">
+                      {selectedHotspot.impact}
+                    </div>
+                  </div>
+                )}
+
+                {/* Diagnostic Evidence */}
+                {selectedHotspot.evidence && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <AlertTriangle className="h-4 w-4 text-status-warn" />
+                      <span className="text-xs font-mono uppercase tracking-widest font-bold">{localize({ en: "Diagnostic Evidence", ar: "الأدلة التشخيصية" }, language)}</span>
+                    </div>
+                    <div className="rounded-lg border border-border/30 bg-status-warn/5 p-3 text-xs leading-relaxed text-muted-foreground">
+                      {selectedHotspot.evidence}
+                    </div>
+                  </div>
+                )}
+
+                {/* CCTV Feed */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Camera className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-mono uppercase tracking-widest font-bold">{localize({ en: "Live CCTV Feed", ar: "بث كاميرا المراقبة" }, language)}</span>
+                  </div>
+                  
+                  <div className="flex flex-col rounded-lg overflow-hidden border border-border/60 bg-black">
+                    <div className="flex items-center justify-between bg-zinc-950 px-3 py-1.5 border-b border-border/30">
+                      <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider">REC // {selectedHotspot.source || "T3-GATE-B12"}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
+                      </div>
+                    </div>
+                    {/* Render visual simulated CSS-animated loop */}
+                    <CctvTerminalLoop />
                   </div>
                 </div>
+
+                {/* Action Buttons */}
+                <div className="mt-2 pt-3 border-t border-border/40 space-y-2">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
+                  >
+                    {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
+                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                  </button>
+                  {selectedHotspot.action && (
+                    <div className="text-center">
+                      <span className="text-[10px] text-muted-foreground block mb-0.5 font-mono uppercase tracking-wider">{localize({ en: "Recommended Action", ar: "الإجراء الموصى به" }, language)}</span>
+                      <span className="text-xs text-primary font-medium">{selectedHotspot.action}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            
-               <div className="mt-auto border-t border-border p-6 bg-surface-2/50">
+            ) : (
+              <>
+                <div className="p-6">
+                  <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">{tr("Area Overview")}</p>
+                  <h3 className="mt-3 text-xl font-bold tracking-tight">{tr(activeScene.title)}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{tr(activeScene.summary)}</p>
+                  
+                  <div className="mt-6 border-t border-border pt-5">
+                    <h4 className="text-sm font-bold mb-3 text-foreground">{localize({ en: "Active Issues", ar: "المشكلات النشطة" }, language)}</h4>
+                    <div className="grid gap-3">
+                      {activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").length > 0 ? 
+                        activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").map(h => (
+                          <button 
+                            key={h.id} 
+                            type="button"
+                            onClick={() => {
+                              setSelectedHotspotId(h.id);
+                            }}
+                            className="flex items-start gap-3 rounded-md border border-border p-3 text-start transition hover:border-primary hover:bg-secondary/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                          >
+                            <span className="mt-0.5 block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: getStatusColor(h.status) }} />
+                            <div>
+                              <p className="text-sm font-medium">{h.title}</p>
+                              <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{h.evidence}</p>
+                            </div>
+                          </button>
+                        ))
+                      : (
+                        <p className="text-sm text-muted-foreground italic">No critical issues or attention items in this area.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              
+                <div className="mt-auto border-t border-border p-6 bg-surface-2/50">
                   <h4 className="text-xs font-bold uppercase tracking-wider mb-3 text-primary">{localize({ en: "Incoming Operations", ar: "العمليات القادمة" }, language)}</h4>
                   <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
                   <div className="mt-3">
                     <ZoneStatusPanel />
                   </div>
-               </div>
+                </div>
+              </>
+            )}
           </aside>
         </div>
       </SectionPanel>
@@ -227,252 +349,6 @@ function DigitalTwinView() {
   );
 }
 
-
-
-function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anchor: {x: number, y: number}; onClose: () => void; }) {
-  const { language, tr } = useLocale();
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const dragStart = useRef<{x: number, y: number, startX: number, startY: number} | null>(null);
-
-  const statusLabel = hotspot.status === "warning"
-    ? localize({ en: "Needs attention", ar: "يحتاج انتباها" }, language)
-    : hotspot.status === "critical"
-      ? localize({ en: "Critical", ar: "حرج" }, language)
-      : hotspot.status === "good"
-        ? localize({ en: "Good", ar: "جيد" }, language)
-        : hotspot.status === "offline"
-          ? localize({ en: "Offline", ar: "متوقف" }, language)
-          : localize({ en: "Info", ar: "معلومة" }, language);
-
-  const toneStyles = 
-    hotspot.status === 'good' ? 'border-status-ok/30 bg-status-ok/10 text-status-ok' :
-    hotspot.status === 'warning' ? 'border-status-warn/30 bg-status-warn/10 text-status-warn' :
-    hotspot.status === 'critical' ? 'border-status-crit/30 bg-status-crit/10 text-status-crit' :
-    'border-status-info/30 bg-status-info/10 text-status-info';
-
-  const toneColor = 
-    hotspot.status === 'good' ? 'bg-status-ok' :
-    hotspot.status === 'warning' ? 'bg-status-warn' :
-    hotspot.status === 'critical' ? 'bg-status-crit' :
-    'bg-status-info';
-
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [modalSize, setModalSize] = useState({ w: 280, h: 440 });
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    if (popoverRef.current) {
-      const observer = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          setModalSize({ w: entry.contentRect.width, h: entry.contentRect.height });
-        }
-      });
-      observer.observe(popoverRef.current);
-      return () => observer.disconnect();
-    }
-  }, [hotspot.id, language, isExpanded]);
-
-  // Compute initial position and keep it in state for dragging
-  const [pos, setPos] = useState(() => {
-    const W = 320;
-    const H = 400;
-    const container = document.getElementById("digital-twin-image-container");
-    if (container) {
-      const rect = container.getBoundingClientRect();
-      const left = rect.left + rect.width / 2 - W / 2;
-      const top = rect.top + rect.height / 2 - H / 2;
-      return { x: left, y: top };
-    }
-    const left = (window.innerWidth / 2) - (W / 2);
-    const top = (window.innerHeight / 2) - (H / 2);
-    return { x: left, y: top };
-  });
-
-  // Re-sync position if anchor wildly changes (e.g. they clicked a different hotspot)
-  useEffect(() => {
-    if (isMobile) return;
-    setPos(() => {
-      const W = 320;
-      const H = 400;
-      const container = document.getElementById("digital-twin-image-container");
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        return { 
-          x: rect.left + rect.width / 2 - W / 2, 
-          y: rect.top + rect.height / 2 - H / 2 
-        };
-      }
-      return { 
-        x: (window.innerWidth / 2) - (W / 2), 
-        y: (window.innerHeight / 2) - (H / 2) 
-      };
-    });
-  }, [anchor.x, anchor.y, isMobile]);
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isMobile) return;
-    // Only drag from the header area, avoid dragging if clicking buttons
-    if ((e.target as HTMLElement).closest("button")) return;
-    dragStart.current = { x: e.clientX, y: e.clientY, startX: pos.x, startY: pos.y };
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isMobile || !dragStart.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    setPos({ x: dragStart.current.startX + dx, y: dragStart.current.startY + dy });
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isMobile) return;
-    dragStart.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-  };
-
-  const style = useMemo(() => {
-    if (isMobile) return { position: "fixed" as const, inset: 0, zIndex: 250 };
-    return { position: "fixed" as const, top: pos.y, left: pos.x, zIndex: 200 };
-  }, [pos.x, pos.y, isMobile]);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  // Move focus into the popover when it mounts without scrolling the page
-  useEffect(() => {
-    popoverRef.current?.focus({ preventScroll: true });
-  }, []);
-
-  return (
-    <>
-      {/* Full-screen click-to-close backdrop (desktop only) */}
-      {!isMobile && <div className="fixed inset-0 z-[198]" onClick={onClose} aria-hidden="true" />}
-      
-      {/* Popover card */}
-      <div
-        ref={popoverRef}
-        className={isMobile
-          ? "hotspot-popover fixed inset-0 z-[250] flex flex-col bg-[#0B121A] animate-in slide-in-from-bottom duration-300 w-full h-full max-w-none max-h-none border-0 rounded-none"
-          : "hotspot-popover panel p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[320px]"
-        }
-        style={isMobile ? { zIndex: 250 } : { ...style, minWidth: 280, minHeight: 120, maxHeight: "min(600px, calc(100vh - 24px))", overflow: "auto" }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="hotspot-popover-title"
-        tabIndex={-1}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div 
-          className={`flex items-center justify-between gap-4 border-b border-border/30 px-4 py-4 ${isMobile ? "" : "cursor-move select-none"} whitespace-nowrap`}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-        >
-          <h2 id="hotspot-popover-title" className="text-base font-bold tracking-tight text-foreground truncate">
-            {isMobile ? tr(hotspot.title) : (tr(hotspot.title).split(" ").slice(0, 4).join(" ") + (tr(hotspot.title).split(" ").length > 4 ? "..." : ""))}
-          </h2>
-          <div className="flex items-center gap-1.5">
-            {!isMobile && (
-              <button
-                type="button"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
-                aria-label={isExpanded ? tr("Collapse") : tr("Expand")}
-                title={isExpanded ? tr("Collapse") : tr("Expand")}
-              >
-                {isExpanded ? <ChevronUp aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" /> : <ChevronDown aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="shrink-0 rounded p-1 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
-              aria-label={tr("Close")}
-              title={tr("Close")}
-            >
-              <X aria-hidden="true" className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-            </button>
-          </div>
-        </div>
-
-        <div className={`flex flex-col p-4 pt-2 ${isMobile ? "flex-1 overflow-y-auto w-full max-w-xl mx-auto pb-10" : "w-0 min-w-full whitespace-normal"}`}>
-          {hotspot.impact && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <BarChart3 aria-hidden="true" className="h-4 w-4" />
-                  <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "Operational Impact", ar: "التأثير التشغيلي"}, language)}</span>
-                </div>
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${toneStyles}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${toneColor}`}></span>
-                  {statusLabel}
-                </span>
-              </div>
-              <p className="text-sm leading-relaxed text-foreground/90">{hotspot.impact}</p>
-              <div className="flex items-center gap-1.5 mt-2 text-muted-foreground">
-                <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
-                <span className="text-xs font-mono">{localize({en: "Updated", ar: "تم التحديث"}, language)} {hotspot.updatedAt}</span>
-              </div>
-            </div>
-          )}
-
-          {(isExpanded || isMobile) && hotspot.impact && hotspot.category && (
-            <hr className="border-border/40 my-3" />
-          )}
-
-          {(isExpanded || isMobile) && (
-            <div>
-              <div className="flex items-center gap-2 text-muted-foreground mb-3">
-                <Camera aria-hidden="true" className="h-4 w-4" />
-                <span className="text-xs font-mono uppercase tracking-widest font-semibold">{localize({en: "CCTV Feed", ar: "تغذية الكاميرا"}, language)}</span>
-              </div>
-              
-              <div className="flex flex-col rounded-lg overflow-hidden border border-border/40 w-full max-w-md mx-auto">
-                <div className="flex items-center justify-between bg-[#05090F] px-3 py-2">
-                  <span className="text-[10px] font-mono text-status-ok uppercase tracking-wider">REC // T3-GATE-B12</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-status-crit animate-pulse"></span>
-                    <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
-                  </div>
-                </div>
-                <img 
-                  src="/manager-assets/cctv-placeholder.png" 
-                  alt="CCTV Feed" 
-                  className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity" 
-                />
-              </div>
-            </div>
-          )}
-
-          {(isExpanded || isMobile) && (
-            <div className="mt-4">
-              <button
-                type="button"
-                className="inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_0_24px_rgba(88,214,255,0.18)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
-                <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
 
 function CctvTerminalLoop() {
   return (
