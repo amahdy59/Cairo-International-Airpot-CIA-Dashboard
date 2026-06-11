@@ -105,14 +105,15 @@ export function Header({
                     onShowDashboard();
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className={`group relative flex h-9 min-w-0 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:min-w-32 lg:min-w-36 ${
+                  title={tab.label}
+                  className={`group relative flex h-9 w-9 items-center justify-center gap-2 rounded-md text-sm font-semibold transition-all duration-300 ease-out focus-visible:z-10 xl:w-auto xl:px-3.5 xl:min-w-32 ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-[0_8px_22px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
                       : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
                   }`}
                 >
                   <Icon aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
-                  <span className="truncate">{tab.label}</span>
+                  <span className="hidden xl:inline truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -120,7 +121,7 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2 order-2 sm:order-none">
-          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex" title={tr("Current Cairo and UTC Time")}>
+          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 xl:flex" title={tr("Current Cairo and UTC Time")}>
             <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
             <TimeChip label={tr("Cairo")} value={times.cairo} />
             <span className="h-5 w-px bg-border" />
