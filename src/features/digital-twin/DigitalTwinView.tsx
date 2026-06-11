@@ -266,6 +266,14 @@ function HotspotPopover({ hotspot, anchor, onClose }: { hotspot: MapHotspot; anc
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [modalSize, setModalSize] = useState({ w: 280, h: 440 });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     if (popoverRef.current) {
