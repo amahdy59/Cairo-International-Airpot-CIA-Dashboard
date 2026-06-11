@@ -7,15 +7,20 @@ import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-
 function SafetyView() {
   return (
     <div className="flex flex-col gap-3 lg:gap-4">
-      {/* Top Section: two-column grid, self-start prevents height stretching */}
-      <div className="grid gap-3 lg:gap-4 xl:grid-cols-2 xl:items-start">
-        <div className="grid min-w-0 content-start gap-3 lg:gap-4">
-          <SafetyAlertAge />
-          <AircraftRiskTable />
+      {/* Top Section: 2x2 grid. Right-side cards are absolutely positioned inside a relative wrapper so they perfectly match the left-side intrinsic 'hug' heights */}
+      <div className="grid gap-3 lg:gap-4 xl:grid-cols-2">
+        <SafetyAlertAge />
+        <div className="relative min-h-[340px] xl:h-full">
+          <div className="xl:absolute xl:inset-0 xl:w-full xl:h-full">
+            <SafetyChecks />
+          </div>
         </div>
-        <div className="grid min-w-0 content-start gap-3 lg:gap-4">
-          <SafetyChecks />
-          <MaintenanceTable />
+        
+        <AircraftRiskTable />
+        <div className="relative min-h-[340px] xl:h-full">
+          <div className="xl:absolute xl:inset-0 xl:w-full xl:h-full">
+            <MaintenanceTable />
+          </div>
         </div>
       </div>
       {/* Merged priority actions + controls card */}
@@ -112,9 +117,9 @@ function SafetyAlertAge() {
   ];
   const max = Math.max(...buckets.map((item) => item.value));
   return (
-    <SectionPanel title={tr("Safety alert age")} action={<div className="flex shrink-0 flex-wrap justify-end gap-2"><StatusPill tone="warn">{tr("1 overdue")}</StatusPill></div>} className="h-fit self-start">
+    <SectionPanel title={tr("Safety alert age")} action={<div className="flex shrink-0 flex-wrap justify-end gap-2"><StatusPill tone="warn">{tr("1 overdue")}</StatusPill></div>} className="flex flex-col">
       <p className="mb-5 text-sm text-muted-foreground">{tr("Aging buckets show whether issues are accumulating before they become critical.")}</p>
-      <div className="grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
+      <div className="mt-auto grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
         {buckets.map((bucket) => {
           const height = 40 + (bucket.value / max) * 58;
           const color = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
@@ -136,8 +141,8 @@ function SafetyAlertAge() {
 function SafetyChecks() {
   const { tr } = useLocale();
   return (
-    <SectionPanel title={tr("Safety checks")} className="h-fit self-start">
-      <div className="grid gap-3">
+    <SectionPanel title={tr("Safety checks")} className="h-full flex flex-col overflow-hidden">
+      <div className="grid gap-3 flex-1 content-start overflow-y-auto pr-1 pb-1">
         {safetyChecks.map((item) => {
           const Icon = item.icon;
           return (
@@ -165,8 +170,8 @@ function SafetyChecks() {
 function MaintenanceTable() {
   const { tr } = useLocale();
   return (
-    <SectionPanel title={tr("Recent aircraft maintenance")}>
-      <div className="-mx-1 overflow-x-auto">
+    <SectionPanel title={tr("Recent aircraft maintenance")} className="h-full flex flex-col overflow-hidden">
+      <div className="-mx-1 flex-1 overflow-x-auto overflow-y-auto">
         <table className="w-full min-w-[620px] text-sm">
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
@@ -197,8 +202,8 @@ function MaintenanceTable() {
 function AircraftRiskTable() {
   const { tr } = useLocale();
   return (
-    <SectionPanel title={tr("Aircraft requiring attention")} action={<div className="flex flex-wrap gap-2"><span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span></div>}>
-      <div className="-mx-1 overflow-x-auto">
+    <SectionPanel title={tr("Aircraft requiring attention")} action={<div className="flex flex-wrap gap-2"><span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span></div>} className="flex flex-col">
+      <div className="-mx-1 overflow-x-auto flex-1 pb-1">
         <table className="w-full min-w-[780px] text-sm">
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <tr>

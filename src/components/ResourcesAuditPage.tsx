@@ -24,6 +24,7 @@ import {
   Globe,
   ChevronDown,
   ChevronUp,
+  Linkedin,
 } from "lucide-react";
 import { StatusPill } from "./command-center/MetricWidgets";
 import { useLocale } from "../context/locale";
@@ -255,10 +256,16 @@ export default function ResourcesAuditPage() {
         </div>
       </section>
 
-      {/* 2. About the Designer Card */}
+      {/* 2. About the Creator Card */}
       <section className="panel bg-primary/5 border border-primary/20 p-6 flex flex-col justify-between relative overflow-hidden gap-4">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
         <div className="grid gap-3.5 z-10 relative">
+          <div className="flex items-center gap-2 mb-1">
+            <User className="h-4 w-4 text-primary" aria-hidden="true" />
+            <h2 className="text-sm font-mono uppercase tracking-[0.1em] text-primary font-semibold">
+              {localize({ en: "About the creator of the site", ar: "نبذة عن منشئ الموقع" }, language)}
+            </h2>
+          </div>
           <div className="flex items-center gap-3.5">
             <img 
               src="/ahmed-mahdy.png" 
@@ -266,36 +273,64 @@ export default function ResourcesAuditPage() {
               className="h-16 w-16 rounded-xl object-cover border border-primary/25 bg-background shrink-0 shadow-sm"
             />
             <div>
-              <h2 className="text-lg font-bold text-foreground">Ahmed Mahdy</h2>
+              <h3 className="text-lg font-bold text-foreground">Ahmed Mahdy</h3>
               <p className="text-sm text-muted-foreground font-mono">UX Designer & Data Analyst</p>
             </div>
           </div>
-          <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
+          <p className="text-sm sm:text-base leading-relaxed text-muted-foreground mt-1">
             {localize({
               en: "UX Designer & Data Analyst with 4+ years of experience at Advansys IS. Specializes in turning user needs into decision-ready visual systems.",
               ar: "مصمم تجربة مستخدم ومحلل بيانات بخبرة +٤ سنوات في Advansys IS. متخصص في تحويل احتياجات المستخدمين لأنظمة تفاعلية متكاملة.",
             }, language)}
           </p>
+          <div className="mt-3 rounded-lg border border-border/50 bg-background/50 p-3.5 flex flex-col gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+              {localize({ en: "Tools used to create this site", ar: "الأدوات المستخدمة في إنشاء الموقع" }, language)}
+            </h4>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {localize({
+                en: "This project was built using a combination of human UX direction and advanced AI tooling, including Antigravity, OpenAI Codex, Figma, and Lovable.",
+                ar: "تم بناء هذا المشروع باستخدام مزيج من توجيهات تجربة المستخدم البشرية وأدوات الذكاء الاصطناعي المتقدمة، بما في ذلك Antigravity، OpenAI Codex، Figma، و Lovable.",
+              }, language)}
+            </p>
+          </div>
         </div>
         
         {/* Certifications Badge row */}
-        <div className="flex flex-wrap gap-1.5 text-xs font-mono z-10 relative">
-          <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google UX</span>
-          <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google Data Analytics</span>
-          <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Tableau BI</span>
+        <div className="z-10 relative">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+            {localize({ en: "Certifications & Skills", ar: "الشهادات والمهارات" }, language)}
+          </h4>
+          <div className="flex flex-wrap gap-1.5 text-xs font-mono">
+            <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google UX</span>
+            <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Google Data Analytics</span>
+            <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded border border-primary/10">Tableau BI</span>
+          </div>
         </div>
 
         <div className="border-t border-border/50 pt-3.5 flex justify-between items-center text-sm z-10 relative">
           <span className="font-mono text-muted-foreground">Cairo, Egypt</span>
-          <a 
-            href="https://mahdy-resume.vercel.app/"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 text-primary hover:underline font-semibold"
-          >
-            <span>{localize({ en: "View Resume", ar: "عرض السيرة الذاتية" }, language)}</span>
-            <ExternalLink className="h-4 w-4" />
-          </a>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://www.linkedin.com/in/creativemahdy"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors font-medium"
+              aria-label="LinkedIn"
+            >
+              <Linkedin className="h-4 w-4" />
+              <span className="hidden sm:inline">LinkedIn</span>
+            </a>
+            <a 
+              href="https://mahdy-resume.vercel.app/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-primary hover:underline font-semibold"
+            >
+              <span>{localize({ en: "View Resume", ar: "عرض السيرة الذاتية" }, language)}</span>
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </section>
 

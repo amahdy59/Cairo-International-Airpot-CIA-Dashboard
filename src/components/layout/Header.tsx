@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Activity,
   ArrowUp,
@@ -9,6 +10,8 @@ import {
   Radar,
   ShieldCheck,
   Sun,
+  Menu,
+  X,
 } from "lucide-react";
 import { ManagerTab, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
@@ -22,6 +25,7 @@ export function BackToTopButton() {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       className="fixed bottom-5 end-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-border bg-primary text-primary-foreground shadow-[0_14px_34px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_color-mix(in_oklab,var(--primary)_36%,transparent)]"
       aria-label={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
+      title={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
     >
       <ArrowUp aria-hidden="true" className="h-5 w-5" />
     </button>
@@ -62,6 +66,7 @@ export function Header({
 }) {
   const c = copy[language];
   const { tr } = useLocale();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-50 border-b border-white/20 bg-background/40 backdrop-blur-3xl backdrop-saturate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-background/20 dark:border-white/10 dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] supports-[backdrop-filter]:bg-background/30">
@@ -69,7 +74,7 @@ export function Header({
         {tr("Skip to content")}
       </a>
       <div className="mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}>
+        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
           </span>
@@ -79,8 +84,8 @@ export function Header({
           </span>
         </a>
 
-        {/* Navigation Tabs */}
-        <nav className="order-3 flex w-full flex-1 justify-center sm:order-none sm:mt-0 sm:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
+        {/* Navigation Tabs - Desktop */}
+        <nav className="order-3 hidden md:flex flex-1 justify-center md:order-none md:mt-0 md:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
           <div className="flex h-10 w-full items-center justify-center gap-1 rounded-lg border border-white/10 bg-background/30 p-0.5 backdrop-blur-md dark:bg-secondary/30 sm:w-auto">
             {[
               { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
@@ -115,24 +120,71 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2 order-2 sm:order-none">
-          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex">
+          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex" title={tr("Current Cairo and UTC Time")}>
             <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
             <TimeChip label={tr("Cairo")} value={times.cairo} />
             <span className="h-5 w-px bg-border" />
             <TimeChip label="UTC" value={times.utc} />
           </div>
-          <button type="button" onClick={() => setHighContrast(!highContrast)} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast}>
+          <button type="button" onClick={() => setHighContrast(!highContrast)} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
           </button>
-          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
+          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
             <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 text-sm hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
             <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
-            {language === "en" ? "AR" : "EN"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary md:hidden"
+            aria-expanded={isMenuOpen}
+            aria-label={tr("Toggle navigation menu")}
+            title={tr("Toggle navigation menu")}
+          >
+            {isMenuOpen ? <X className="h-4 w-4 text-primary" /> : <Menu className="h-4 w-4 text-primary" />}
           </button>
         </div>
       </div>
+
+      {/* Mobile Navigation Dropdown */}
+      {isMenuOpen && (
+        <div className="md:hidden border-t border-white/20 bg-background/95 backdrop-blur-2xl px-4 py-3 animate-in slide-in-from-top-2 duration-200">
+          <nav className="flex flex-col gap-1.5" role="tablist" aria-label={tr("Manager dashboard sections")}>
+            {[
+              { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
+              { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
+              { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls="main-content"
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsMenuOpen(false);
+                    onShowDashboard();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`group flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-all ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-[0_4px_12px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
+                      : "bg-transparent text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                  }`}
+                >
+                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
