@@ -73,7 +73,7 @@ export function Header({
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
         {tr("Skip to content")}
       </a>
-      <div className="mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
+      <div className="relative mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
         <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
@@ -84,8 +84,8 @@ export function Header({
           </span>
         </a>
 
-        {/* Navigation Tabs - Visible on all screens */}
-        <nav className="order-2 flex flex-1 justify-center md:order-none md:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
+        {/* Navigation Tabs - Visible on all screens, centered absolutely on medium-and-above screens */}
+        <nav className="order-2 flex flex-1 justify-center md:order-none md:absolute md:left-1/2 md:-translate-x-1/2 md:top-1/2 md:-translate-y-1/2 md:z-10 md:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
           <div className="flex h-10 items-center justify-center gap-1 rounded-lg border border-white/10 bg-background/30 p-0.5 backdrop-blur-md dark:bg-secondary/30">
             {[
               { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
@@ -121,25 +121,25 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2 order-3 sm:order-none">
-          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex" title={tr("Current Cairo and UTC Time")}>
+          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 xl:flex" title={tr("Current Cairo and UTC Time")}>
             <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
             <TimeChip label={tr("Cairo")} value={times.cairo} />
             <span className="h-5 w-px bg-border" />
             <TimeChip label="UTC" value={times.utc} />
           </div>
-          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
+          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
           </button>
-          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
+          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
             <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
             <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
           <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary xl:hidden"
             aria-expanded={isMenuOpen}
             aria-label={tr("Toggle navigation menu")}
             title={tr("Toggle navigation menu")}
@@ -151,7 +151,7 @@ export function Header({
 
       {/* Mobile/Tablet Navigation Dropdown */}
       {isMenuOpen && (
-        <div className="lg:hidden border-t border-white/20 bg-background/95 backdrop-blur-2xl px-4 py-4 animate-in slide-in-from-top-2 duration-200">
+        <div className="xl:hidden border-t border-white/20 bg-background/95 backdrop-blur-2xl px-4 py-4 animate-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-4 max-w-xl mx-auto">
             {/* Clock/Time */}
             <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/25 p-3">
