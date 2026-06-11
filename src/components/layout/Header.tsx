@@ -68,13 +68,21 @@ export function Header({
   const { tr } = useLocale();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ThemeIcon = theme === "dark" ? Sun : Moon;
+
+  const handleMenuSelect = (action: () => void) => {
+    action();
+    // Smoothly close the menu after a minor delay to allow microinteraction state update to be visible
+    setTimeout(() => {
+      setIsMenuOpen(false);
+    }, 180);
+  };
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-50 border-b border-white/20 bg-background/40 backdrop-blur-3xl backdrop-saturate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-background/20 dark:border-white/10 dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] supports-[backdrop-filter]:bg-background/30">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
         {tr("Skip to content")}
       </a>
       <div className="relative mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
+        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); setIsMenuOpen(false); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
           </span>
@@ -103,6 +111,7 @@ export function Header({
                   onClick={() => {
                     setActiveTab(tab.id);
                     onShowDashboard();
+                    setIsMenuOpen(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   title={tab.label}
@@ -171,8 +180,8 @@ export function Header({
               {/* Theme Mode Toggle */}
               <button
                 type="button"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors"
+                onClick={() => handleMenuSelect(() => setTheme(theme === "dark" ? "light" : "dark"))}
+                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors cursor-pointer"
               >
                 <ThemeIcon className="h-4 w-4 text-primary" />
                 <span>
@@ -186,8 +195,8 @@ export function Header({
               {/* High Contrast Toggle */}
               <button
                 type="button"
-                onClick={() => setHighContrast(!highContrast)}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors"
+                onClick={() => handleMenuSelect(() => setHighContrast(!highContrast))}
+                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors cursor-pointer"
               >
                 <Contrast className="h-4 w-4 text-primary" />
                 <span>
@@ -201,8 +210,8 @@ export function Header({
               {/* Language Switcher */}
               <button
                 type="button"
-                onClick={() => setLanguage(language === "en" ? "ar" : "en")}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors"
+                onClick={() => handleMenuSelect(() => setLanguage(language === "en" ? "ar" : "en"))}
+                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors cursor-pointer"
               >
                 <Languages className="h-4 w-4 text-primary" />
                 <span>

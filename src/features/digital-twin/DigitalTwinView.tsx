@@ -18,6 +18,15 @@ function DigitalTwinView() {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const incoming = useIncomingCaiFlights();
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (selectedHotspotId && sidebarRef.current) {
+      if (window.innerWidth < 1280) {
+        sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [selectedHotspotId]);
 
   useEffect(() => {
     // Preload all scene images (light and dark) to browser cache for instant toggles/swaps
@@ -221,7 +230,7 @@ function DigitalTwinView() {
           {/* Selected hotspot popover modal removed in favor of sidebar dashboard panel */}
           </div>
 
-          <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full xl:max-h-[580px] overflow-y-auto">
+          <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full xl:max-h-[580px] overflow-y-auto">
             {selectedHotspot ? (
               <div className="p-5 flex flex-col gap-4">
                 {/* Header: Back to Overview & Close button */}
