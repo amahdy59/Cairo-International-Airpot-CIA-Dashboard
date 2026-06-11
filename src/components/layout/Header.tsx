@@ -78,8 +78,8 @@ export function Header({
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
           </span>
-          <span className="hidden min-w-0 lg:block lg:max-w-none">
-            <span className="block truncate font-mono text-xs uppercase tracking-[0.18em] text-primary lg:tracking-[0.22em]">{c.airport}</span>
+          <span className="hidden min-w-0 xl:block xl:max-w-none">
+            <span className="block truncate font-mono text-xs uppercase tracking-[0.18em] text-primary xl:tracking-[0.22em]">{c.airport}</span>
             <span className="block truncate text-sm font-bold">{c.brand}</span>
           </span>
         </a>
@@ -106,14 +106,14 @@ export function Header({
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   title={tab.label}
-                  className={`group relative flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-32 lg:min-w-36 ${
+                  className={`group relative flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-32 lg:min-w-36 nav-tab-btn ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-[0_8px_22px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
                       : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
                   }`}
                 >
                   <Icon aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 sm:h-4 sm:w-4 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
-                  <span className="truncate">{tab.label}</span>
+                  <span className="truncate nav-tab-text">{tab.label}</span>
                 </button>
               );
             })}
