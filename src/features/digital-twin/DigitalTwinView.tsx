@@ -128,14 +128,6 @@ function DigitalTwinView() {
               })}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
-              className="hidden sm:inline-flex ms-auto h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-background/70 px-4 text-sm font-semibold hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              <ImageModeIcon className="h-4 w-4" />
-              {localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
-            </button>
           </div>
         </nav>
 
@@ -148,11 +140,11 @@ function DigitalTwinView() {
               {/* Render Hotspots */}
               {isImageLoaded && activeScene.hotspots.map(renderHotspotMarker)}
             </svg>
-            {/* Floating Dark/Light image mode toggle for mobile devices */}
+            {/* Floating Dark/Light image mode toggle for all screens */}
             <button
               type="button"
               onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
-              className="absolute top-3 end-3 z-10 flex h-10 w-10 sm:hidden items-center justify-center rounded-xl border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors"
+              className="absolute top-3 end-3 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors"
               title={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
               aria-label={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
             >
