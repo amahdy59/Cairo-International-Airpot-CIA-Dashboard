@@ -20,8 +20,18 @@ function DigitalTwinView() {
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Preload all scene images (light and dark) to browser cache for instant toggles/swaps
+    scenes.forEach((scene) => {
+      const imgLight = new Image();
+      imgLight.src = scene.image;
+      const imgDark = new Image();
+      imgDark.src = scene.darkImage;
+    });
+  }, []);
+
+  useEffect(() => {
     setIsImageLoaded(false);
-  }, [activeSceneId, imageMode]);
+  }, [activeSceneId]);
 
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
   const jumpScenes = ["terminal-1", "terminal-2", "terminal-3", "services", "landside"]
@@ -118,7 +128,7 @@ function DigitalTwinView() {
   };
 
   const imageFilter = "none";
-  const sceneImage = imageMode === "dark" ? activeScene.darkImage : activeScene.image;
+
 
   return (
     <div className="grid min-w-0 gap-3 lg:gap-4">
@@ -155,9 +165,37 @@ function DigitalTwinView() {
 
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
-            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video sm:aspect-auto sm:min-h-[350px] lg:min-h-[500px] xl:min-h-[560px] overflow-hidden">
+            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video w-full overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
-              <image onLoad={() => setIsImageLoaded(true)} href={sceneImage} width="1600" height="900" preserveAspectRatio="xMidYMid slice" style={{ filter: imageFilter, transformOrigin: "center", transition: "filter 180ms ease" }} />
+              {/* Light Scene Image */}
+              <image 
+                onLoad={() => setIsImageLoaded(true)} 
+                href={activeScene.image} 
+                width="1600" 
+                height="900" 
+                preserveAspectRatio="xMidYMid slice" 
+                style={{ 
+                  opacity: imageMode === "light" ? 1 : 0, 
+                  transition: "opacity 150ms ease-in-out", 
+                  transformOrigin: "center", 
+                  filter: imageFilter 
+                }} 
+              />
+              
+              {/* Dark Scene Image */}
+              <image 
+                onLoad={() => setIsImageLoaded(true)} 
+                href={activeScene.darkImage} 
+                width="1600" 
+                height="900" 
+                preserveAspectRatio="xMidYMid slice" 
+                style={{ 
+                  opacity: imageMode === "dark" ? 1 : 0, 
+                  transition: "opacity 150ms ease-in-out", 
+                  transformOrigin: "center", 
+                  filter: imageFilter 
+                }} 
+              />
 
               {/* Render Hotspots */}
               {isImageLoaded && activeScene.hotspots.map(renderHotspotMarker)}
@@ -183,7 +221,7 @@ function DigitalTwinView() {
           {/* Selected hotspot popover modal removed in favor of sidebar dashboard panel */}
           </div>
 
-          <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full max-h-[560px] overflow-y-auto">
+          <aside className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full xl:max-h-[580px] overflow-y-auto">
             {selectedHotspot ? (
               <div className="p-5 flex flex-col gap-4">
                 {/* Header: Back to Overview & Close button */}
@@ -192,7 +230,6 @@ function DigitalTwinView() {
                     type="button"
                     onClick={() => {
                       setSelectedHotspotId(null);
-                      setHotspotAnchor(null);
                     }}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/50 px-2.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-background/80 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
                   >
@@ -203,7 +240,6 @@ function DigitalTwinView() {
                     type="button"
                     onClick={() => {
                       setSelectedHotspotId(null);
-                      setHotspotAnchor(null);
                     }}
                     className="rounded-lg p-1 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
                     aria-label={tr("Close")}
