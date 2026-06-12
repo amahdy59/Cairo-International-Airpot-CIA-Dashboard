@@ -145,10 +145,10 @@ function DigitalTwinView() {
   return (
     <div className="grid min-w-0 gap-3 lg:gap-4">
       <SectionPanel className="overflow-hidden p-0!" title="">
-        <nav className="border-b border-border bg-card/70 px-2 lg:px-4 py-2.5" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
-          <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto">
-            <div className="flex items-center gap-3">
-              <h2 className="shrink-0 font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
+        <nav className="border-b border-border bg-card/70 px-2 lg:px-4 py-2" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+          <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-2.5">
+              <h2 className="shrink-0 text-sm sm:text-base font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
               <span className="hidden sm:inline-block shrink-0 font-mono text-[10px] font-semibold uppercase text-muted-foreground/40">|</span>
               <div className="flex min-w-max items-center gap-1.5">
               {jumpScenes.map((scene) => {
@@ -162,7 +162,7 @@ function DigitalTwinView() {
                       setSelectedHotspotId(null);
                     }}
                     aria-current={active ? "page" : undefined}
-                    className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                    className={`inline-flex h-8 sm:h-9 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border px-2.5 sm:px-3.5 text-xs lg:text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                       active ? "border-primary/50 bg-primary/[0.16] text-foreground shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "border-transparent text-muted-foreground hover:border-border hover:bg-background/65 hover:text-foreground"
                     }`}
                   >
