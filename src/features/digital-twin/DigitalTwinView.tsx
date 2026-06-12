@@ -403,7 +403,7 @@ function IncomingFlightsPanel({
   source: "live" | "sample" | "loading";
   updatedAt: string;
 }) {
-  const { language } = useLocale();
+  const { language, tr } = useLocale();
   const sourceLabel = source === "live"
     ? localize({ en: "Live", ar: "مباشر" }, language)
     : source === "loading"
