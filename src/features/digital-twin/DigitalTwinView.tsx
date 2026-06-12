@@ -141,8 +141,8 @@ function DigitalTwinView() {
 
   return (
     <div className="grid min-w-0 gap-3 lg:gap-4">
-      <SectionPanel className="overflow-hidden p-0" title="">
-        <nav className="border-b border-border bg-card/70 px-4 py-2.5" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+      <SectionPanel className="overflow-hidden p-0!" title="">
+        <nav className="border-b border-border bg-card/70 px-2 lg:px-4 py-2.5" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
           <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto">
             <div className="flex items-center gap-3">
               <h2 className="shrink-0 font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
@@ -172,7 +172,7 @@ function DigitalTwinView() {
           </div>
         </nav>
 
-        <div className="grid min-w-0 p-3 lg:p-4 gap-3 lg:gap-4 xl:grid-cols-[1fr_360px] xl:h-[calc(100vh-170px)] xl:min-h-[500px]">
+        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 xl:grid-cols-[1fr_360px] xl:h-[calc(100vh-170px)] xl:min-h-[500px]">
           <div className="flex flex-col min-w-0 h-full">
             <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] xl:aspect-auto w-full xl:h-full xl:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
@@ -232,7 +232,7 @@ function DigitalTwinView() {
 
           <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 rounded-xl border border-border bg-card/65 backdrop-blur-md h-full overflow-y-auto">
             {selectedHotspot ? (
-              <div className="p-3.5 lg:p-4 flex flex-col gap-3.5">
+              <div className="px-2 py-3.5 lg:p-4 flex flex-col gap-3.5">
                 {/* Header: Back to Overview & Close button */}
                 <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
                   <button
@@ -326,7 +326,7 @@ function DigitalTwinView() {
               </div>
             ) : (
               <>
-                <div className="p-3.5 lg:p-4">
+                <div className="px-2 py-3.5 lg:p-4">
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary font-bold">{tr("Area Overview")}</p>
                   <h3 className="mt-1 text-base font-bold tracking-tight text-foreground">{tr(activeScene.title)}</h3>
                   <p className="mt-1 text-xs leading-normal text-muted-foreground line-clamp-2">{tr(activeScene.summary)}</p>
@@ -358,7 +358,7 @@ function DigitalTwinView() {
                   </div>
                 </div>
               
-                <div className="mt-auto border-t border-border p-2.5 lg:p-3 bg-surface-2/25">
+                <div className="mt-auto border-t border-border px-1.5 py-2.5 lg:p-3 bg-surface-2/25">
                   <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
                   <div className="mt-2.5">
                     <ZoneStatusPanel />
