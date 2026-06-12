@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, Zap } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
@@ -172,9 +172,9 @@ function DigitalTwinView() {
           </div>
         </nav>
 
-        <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
-          <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
-            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video w-full overflow-hidden">
+        <div className="grid min-w-0 p-3 lg:p-4 gap-3 lg:gap-4 xl:grid-cols-[1fr_360px] xl:h-[calc(100vh-170px)] xl:min-h-[500px]">
+          <div className="flex flex-col min-w-0 h-full">
+            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] xl:aspect-auto w-full xl:h-full xl:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
               {/* Light Scene Image */}
               <image 
@@ -230,7 +230,7 @@ function DigitalTwinView() {
           {/* Selected hotspot popover modal removed in favor of sidebar dashboard panel */}
           </div>
 
-          <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 border-t border-border bg-card xl:border-s xl:border-t-0 h-full xl:max-h-[580px] overflow-y-auto">
+          <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 rounded-xl border border-border bg-card/65 backdrop-blur-md h-full overflow-y-auto">
             {selectedHotspot ? (
               <div className="p-4 flex flex-col gap-3">
                 {/* Header: Back to Overview & Close button */}
@@ -310,19 +310,21 @@ function DigitalTwinView() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="mt-1 pt-2 border-t border-border/30 space-y-1.5">
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-[0_0_20px_rgba(88,214,255,0.15)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
-                  >
-                    {localize({ en: "View full analytics", ar: "عرض التحليلات كاملة" }, language)}
-                    <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
-                  </button>
+                {/* Action Recommendation Callout */}
+                <div className="mt-2 pt-2 border-t border-border/30">
                   {selectedHotspot.action && (
-                    <div className="text-center text-[10px] text-muted-foreground">
-                      <span className="uppercase tracking-wider font-mono me-1">{localize({ en: "Action:", ar: "الإجراء:" }, language)}</span>
-                      <span className="text-primary font-semibold">{tr(selectedHotspot.action)}</span>
+                    <div className="flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 p-3 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                          {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
+                        </span>
+                        <p className="mt-1 text-xs text-foreground font-semibold leading-relaxed">
+                          {tr(selectedHotspot.action)}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
