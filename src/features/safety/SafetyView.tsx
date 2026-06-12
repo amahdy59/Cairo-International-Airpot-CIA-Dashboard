@@ -8,7 +8,7 @@ function SafetyView() {
   return (
     <div className="flex flex-col gap-3 lg:gap-4">
       {/* Top Section: 2x2 grid. Right-side cards are absolutely positioned inside a relative wrapper so they perfectly match the left-side intrinsic 'hug' heights */}
-      <div className="grid gap-3 lg:gap-4 xl:grid-cols-2">
+      <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
         <SafetyAlertAge />
         <div className="relative min-h-[340px] xl:h-full">
           <div className="xl:absolute xl:inset-0 xl:w-full xl:h-full">

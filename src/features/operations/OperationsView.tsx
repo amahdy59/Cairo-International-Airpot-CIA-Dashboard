@@ -17,7 +17,7 @@ function Legend({ color, label }: { color: string; label: string }) {
 
 function DigitalOperationalGrid() {
   return (
-    <section className="grid gap-3 lg:gap-4 xl:grid-cols-2 xl:items-start" aria-label="Digital twin operational analytics">
+    <section className="grid gap-3 lg:gap-4 md:grid-cols-2 md:items-start" aria-label="Digital twin operational analytics">
       <div className="grid gap-3 lg:gap-4">
         <PassengerInfluxForecast />
         <GateWaitChart />
@@ -182,13 +182,13 @@ function OperationsView() {
       </section>
 
       {/* Middle: Charts for visual absorption */}
-      <div className="grid gap-3 lg:gap-4 xl:grid-cols-2">
+      <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
         <PassengerFlowChart />
         <QueuePressureChart />
       </div>
 
       {/* Tables: Detailed lists */}
-      <div className="grid gap-3 lg:gap-4 xl:grid-cols-2">
+      <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
         <FlightBoard title={tr("Departures")} direction="to" rows={departures} />
         <FlightBoard title={tr("Arrivals")} direction="from" rows={arrivals} />
       </div>

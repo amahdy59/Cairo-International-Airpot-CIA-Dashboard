@@ -175,9 +175,9 @@ function DigitalTwinView() {
           </div>
         </nav>
 
-        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 xl:grid-cols-[1fr_360px] xl:h-[calc(100vh-170px)] xl:min-h-[500px]">
+        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[1fr_360px] md:h-[calc(100vh-170px)] md:min-h-[500px]">
           <div className="flex flex-col min-w-0 h-full">
-            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] xl:aspect-auto w-full xl:h-full xl:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
+            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
             <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
               {/* Light Scene Image */}
               <image 
