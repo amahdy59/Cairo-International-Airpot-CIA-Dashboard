@@ -303,42 +303,55 @@ function DigitalTwinView() {
                 <ImageModeIcon className="h-4 w-4" />
               </button>
 
-              {/* Panning Overlay Buttons */}
-              <button
-                type="button"
-                onClick={() => scrollMap("left")}
-                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
-                aria-label={localize({ en: "Scroll left", ar: "التمرير لليسار" }, language)}
-              >
-                <ArrowLeft className="h-4.5 w-4.5" />
-              </button>
+              {/* Consolidated Navigation Controller (D-pad) in bottom-left */}
+              <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1 rounded-xl border border-border bg-background/85 p-1.5 backdrop-blur-md shadow-lg">
+                <div className="grid grid-cols-3 gap-1">
+                  {/* Row 1 */}
+                  <div />
+                  <button
+                    type="button"
+                    onClick={() => scrollMap("up")}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    aria-label={localize({ en: "Scroll up", ar: "التمرير لأعلى" }, language)}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
+                  <div />
 
-              <button
-                type="button"
-                onClick={() => scrollMap("right")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
-                aria-label={localize({ en: "Scroll right", ar: "التمرير لليمين" }, language)}
-              >
-                <ArrowRight className="h-4.5 w-4.5" />
-              </button>
+                  {/* Row 2 */}
+                  <button
+                    type="button"
+                    onClick={() => scrollMap("left")}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    aria-label={localize({ en: "Scroll left", ar: "التمرير لليسار" }, language)}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <div className="flex items-center justify-center text-muted-foreground/35">
+                    <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => scrollMap("right")}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    aria-label={localize({ en: "Scroll right", ar: "التمرير لليمين" }, language)}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => scrollMap("up")}
-                className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
-                aria-label={localize({ en: "Scroll up", ar: "التمرير لأعلى" }, language)}
-              >
-                <ArrowUp className="h-4.5 w-4.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => scrollMap("down")}
-                className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
-                aria-label={localize({ en: "Scroll down", ar: "التمرير لأسفل" }, language)}
-              >
-                <ArrowDown className="h-4.5 w-4.5" />
-              </button>
+                  {/* Row 3 */}
+                  <div />
+                  <button
+                    type="button"
+                    onClick={() => scrollMap("down")}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    aria-label={localize({ en: "Scroll down", ar: "التمرير لأسفل" }, language)}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </button>
+                  <div />
+                </div>
+              </div>
             </div>
           {/* Popover renders OUTSIDE overflow-hidden — fixed to viewport, never cropped */}
           {activeScene.hotspots.find(h => h.id === hoveredHotspotId) && hoverAnchor && !selectedHotspot && (
