@@ -1,4 +1,4 @@
-import { Flame, Wrench, Activity, ShieldCheck, LucideIcon } from "lucide-react";
+import { Flame, Wrench, Activity, ShieldCheck } from "lucide-react";
 
 // ----------------------------------------------------
 // Type Definitions
@@ -199,6 +199,124 @@ export const arText: Record<string, string> = {
   "Top issue": "أبرز مشكلة",
   Risk: "الخطر",
   "Close": "إغلاق",
+  // Scenes & Summaries
+  "Landside Access": "الوصول الأرضي",
+  "Support Services": "خدمات الدعم",
+  "Terminal 1 Operations": "عمليات مبنى الركاب 1",
+  "Terminal 2 Operations": "عمليات مبنى الركاب 2",
+  "Terminal 3 Operations": "عمليات مبنى الركاب 3",
+  "Separate terminal area serving selected domestic and international operations.": "منطقة صالة منفصلة تخدم عمليات محلية ودولية محددة.",
+  "International terminal connected operationally with Terminal 3.": "مبنى ركاب دولي متصل تشغيلياً بمبنى الركاب 3.",
+  "Main international terminal with gate, flow, and connection monitoring.": "مبنى الركاب الدولي الرئيسي مع مراقبة البوابات والتدفق والربط.",
+  "Parking, access roads, curbside flow, and public-side movement.": "مواقف السيارات، الطرق المؤدية، حركة تدفق الرصيف، وحركة الجانب العام.",
+  "Maintenance, catering, and airport support facilities.": "مرافق الصيانة، التموين، وخدمات دعم المطار.",
+
+  // Hotspot Categories
+  "Airside": "جانب الطيران",
+  "Terminal": "مبنى الركاب",
+  "Operations": "التشغيل",
+  "Landside": "الجانب البري",
+  "Services": "الخدمات",
+
+  // Hotspot Titles
+  "Remote Stand Turnaround Pressure": "ضغط دوران الطائرات في المواقف البعيدة",
+  "T2 Security Queue Rising": "ارتفاع طابور الأمن في مبنى 2",
+  "Terminal 3 Passenger Flow": "تدفق الركاب في مبنى 3",
+  "Gate B12 Boarding Risk": "مخاطر صعود الطائرة عند البوابة B12",
+  "Parking Entry Queue": "طابور مدخل مواقف السيارات",
+  "Catering Dispatch Stable": "استقرار إرسال التموين",
+
+  // Hotspot Impacts
+  "Two narrow-body turns may exceed the planned ground time if fueling and catering overlap.": "قد يتجاوز دوران طائرتين ضيقتي البدن الوقت الأرضي المخطط له في حال تداخل تزويد الوقود والتموين.",
+  "Departing passengers may reach passport control late during the next arrival/departure overlap.": "قد يصل الركاب المغادرون إلى مراقبة الجوازات متأخرين أثناء تداخل الوصول/المغادرة القادم.",
+  "Passenger processing is stable across check-in, passport control, and departure gates.": "إجراءات الركاب مستقرة عبر تسجيل الوصول، ومراقبة الجوازات، وبوابات المغادرة.",
+  "A late inbound aircraft may compress boarding time and create connection pressure.": "قد تؤدي طائرة قادمة متأخرة إلى ضغط وقت الصعود وإنشاء ضغط في رحلات الربط.",
+  "Curbside access may slow for passengers arriving by car or shuttle.": "قد تتباطأ حركة الوصول عند الرصيف للركاب القادمين بالسيارة أو الحافلة.",
+  "Catering dispatch is meeting the planned departure wave.": "توزيع التموين يلبي موجة المغادرة المخطط لها.",
+
+  // Hotspot Evidences
+  "Stand team is 9 minutes behind the service milestone.": "فريق الموقف متأخر بـ 9 دقائق عن المرحلة التشغيلية المستهدفة.",
+  "Security queue reached 17m. Open secondary screening lanes immediately.": "طابور الأمن وصل إلى 17 متراً. افتح مسارات التفتيش الثانوية فوراً.",
+  "Average wait is below 5 minutes.": "متوسط وقت الانتظار أقل من 5 دقائق.",
+  "Inbound aircraft is 18 minutes behind stand target.": "الطائرة القادمة متأخرة بـ 18 دقيقة عن الموقف المستهدف.",
+  "Entry queue is above 15 vehicles.": "طابور الدخول يتجاوز 15 مركبة.",
+  "All priority flights have catering assigned.": "تم تعيين التموين لجميع الرحلات ذات الأولوية.",
+
+  // Hotspot Actions & Sources
+  "Move one ground support unit from the adjacent stand.": "نقل وحدة دعم أرضي واحدة من الموقف المجاور.",
+  "Open one extra screening lane for 30 minutes.": "افتح مسار تفتيش إضافي لمدة 30 دقيقة.",
+  "Assign a ramp runner and pre-stage boarding staff.": "تعيين مشرف ساحة وتجهيز موظفي الصعود مسبقاً.",
+  "Deploy two traffic wardens at the parking entry split.": "نشر اثنين من مراقبي المرور عند مفرق مدخل مواقف السيارات.",
+  "Turnaround control": "مراقبة الدوران",
+  "Queue sensor": "مستشعر الطابور",
+  "Gate control": "مراقبة البوابة",
+  "Traffic camera": "كاميرا المرور",
+  "Facilities control": "مراقبة المرافق",
+
+  // Flight origins (city names)
+  "Frankfurt (FRA)": "فرانكفورت (FRA)",
+  "Doha (DOH)": "الدوحة (DOH)",
+  "Dubai (DXB)": "دبي (DXB)",
+  "Jeddah (JED)": "جدة (JED)",
+  "Frankfurt": "فرانكفورت",
+  "Doha": "الدوحة",
+  "Dubai": "دبي",
+  "Jeddah": "جدة",
+  "London (LHR)": "لندن (LHR)",
+  "Riyadh (RUH)": "الرياض (RUH)",
+  "Paris (CDG)": "باريس (CDG)",
+  "Luxor (LXR)": "الأقصر (LXR)",
+  "Istanbul (IST)": "إسطنبول (IST)",
+  "London": "لندن",
+  "Riyadh": "الرياض",
+  "Paris": "باريس",
+  "Luxor": "الأقصر",
+  "Istanbul": "إسطنبول",
+
+  // Airline names
+  "EgyptAir": "مصر للطيران",
+  "Qatar Airways": "الخطوط الجوية القطرية",
+  "Emirates": "طيران الإمارات",
+  "Saudia": "الخطوط السعودية",
+
+  // Flight Statuses
+  "Boarding": "صعود الطائرة",
+  "Scheduled": "مجدولة",
+  "Gate Open": "البوابة مفتوحة",
+  "Delayed +10m": "متأخرة +10د",
+  "On Time": "في الموعد",
+  "Estimated": "مقدّرة",
+  "Landed": "هبطت",
+
+  // General UI labels
+  "Area Overview": "نظرة عامة على المنطقة",
+  "UTC": "عالمي",
+
+  // Safety Checks & Maintenance Details
+  "Maintain 4h inspection cycle": "متابعة دورة الفحص كل 4 ساعات",
+  "Schedule drill within 24h": "جدولة التدريب خلال 24 ساعة",
+  "Maintain 15m polling": "متابعة الاتصال كل 15 دقيقة",
+  "Increase audits in sector B": "زيادة عمليات التدقيق في القطاع B",
+  "Expedite tech to T2-B": "إرسال فني إلى T2-B على الفور",
+  "12 May 2026": "12 مايو 2026",
+  "11 May 2026": "11 مايو 2026",
+  "10 May 2026": "10 مايو 2026",
+
+  // MTBF and Aircraft Risk
+  "MTBF": "متوسط الوقت بين الأعطال",
+  "Pressurisation, APU starts": "الضغط، بدء تشغيل وحدة الطاقة المساعدة (APU)",
+  "Brake wear, nose gear": "تآكل المكابح، معدات الهبوط الأمامية",
+  "Galley power, IFE": "طاقة المطبخ، نظام الترفيه الجوي",
+  "Cabin sensors": "مستشعرات المقصورة",
+  "142h": "142 ساعة",
+  "168h": "168 ساعة",
+  "210h": "210 ساعة",
+  "320h": "320 ساعة",
+  "32h": "32 ساعة",
+  "8h": "8 ساعات",
+  "14h": "14 ساعة",
+  "4h": "4 ساعات",
+  "6h": "6 ساعات",
 };
 
 export const copy = {

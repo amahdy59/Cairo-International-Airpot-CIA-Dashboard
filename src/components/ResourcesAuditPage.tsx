@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
   AlertTriangle,
-  ArrowRight,
   Check,
   CheckCircle2,
   Laptop,
@@ -12,7 +11,6 @@ import {
   User,
   Users,
   Briefcase,
-  Award,
   Clock3,
   Eye,
   ExternalLink,
@@ -42,8 +40,8 @@ const personas = [
     needs: { en: "Needs high-priority anomaly detection visible under 200ms without switching tabs.", ar: "يحتاج لرصد فوري للمشاكل يظهر خلال أقل من ٢٠٠ ملي ثانية دون تغيير التبويبات." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Night (12h)", ar: "ليلية (١٢ ساعة)" } },
-      { label: { en: "Device", ar: "Device" }, val: { en: "4K Wall Display", ar: "شاشة جدارية 4K" } },
-      { label: { en: "Priority", ar: "Priority" }, val: { en: "Alert aging & escalation", ar: "متابعة وتصعيد التنبيهات" } }
+      { label: { en: "Device", ar: "الجهاز" }, val: { en: "4K Wall Display", ar: "شاشة جدارية 4K" } },
+      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Alert aging & escalation", ar: "متابعة وتصعيد التنبيهات" } }
     ]
   },
   {
@@ -54,8 +52,8 @@ const personas = [
     needs: { en: "Requires larger touch targets (44px min) and responsive RTL Arabic support.", ar: "تتطلب مساحات لمس أكبر (٤٤ بكسل كحد أدنى) ودعم متجاوب للغة العربية." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Day (8h)", ar: "نهارية (٨ ساعات)" } },
-      { label: { en: "Device", ar: "Device" }, val: { en: "10\" Tablet", ar: "تابلت ١٠ بوصة" } },
-      { label: { en: "Priority", ar: "Priority" }, val: { en: "Touch target size & RTL Arabic", ar: "حجم اللمس واللغة العربية" } }
+      { label: { en: "Device", ar: "الجهاز" }, val: { en: "10\" Tablet", ar: "تابلت ١٠ بوصة" } },
+      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Touch target size & RTL Arabic", ar: "حجم اللمس واللغة العربية" } }
     ]
   },
   {
@@ -66,8 +64,8 @@ const personas = [
     needs: { en: "Requires CSV/Excel data export capabilities and high contrast elements for outdoor glare.", ar: "يتطلب إمكانية تصدير البيانات (CSV/Excel) وعناصر تباين عالية للقراءة تحت ضوء الشمس." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Intermittent", ar: "متقطعة" } },
-      { label: { en: "Device", ar: "Device" }, val: { en: "13\" Laptop", ar: "لابتوب ١٣ بوصة" } },
-      { label: { en: "Priority", ar: "Priority" }, val: { en: "High-contrast reading & CSV export", ar: "تباين القراءة وتصدير البيانات" } }
+      { label: { en: "Device", ar: "الجهاز" }, val: { en: "13\" Laptop", ar: "لابتوب ١٣ بوصة" } },
+      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "High-contrast reading & CSV export", ar: "تباين القراءة وتصدير البيانات" } }
     ]
   }
 ];
@@ -113,7 +111,6 @@ function MiniMetricCard({
   delta,
   deltaTone = "ok",
   accent = "cyan",
-  language,
 }: {
   label: string;
   value: string;
@@ -121,7 +118,6 @@ function MiniMetricCard({
   delta: string;
   deltaTone?: "ok" | "warn" | "crit" | "info";
   accent?: "cyan" | "magenta" | "warn" | "ok";
-  language: "en" | "ar";
 }) {
   const accentClass = {
     cyan: "from-cyan to-cyan/0",
@@ -138,9 +134,9 @@ function MiniMetricCard({
   }[accent];
 
   return (
-    <div className="panel relative overflow-hidden p-3 bg-card border border-border/80 text-left h-full">
-      <div className="absolute -top-6 -left-6 h-16 w-16 rounded-full opacity-10 blur-xl pointer-events-none" style={{ backgroundColor: accentHex }} />
-      <div className={`absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b ${accentClass}`} />
+    <div className="panel relative overflow-hidden p-3 bg-card border border-border/80 text-start h-full">
+      <div className="absolute -top-6 -start-6 h-16 w-16 rounded-full opacity-10 blur-xl pointer-events-none" style={{ backgroundColor: accentHex }} />
+      <div className={`absolute inset-y-0 start-0 w-[2px] bg-gradient-to-b ${accentClass}`} />
       <div className="min-w-0 flex flex-col justify-between h-full gap-2">
         <div>
           <p className="text-xs font-mono uppercase tracking-[0.08em] text-muted-foreground truncate">{label}</p>
@@ -309,7 +305,7 @@ export default function ResourcesAuditPage() {
         </div>
 
         <div className="border-t border-border/50 pt-3.5 flex justify-between items-center text-sm z-10 relative">
-          <span className="font-mono text-muted-foreground">Cairo, Egypt</span>
+          <span className="font-mono text-muted-foreground">{localize({ en: "Cairo, Egypt", ar: "القاهرة، مصر" }, language)}</span>
           <div className="flex items-center gap-4">
             <a 
               href="https://www.linkedin.com/in/creativemahdy"
@@ -416,7 +412,7 @@ export default function ResourcesAuditPage() {
         </div>
 
         {/* Vertical roadmaps with no empty gaps */}
-        <div className="relative flex flex-col gap-4 pl-1">
+        <div className="relative flex flex-col gap-4 ps-1">
           {timelinePhases.map((phase) => {
             const Icon = phase.icon;
             const isExpanded = !!expandedPhases[phase.id];
@@ -495,17 +491,17 @@ export default function ResourcesAuditPage() {
           <div className="absolute inset-0 w-full h-full p-4 flex items-center justify-center bg-card">
             <div className="w-full max-w-[300px] panel relative overflow-hidden p-4 bg-background border border-border/80 shadow-md">
               {/* Real MetricCard layout replication */}
-              <div className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-cyan/15 blur-xl pointer-events-none" />
-              <div className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-cyan to-cyan/0" />
-              <div className="relative z-10 flex items-start justify-between gap-3 pl-1">
+              <div className="absolute -top-10 -start-10 h-24 w-24 rounded-full bg-cyan/15 blur-xl pointer-events-none" />
+              <div className="absolute inset-y-0 start-0 w-[3px] bg-gradient-to-b from-cyan to-cyan/0" />
+              <div className="relative z-10 flex items-start justify-between gap-3 ps-1">
                 <div className="min-w-0">
-                  <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground">LUGGAGE PROCESSING</p>
+                  <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground">{localize({ en: "LUGGAGE PROCESSING", ar: "معالجة الحقائب" }, language)}</p>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
                     <span className="text-2xl font-semibold tracking-tight text-foreground">94.2</span>
-                    <span className="font-mono text-xs text-muted-foreground">bags/min</span>
+                    <span className="font-mono text-xs text-muted-foreground">{localize({ en: "bags/min", ar: "حقيبة/دقيقة" }, language)}</span>
                   </div>
                   <p className="mt-2 inline-flex items-center gap-1 text-xs text-status-ok font-mono">
-                    ▲ +4.1% vs last hr
+                    {localize({ en: "▲ +4.1% vs last hr", ar: "▲ +4.1% مقارنة بالساعة الماضية" }, language)}
                   </p>
                 </div>
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-cyan/20 bg-cyan/10 text-cyan">
@@ -523,8 +519,8 @@ export default function ResourcesAuditPage() {
             <div className="absolute top-0 left-0 w-full h-full p-4 flex items-center justify-center min-w-[340px]" style={{ width: sliderRef.current?.getBoundingClientRect().width }}>
               <div className="w-full max-w-[300px] border border-dashed border-muted-foreground/50 rounded-lg p-4 bg-background/80 grayscale opacity-60 relative">
                 {/* Real MetricCard wireframe layout */}
-                <div className="absolute inset-y-0 left-0 w-[3px] border-r border-dashed border-muted-foreground/40" />
-                <div className="flex items-start justify-between gap-3 pl-1">
+                <div className="absolute inset-y-0 start-0 w-[3px] border-r border-dashed border-muted-foreground/40" />
+                <div className="flex items-start justify-between gap-3 ps-1">
                   <div className="min-w-0">
                     {/* Label skeleton */}
                     <div className="h-3 bg-muted border border-dashed border-muted-foreground/30 rounded w-24" />
@@ -603,10 +599,10 @@ export default function ResourcesAuditPage() {
                   ? "grid-cols-2" 
                   : "grid-cols-1"
             }`}>
-              <MiniMetricCard label="LUGGAGE FLOW" value="94.2" unit="bags/m" delta="▲ +4.1%" deltaTone="ok" accent="cyan" language={language} />
-              <MiniMetricCard label="SEC LANES" value="12" unit="lanes" delta="▲ +2 lanes" deltaTone="warn" accent="warn" language={language} />
-              <MiniMetricCard label="TERMINAL ARRIV" value="1.4k" unit="pax/h" delta="▼ -8.4%" deltaTone="crit" language={language} />
-              <MiniMetricCard label="GATE LOADS" value="28/30" unit="gates" delta="93% cap" deltaTone="info" accent="ok" language={language} />
+              <MiniMetricCard label={localize({ en: "LUGGAGE FLOW", ar: "تدفق الأمتعة" }, language)} value="94.2" unit={localize({ en: "bags/m", ar: "حقيبة/د" }, language)} delta={localize({ en: "▲ +4.1%", ar: "▲ +4.1%" }, language)} deltaTone="ok" accent="cyan" />
+              <MiniMetricCard label={localize({ en: "SEC LANES", ar: "مسارات الأمن" }, language)} value="12" unit={localize({ en: "lanes", ar: "مسارات" }, language)} delta={localize({ en: "▲ +2 lanes", ar: "▲ +2 مسار" }, language)} deltaTone="warn" accent="warn" />
+              <MiniMetricCard label={localize({ en: "TERMINAL ARRIV", ar: "وصول المبنى" }, language)} value="1.4k" unit={localize({ en: "pax/h", ar: "راكب/س" }, language)} delta={localize({ en: "▼ -8.4%", ar: "▼ -8.4%" }, language)} deltaTone="crit" />
+              <MiniMetricCard label={localize({ en: "GATE LOADS", ar: "حمولة البوابات" }, language)} value="28/30" unit={localize({ en: "gates", ar: "بوابات" }, language)} delta={localize({ en: "93% cap", ar: "سعة 93%" }, language)} deltaTone="info" accent="ok" />
             </div>
           </div>
         </div>
@@ -742,7 +738,7 @@ export default function ResourcesAuditPage() {
         <div className="grid gap-4">
           {/* Requirements Matrix Table */}
           <div className="overflow-x-auto border border-border rounded-lg bg-background/50">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-start text-sm border-collapse">
               <thead>
                 <tr className="border-b border-border bg-secondary/35 text-muted-foreground font-mono uppercase text-xs tracking-wider">
                   <th className="py-2.5 px-3.5">{localize({ en: "Requirement", ar: "المتطلب" }, language)}</th>
@@ -753,16 +749,16 @@ export default function ResourcesAuditPage() {
               <tbody className="divide-y divide-border/40 font-medium text-foreground text-sm">
                 <tr>
                   <td className="py-3 px-3.5">{localize({ en: "Arabic/English Toggle", ar: "تغيير اللغة" }, language)}</td>
-                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">RTL Switcher hooks</td>
+                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "RTL Switcher hooks", ar: "ربط اتجاه الواجهة (RTL)" }, language)}</td>
                   <td className="py-3 px-3.5 text-center">
-                    <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20">LIVE</span>
+                    <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
                   <td className="py-3 px-3.5">{localize({ en: "AODB Flight Feed", ar: "تغذية الرحلات الجوية" }, language)}</td>
-                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">Simulated feed state</td>
+                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "Simulated feed state", ar: "تغذية بيانات افتراضية" }, language)}</td>
                   <td className="py-3 px-3.5 text-center">
-                    <span className="text-xs font-mono text-status-warn bg-status-warn/10 px-2 py-0.5 rounded border border-status-warn/20">PENDING</span>
+                    <span className="text-xs font-mono text-status-warn bg-status-warn/10 px-2 py-0.5 rounded border border-status-warn/20">{localize({ en: "PENDING", ar: "قيد الانتظار" }, language)}</span>
                   </td>
                 </tr>
               </tbody>
@@ -777,9 +773,9 @@ export default function ResourcesAuditPage() {
                 <span>{localize({ en: "Built Now", ar: "المكتمل" }, language)}</span>
               </h3>
               <ul className="mt-2 space-y-1 pl-0 list-none text-muted-foreground text-xs">
-                <li>• Interactive sliders</li>
-                <li>• Responsive grid reflow</li>
-                <li>• Contrast compliance</li>
+                <li>{localize({ en: "• Interactive sliders", ar: "• عناصر التمرير التفاعلية" }, language)}</li>
+                <li>{localize({ en: "• Responsive grid reflow", ar: "• إعادة ترتيب الشبكة المتجاوبة" }, language)}</li>
+                <li>{localize({ en: "• Contrast compliance", ar: "• التوافق مع نسب التباين" }, language)}</li>
               </ul>
             </div>
             <div className="bg-background border border-border/60 rounded-xl p-4">
@@ -788,9 +784,9 @@ export default function ResourcesAuditPage() {
                 <span>{localize({ en: "Next Step", ar: "الخطوة التالية" }, language)}</span>
               </h3>
               <ul className="mt-2 space-y-1 pl-0 list-none text-muted-foreground text-xs">
-                <li>• API endpoint linking</li>
-                <li>• Operational credentials</li>
-                <li>• Export to Excel/CSV</li>
+                <li>{localize({ en: "• API endpoint linking", ar: "• ربط نقاط واجهة البرمجة (API)" }, language)}</li>
+                <li>{localize({ en: "• Operational credentials", ar: "• بيانات الاعتماد التشغيلية" }, language)}</li>
+                <li>{localize({ en: "• Export to Excel/CSV", ar: "• تصدير البيانات إلى Excel/CSV" }, language)}</li>
               </ul>
             </div>
           </div>

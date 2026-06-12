@@ -110,7 +110,7 @@ function DigitalTwinView() {
         onPointerLeave={() => setHoveredHotspotId(null)}
         role="button"
         tabIndex={0}
-        aria-label={`${hotspot.title}. ${hotspot.status}`}
+        aria-label={`${tr(hotspot.title)}. ${tr(hotspot.status === 'warning' ? 'Needs attention' : hotspot.status === 'critical' ? 'Critical' : hotspot.status === 'good' ? 'Good' : hotspot.status === 'offline' ? 'Offline' : 'Info')}`}
         className="cursor-pointer"
       >
         {/* Outer Glow */}
@@ -175,7 +175,7 @@ function DigitalTwinView() {
         <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
           <div className="flex flex-col min-w-0 border-b xl:border-b-0 border-border">
             <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black aspect-video w-full overflow-hidden">
-            <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={`${activeScene.title} operational image map`}>
+            <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
               {/* Light Scene Image */}
               <image 
                 onLoad={() => setIsImageLoaded(true)} 
@@ -259,7 +259,7 @@ function DigitalTwinView() {
 
                 {/* Hotspot Title & Category */}
                 <div>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">{selectedHotspot.category}</span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">{tr(selectedHotspot.category)}</span>
                   <h3 className="text-base font-bold tracking-tight text-foreground">{tr(selectedHotspot.title)}</h3>
                 </div>
 
@@ -283,16 +283,16 @@ function DigitalTwinView() {
                 {/* Operational Impact */}
                 {selectedHotspot.impact && (
                   <div className="rounded-lg border border-border/40 bg-background/50 p-2.5 text-xs leading-relaxed text-foreground shadow-inner">
-                    <span className="font-bold text-primary mr-1">{localize({ en: "Operational Impact:", ar: "التأثير التشغيلي:" }, language)}</span>
-                    {selectedHotspot.impact}
+                    <span className="font-bold text-primary me-1">{localize({ en: "Operational Impact:", ar: "التأثير التشغيلي:" }, language)}</span>
+                    {tr(selectedHotspot.impact)}
                   </div>
                 )}
 
                 {/* Diagnostic Evidence */}
                 {selectedHotspot.evidence && (
                   <div className="rounded-lg border border-border/30 bg-status-warn/5 p-2.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-bold text-status-warn mr-1">{localize({ en: "Evidence:", ar: "الأدلة:" }, language)}</span>
-                    {selectedHotspot.evidence}
+                    <span className="font-bold text-status-warn me-1">{localize({ en: "Evidence:", ar: "الأدلة:" }, language)}</span>
+                    {tr(selectedHotspot.evidence)}
                   </div>
                 )}
 
@@ -321,8 +321,8 @@ function DigitalTwinView() {
                   </button>
                   {selectedHotspot.action && (
                     <div className="text-center text-[10px] text-muted-foreground">
-                      <span className="uppercase tracking-wider font-mono mr-1">{localize({ en: "Action:", ar: "الإجراء:" }, language)}</span>
-                      <span className="text-primary font-semibold">{selectedHotspot.action}</span>
+                      <span className="uppercase tracking-wider font-mono me-1">{localize({ en: "Action:", ar: "الإجراء:" }, language)}</span>
+                      <span className="text-primary font-semibold">{tr(selectedHotspot.action)}</span>
                     </div>
                   )}
                 </div>
@@ -349,9 +349,9 @@ function DigitalTwinView() {
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="block h-2 w-2 shrink-0 rounded-full animate-pulse" style={{ backgroundColor: getStatusColor(h.status) }} />
-                              <p className="text-xs font-semibold truncate text-foreground">{h.title}</p>
+                              <p className="text-xs font-semibold truncate text-foreground">{tr(h.title)}</p>
                             </div>
-                            <span className="text-[9px] text-muted-foreground shrink-0 uppercase font-mono">{h.category}</span>
+                            <span className="text-[9px] text-muted-foreground shrink-0 uppercase font-mono">{tr(h.category)}</span>
                           </button>
                         ))
                       : (
@@ -380,16 +380,15 @@ function DigitalTwinView() {
 
 function CctvTerminalLoop() {
   return (
-    <div className="cctv-loop overflow-hidden rounded-lg border border-border bg-black" aria-label="Generic three second airport terminal CCTV sample without visible faces">
-      <div className="cctv-frame">
-        <span className="cctv-ceiling" />
-        <span className="cctv-floor" />
-        <span className="cctv-left-wall" />
-        <span className="cctv-right-wall" />
-        <span className="cctv-gate cctv-gate-a" />
-        <span className="cctv-gate cctv-gate-b" />
+    <div className="cctv-loop overflow-hidden rounded-lg border border-border bg-black" aria-label="Cairo Airport terminal CCTV view showing passengers moving near departures and boarding gates">
+      <div className="cctv-frame relative w-full h-full">
+        <img 
+          src="/manager-assets/cctv-live.webp" 
+          alt="CCTV live feed" 
+          className="w-full h-full object-cover opacity-85" 
+        />
         <span className="cctv-scanline" />
-        <span className="cctv-timestamp">CAI CCTV · 00:03 LOOP</span>
+        <span className="cctv-timestamp">CAI CCTV · LIVE FEED</span>
       </div>
     </div>
   );
@@ -425,7 +424,7 @@ function IncomingFlightsPanel({
         {flights.slice(0, 3).map((flight) => (
           <div key={`${flight.flight}-${flight.eta}`} className="flex items-center justify-between text-xs py-0.5 border-b border-border/30 last:border-b-0">
             <span className="font-mono font-bold text-foreground">{flight.flight}</span>
-            <span className="text-muted-foreground truncate max-w-[80px] text-[11px]">{flight.origin.split(" (")[0]}</span>
+            <span className="text-muted-foreground truncate max-w-[80px] text-[11px]">{tr(flight.origin.split(" (")[0])}</span>
             <span className="font-mono text-foreground">{flight.eta}</span>
             <span className="font-mono text-muted-foreground text-[11px]">{flight.gate.replace("T3 / ", "").replace("Gate ", "")}</span>
             <span className={`text-[10px] font-semibold shrink-0 ${
@@ -495,7 +494,7 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
           </span>
         </div>
         <div className="flex flex-col p-3 pt-0 w-0 min-w-full whitespace-normal">
-          <p className="text-xs text-muted-foreground line-clamp-2">{hotspot.impact}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">{tr(hotspot.impact)}</p>
           <div className="text-[10px] text-primary/80 uppercase tracking-widest font-mono mt-2">{localize({en: "Click hotspot to expand", ar: "انقر للتوسيع"}, language)}</div>
         </div>
       </div>

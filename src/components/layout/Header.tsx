@@ -134,7 +134,7 @@ export function Header({
             <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
             <TimeChip label={tr("Cairo")} value={times.cairo} />
             <span className="h-5 w-px bg-border" />
-            <TimeChip label="UTC" value={times.utc} />
+            <TimeChip label={tr("UTC")} value={times.utc} />
           </div>
           <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
@@ -148,19 +148,36 @@ export function Header({
           <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary xl:hidden"
+            className="relative grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary xl:hidden transition-colors overflow-hidden"
             aria-expanded={isMenuOpen}
             aria-label={tr("Toggle navigation menu")}
             title={tr("Toggle navigation menu")}
           >
-            {isMenuOpen ? <X className="h-4 w-4 text-primary" /> : <Menu className="h-4 w-4 text-primary" />}
+            <div className="relative w-4 h-4">
+              <span className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                isMenuOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
+              }`}>
+                <Menu className="h-4 w-4 text-primary" />
+              </span>
+              <span className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                isMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
+              }`}>
+                <X className="h-4 w-4 text-primary" />
+              </span>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Mobile/Tablet Navigation Dropdown */}
-      {isMenuOpen && (
-        <div className="xl:hidden border-t border-white/20 bg-background/95 backdrop-blur-2xl px-4 py-4 animate-in slide-in-from-top-2 duration-200">
+      {/* Mobile/Tablet Navigation Dropdown with microinteractions */}
+      <div
+        className={`xl:hidden overflow-hidden transition-all pointer-events-auto ${
+          isMenuOpen
+            ? "max-h-[350px] opacity-100 border-t border-white/20 visible duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+            : "max-h-0 opacity-0 border-t-0 invisible pointer-events-none duration-250 ease-[cubic-bezier(0.7,0,0.84,0)]"
+        }`}
+      >
+        <div className="bg-background/95 backdrop-blur-2xl px-4 py-4 shadow-[inset_0_4px_12px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_4px_12px_rgba(0,0,0,0.15)]">
           <div className="flex flex-col gap-4 max-w-xl mx-auto">
             {/* Clock/Time */}
             <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/25 p-3">
@@ -171,7 +188,7 @@ export function Header({
               <div className="flex items-center gap-4 mt-1">
                 <TimeChip label={tr("Cairo")} value={times.cairo} />
                 <span className="h-4 w-px bg-border" />
-                <TimeChip label="UTC" value={times.utc} />
+                <TimeChip label={tr("UTC")} value={times.utc} />
               </div>
             </div>
 
@@ -181,11 +198,11 @@ export function Header({
               <button
                 type="button"
                 onClick={() => handleMenuSelect(() => setTheme(theme === "dark" ? "light" : "dark"))}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors cursor-pointer"
+                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-all active:scale-[0.97] active:bg-secondary/40 duration-200 cursor-pointer"
               >
                 <ThemeIcon className="h-4 w-4 text-primary" />
                 <span>
-                  {theme === "dark" 
+                  {theme === "dark"
                     ? localize({ en: "Switch to Light Mode", ar: "التحويل للوضع الفاتح" }, language)
                     : localize({ en: "Switch to Dark Mode", ar: "التحويل للوضع الداكن" }, language)
                   }
@@ -196,7 +213,7 @@ export function Header({
               <button
                 type="button"
                 onClick={() => handleMenuSelect(() => setHighContrast(!highContrast))}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors cursor-pointer"
+                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-all active:scale-[0.97] active:bg-secondary/40 duration-200 cursor-pointer"
               >
                 <Contrast className="h-4 w-4 text-primary" />
                 <span>
@@ -211,7 +228,7 @@ export function Header({
               <button
                 type="button"
                 onClick={() => handleMenuSelect(() => setLanguage(language === "en" ? "ar" : "en"))}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-colors cursor-pointer"
+                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-all active:scale-[0.97] active:bg-secondary/40 duration-200 cursor-pointer"
               >
                 <Languages className="h-4 w-4 text-primary" />
                 <span>
@@ -221,7 +238,7 @@ export function Header({
             </div>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }

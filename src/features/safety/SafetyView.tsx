@@ -1,5 +1,5 @@
 import { Users, AlertTriangle, UserCheck, Plane, Clock3, Wrench } from 'lucide-react';
-import { localize, toneCssVar } from '../../utils/helpers';
+import { toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { safetyChecks, maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
@@ -142,7 +142,7 @@ function SafetyChecks() {
   const { tr } = useLocale();
   return (
     <SectionPanel title={tr("Safety checks")} className="h-full flex flex-col overflow-hidden">
-      <div className="grid gap-3 flex-1 content-start overflow-y-auto pr-1 pb-1">
+      <div className="grid gap-3 flex-1 content-start overflow-y-auto pe-1 pb-1">
         {safetyChecks.map((item) => {
           const Icon = item.icon;
           return (
@@ -186,9 +186,9 @@ function MaintenanceTable() {
             {maintenanceRows.map((item) => (
               <tr key={item.reg} className="border-t border-border/60">
                 <td className="px-1 py-3 font-mono"><strong>{item.reg}</strong><div className="text-xs text-muted-foreground">{item.type}</div></td>
-                <td className="px-1 py-3">{tr(item.task)}<div className="text-xs text-muted-foreground">EgyptAir</div></td>
-                <td className="px-1 py-3 font-mono text-muted-foreground">{item.date}</td>
-                <td className="px-1 py-3 font-mono">{item.duration}</td>
+                <td className="px-1 py-3">{tr(item.task)}<div className="text-xs text-muted-foreground">{tr("EgyptAir")}</div></td>
+                <td className="px-1 py-3 font-mono text-muted-foreground">{tr(item.date)}</td>
+                <td className="px-1 py-3 font-mono">{tr(item.duration)}</td>
                 <td className="px-1 py-3"><StatusPill tone={item.tone}>{tr(item.status)}</StatusPill></td>
               </tr>
             ))}
@@ -210,7 +210,7 @@ function AircraftRiskTable() {
               <th className="px-1 py-2 text-start">{tr("Registration")}</th>
               <th className="px-1 py-2 text-start">{tr("Type")}</th>
               <th className="px-1 py-2 text-start">{tr("Events")}</th>
-              <th className="px-1 py-2 text-start">MTBF</th>
+              <th className="px-1 py-2 text-start">{tr("MTBF")}</th>
               <th className="px-1 py-2 text-start">{tr("Top issue")}</th>
               <th className="px-1 py-2 text-start">{tr("Risk")}</th>
             </tr>
@@ -223,8 +223,8 @@ function AircraftRiskTable() {
                   <td className="px-1 py-3 font-mono font-semibold">{aircraft.reg}</td>
                   <td className="px-1 py-3">{aircraft.type}</td>
                   <td className="px-1 py-3 font-mono">{aircraft.events}</td>
-                  <td className="px-1 py-3 font-mono">{aircraft.mtbf}</td>
-                  <td className="px-1 py-3 text-muted-foreground">{aircraft.issue}</td>
+                  <td className="px-1 py-3 font-mono">{tr(aircraft.mtbf)}</td>
+                  <td className="px-1 py-3 text-muted-foreground">{tr(aircraft.issue)}</td>
                   <td className="px-1 py-3">
                     <div className="flex items-center gap-3">
                       <ProgressBar value={aircraft.risk} color={color} className="min-w-36" />

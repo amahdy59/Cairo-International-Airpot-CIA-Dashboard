@@ -217,7 +217,7 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
             {rows.map((row) => (
               <tr key={row.flight} className="border-t border-border/60">
                 <td className="px-1 py-3 font-mono font-semibold">{row.flight}</td>
-                <td className="px-1 py-3">{row.city}</td>
+                <td className="px-1 py-3">{tr(row.city)}</td>
                 <td className="px-1 py-3 font-mono">{row.time}</td>
                 <td className="px-1 py-3 font-mono text-muted-foreground">{row.gate}</td>
                 <td className="px-1 py-3"><StatusPill tone={row.tone}>{tr(row.status)}</StatusPill></td>
