@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowLeft, Zap } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Zap } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
@@ -19,6 +19,75 @@ function DigitalTwinView() {
   const incoming = useIncomingCaiFlights();
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
+
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const scrollLeft = useRef(0);
+  const scrollTop = useRef(0);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    startX.current = e.pageX - imageContainerRef.current!.offsetLeft;
+    startY.current = e.pageY - imageContainerRef.current!.offsetTop;
+    scrollLeft.current = imageContainerRef.current!.scrollLeft;
+    scrollTop.current = imageContainerRef.current!.scrollTop;
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    const x = e.pageX - imageContainerRef.current!.offsetLeft;
+    const y = e.pageY - imageContainerRef.current!.offsetTop;
+    const walkX = (x - startX.current) * 1.5;
+    const walkY = (y - startY.current) * 1.5;
+    imageContainerRef.current!.scrollLeft = scrollLeft.current - walkX;
+    imageContainerRef.current!.scrollTop = scrollTop.current - walkY;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    dragStartPos.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleHotspotClick = (hotspotId: string, e: React.MouseEvent) => {
+    const dx = Math.abs(e.clientX - dragStartPos.current.x);
+    const dy = Math.abs(e.clientY - dragStartPos.current.y);
+    if (dx > 5 || dy > 5) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    setSelectedHotspotId(hotspotId);
+    setHoveredHotspotId(null);
+  };
+
+  const scrollMap = (direction: "left" | "right" | "up" | "down") => {
+    if (imageContainerRef.current) {
+      let scrollX = 0;
+      let scrollY = 0;
+      const amount = 250;
+      if (direction === "left") scrollX = -amount;
+      if (direction === "right") scrollX = amount;
+      if (direction === "up") scrollY = -amount;
+      if (direction === "down") scrollY = amount;
+
+      imageContainerRef.current.scrollBy({
+        left: scrollX,
+        top: scrollY,
+        behavior: "smooth"
+      });
+    }
+  };
 
   useEffect(() => {
     if (selectedHotspotId && sidebarRef.current) {
@@ -99,10 +168,7 @@ function DigitalTwinView() {
         key={hotspot.id} 
         id={`hotspot-marker-${hotspot.id}`}
         transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
-        onClick={() => {
-          setSelectedHotspotId(hotspot.id);
-          setHoveredHotspotId(null);
-        }}
+        onClick={(e) => handleHotspotClick(hotspot.id, e)}
         onPointerEnter={(e) => {
           if (selectedHotspotId !== hotspot.id) {
             setHoveredHotspotId(hotspot.id);
@@ -175,53 +241,104 @@ function DigitalTwinView() {
           </div>
         </nav>
 
-        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[1fr_360px] md:h-[calc(100vh-170px)] md:min-h-[500px]">
-          <div className="flex flex-col min-w-0 h-full">
-            <div id="digital-twin-image-container" ref={imageContainerRef} className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
-            <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
-              {/* Light Scene Image */}
-              <image 
-                onLoad={() => setIsImageLoaded(true)} 
-                href={activeScene.image} 
-                width="1600" 
-                height="900" 
-                preserveAspectRatio="xMidYMid slice" 
-                style={{ 
-                  opacity: imageMode === "light" ? 1 : 0, 
-                  transition: "opacity 150ms ease-in-out", 
-                  transformOrigin: "center", 
-                  filter: imageFilter 
-                }} 
-              />
-              
-              {/* Dark Scene Image */}
-              <image 
-                onLoad={() => setIsImageLoaded(true)} 
-                href={activeScene.darkImage} 
-                width="1600" 
-                height="900" 
-                preserveAspectRatio="xMidYMid slice" 
-                style={{ 
-                  opacity: imageMode === "dark" ? 1 : 0, 
-                  transition: "opacity 150ms ease-in-out", 
-                  transformOrigin: "center", 
-                  filter: imageFilter 
-                }} 
-              />
+        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] md:h-[calc(100vh-170px)] md:min-h-[500px]">
+          <div className="flex flex-col min-w-0 h-full relative">
+            <div id="digital-twin-image-viewport" className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
+              <div 
+                id="digital-twin-image-container" 
+                ref={imageContainerRef} 
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                className="w-full h-full overflow-auto no-scrollbar cursor-grab active:cursor-grabbing select-none"
+              >
+                <div className="min-h-[120%] sm:min-h-[115%] md:min-h-[110%] min-w-[145%] sm:min-w-[130%] md:min-w-[125%] relative">
+                  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
+                    {/* Light Scene Image */}
+                    <image 
+                      onLoad={() => setIsImageLoaded(true)} 
+                      href={activeScene.image} 
+                      width="1600" 
+                      height="900" 
+                      preserveAspectRatio="xMidYMid slice" 
+                      style={{ 
+                        opacity: imageMode === "light" ? 1 : 0, 
+                        transition: "opacity 150ms ease-in-out", 
+                        transformOrigin: "center", 
+                        filter: imageFilter 
+                      }} 
+                    />
+                    
+                    {/* Dark Scene Image */}
+                    <image 
+                      onLoad={() => setIsImageLoaded(true)} 
+                      href={activeScene.darkImage} 
+                      width="1600" 
+                      height="900" 
+                      preserveAspectRatio="xMidYMid slice" 
+                      style={{ 
+                        opacity: imageMode === "dark" ? 1 : 0, 
+                        transition: "opacity 150ms ease-in-out", 
+                        transformOrigin: "center", 
+                        filter: imageFilter 
+                      }} 
+                    />
 
-              {/* Render Hotspots */}
-              {isImageLoaded && activeScene.hotspots.map(renderHotspotMarker)}
-            </svg>
-            {/* Floating Dark/Light image mode toggle for all screens */}
-            <button
-              type="button"
-              onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
-              className="absolute top-3 end-3 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors"
-              title={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
-              aria-label={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
-            >
-              <ImageModeIcon className="h-4 w-4" />
-            </button>
+                    {/* Render Hotspots */}
+                    {isImageLoaded && activeScene.hotspots.map(renderHotspotMarker)}
+                  </svg>
+                </div>
+              </div>
+
+              {/* Floating Dark/Light image mode toggle for all screens */}
+              <button
+                type="button"
+                onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
+                className="absolute top-3 end-3 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors"
+                title={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
+                aria-label={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
+              >
+                <ImageModeIcon className="h-4 w-4" />
+              </button>
+
+              {/* Panning Overlay Buttons */}
+              <button
+                type="button"
+                onClick={() => scrollMap("left")}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
+                aria-label={localize({ en: "Scroll left", ar: "التمرير لليسار" }, language)}
+              >
+                <ArrowLeft className="h-4.5 w-4.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollMap("right")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
+                aria-label={localize({ en: "Scroll right", ar: "التمرير لليمين" }, language)}
+              >
+                <ArrowRight className="h-4.5 w-4.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollMap("up")}
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
+                aria-label={localize({ en: "Scroll up", ar: "التمرير لأعلى" }, language)}
+              >
+                <ArrowUp className="h-4.5 w-4.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollMap("down")}
+                className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors cursor-pointer"
+                aria-label={localize({ en: "Scroll down", ar: "التمرير لأسفل" }, language)}
+              >
+                <ArrowDown className="h-4.5 w-4.5" />
+              </button>
             </div>
           {/* Popover renders OUTSIDE overflow-hidden — fixed to viewport, never cropped */}
           {activeScene.hotspots.find(h => h.id === hoveredHotspotId) && hoverAnchor && !selectedHotspot && (
