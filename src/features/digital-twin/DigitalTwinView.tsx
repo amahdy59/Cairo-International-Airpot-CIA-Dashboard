@@ -232,15 +232,15 @@ function DigitalTwinView() {
 
           <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 rounded-xl border border-border bg-card/65 backdrop-blur-md h-full overflow-y-auto">
             {selectedHotspot ? (
-              <div className="p-4 flex flex-col gap-3">
+              <div className="p-3.5 lg:p-4 flex flex-col gap-3.5">
                 {/* Header: Back to Overview & Close button */}
-                <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedHotspotId(null);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/50 px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-background/80 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/50 px-2.5 py-1 text-xs font-semibold text-foreground transition hover:bg-background/80 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
                   >
                     <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
                     {tr("Back to overview")}
@@ -250,88 +250,83 @@ function DigitalTwinView() {
                     onClick={() => {
                       setSelectedHotspotId(null);
                     }}
-                    className="rounded-lg p-0.5 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+                    className="rounded-lg p-1 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
                     aria-label={tr("Close")}
                   >
-                    <X className="h-4.5 w-4.5" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
 
-                {/* Hotspot Title & Category */}
-                <div>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">{tr(selectedHotspot.category)}</span>
-                  <h3 className="text-base font-bold tracking-tight text-foreground">{tr(selectedHotspot.title)}</h3>
-                </div>
-
-                {/* Status & Update Time */}
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-border/45 bg-secondary/5 px-2.5 py-1.5 text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-muted-foreground">{localize({ en: "Status:", ar: "الحالة:" }, language)}</span>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0 text-[9px] font-mono font-bold uppercase tracking-wider border ${hotspotStatusDetails?.toneStyles}`}>
+                {/* Hotspot Title & Category & Status */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">{tr(selectedHotspot.category)}</span>
+                    {selectedHotspot.updatedAt && (
+                      <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px]">
+                        <Clock3 className="h-3 w-3" />
+                        <span>{selectedHotspot.updatedAt}</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-base font-bold tracking-tight text-foreground leading-tight">{tr(selectedHotspot.title)}</h3>
+                  <div className="flex items-center">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${hotspotStatusDetails?.toneStyles}`}>
                       <span className={`h-1.5 w-1.5 rounded-full ${hotspotStatusDetails?.toneColor} ${selectedHotspot.status === 'critical' || selectedHotspot.status === 'warning' ? 'animate-pulse' : ''}`}></span>
                       {hotspotStatusDetails?.statusLabel}
                     </span>
                   </div>
-                  {selectedHotspot.updatedAt && (
-                    <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px]">
-                      <Clock3 className="h-3 w-3" />
-                      <span>{selectedHotspot.updatedAt}</span>
+                </div>
+
+                {/* Unified Info Card (Impact & Evidence) */}
+                <div className="rounded-xl border border-border bg-secondary/5 overflow-hidden divide-y divide-border/40">
+                  {selectedHotspot.impact && (
+                    <div className="p-3 text-xs leading-relaxed text-foreground">
+                      <span className="block font-semibold text-primary/90 uppercase tracking-wider text-[9px] mb-1">{localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}</span>
+                      <p>{tr(selectedHotspot.impact)}</p>
+                    </div>
+                  )}
+                  {selectedHotspot.evidence && (
+                    <div className="p-3 text-xs leading-relaxed text-muted-foreground bg-status-warn/5">
+                      <span className="block font-semibold text-status-warn uppercase tracking-wider text-[9px] mb-1">{localize({ en: "Evidence", ar: "الأدلة" }, language)}</span>
+                      <p>{tr(selectedHotspot.evidence)}</p>
                     </div>
                   )}
                 </div>
 
-                {/* Operational Impact */}
-                {selectedHotspot.impact && (
-                  <div className="rounded-lg border border-border/40 bg-background/50 p-2.5 text-xs leading-relaxed text-foreground shadow-inner">
-                    <span className="font-bold text-primary me-1">{localize({ en: "Operational Impact:", ar: "التأثير التشغيلي:" }, language)}</span>
-                    {tr(selectedHotspot.impact)}
-                  </div>
-                )}
-
-                {/* Diagnostic Evidence */}
-                {selectedHotspot.evidence && (
-                  <div className="rounded-lg border border-border/30 bg-status-warn/5 p-2.5 text-xs leading-relaxed text-muted-foreground">
-                    <span className="font-bold text-status-warn me-1">{localize({ en: "Evidence:", ar: "الأدلة:" }, language)}</span>
-                    {tr(selectedHotspot.evidence)}
-                  </div>
-                )}
-
                 {/* CCTV Feed */}
-                <div className="flex flex-col rounded-lg overflow-hidden border border-border/60 bg-black">
+                <div className="flex flex-col rounded-xl overflow-hidden border border-border/60 bg-black shadow-sm">
                   <div className="flex items-center justify-between bg-zinc-950 px-2.5 py-1 border-b border-border/30">
                     <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-wider">REC // {selectedHotspot.source || "T3-GATE-B12"}</span>
                     <div className="flex items-center gap-1">
-                      <span className="h-1 w-1 rounded-full bg-rose-600 animate-pulse"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse"></span>
                       <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
                     </div>
                   </div>
-                  <div className="h-[86px] overflow-hidden relative">
+                  <div className="h-[96px] overflow-hidden relative">
                     <CctvTerminalLoop />
                   </div>
                 </div>
 
                 {/* Action Recommendation Callout */}
-                <div className="mt-2 pt-2 border-t border-border/30">
-                  {selectedHotspot.action && (
-                    <div className="flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 p-3 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
-                        <Zap className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="block font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
-                          {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
-                        </span>
-                        <p className="mt-1 text-xs text-foreground font-semibold leading-relaxed">
-                          {tr(selectedHotspot.action)}
-                        </p>
-                      </div>
+                {selectedHotspot.action && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
+                      <Zap className="h-4 w-4" />
                     </div>
-                  )}
-                </div>
+                    <div className="min-w-0">
+                      <span className="block font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                        {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
+                      </span>
+                      <p className="mt-1 text-xs text-foreground font-semibold leading-relaxed">
+                        {tr(selectedHotspot.action)}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
-                <div className="p-4">
+                <div className="p-3.5 lg:p-4">
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary font-bold">{tr("Area Overview")}</p>
                   <h3 className="mt-1 text-base font-bold tracking-tight text-foreground">{tr(activeScene.title)}</h3>
                   <p className="mt-1 text-xs leading-normal text-muted-foreground line-clamp-2">{tr(activeScene.summary)}</p>
@@ -363,7 +358,7 @@ function DigitalTwinView() {
                   </div>
                 </div>
               
-                <div className="mt-auto border-t border-border p-3 bg-surface-2/25">
+                <div className="mt-auto border-t border-border p-2.5 lg:p-3 bg-surface-2/25">
                   <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
                   <div className="mt-2.5">
                     <ZoneStatusPanel />
@@ -414,28 +409,39 @@ function IncomingFlightsPanel({
   const sourceTone: Tone = source === "live" ? "ok" : source === "loading" ? "info" : "neutral";
 
   return (
-    <section className="panel-inner p-2.5" aria-label={localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}>
+    <section className="panel-inner p-2 lg:p-2.5" aria-label={localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-primary font-bold">{localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}</p>
+        <p className="font-mono text-[9px] lg:text-[10px] uppercase tracking-[0.15em] text-primary font-bold">{localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}</p>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-muted-foreground font-mono">{updatedAt}</span>
-          <StatusPill tone={sourceTone} className="text-[9px] px-1.5 py-0">{sourceLabel}</StatusPill>
+          <span className="text-[9px] text-muted-foreground font-mono">{updatedAt}</span>
+          <StatusPill tone={sourceTone} className="text-[8px] px-1.5 py-0">{sourceLabel}</StatusPill>
         </div>
       </div>
-      <div className="grid gap-1">
+      <div className="grid gap-1.5">
         {flights.slice(0, 3).map((flight) => (
-          <div key={`${flight.flight}-${flight.eta}`} className="flex items-center justify-between text-xs py-0.5 border-b border-border/30 last:border-b-0">
-            <span className="font-mono font-bold text-foreground">{flight.flight}</span>
-            <span className="text-muted-foreground truncate max-w-[80px] text-[11px]">{tr(flight.origin.split(" (")[0])}</span>
-            <span className="font-mono text-foreground">{flight.eta}</span>
-            <span className="font-mono text-muted-foreground text-[11px]">{flight.gate.replace("T3 / ", "").replace("Gate ", "")}</span>
-            <span className={`text-[10px] font-semibold shrink-0 ${
-              flight.tone === 'ok' ? 'text-status-ok' :
-              flight.tone === 'warn' ? 'text-status-warn' :
-              flight.tone === 'crit' ? 'text-status-crit' : 'text-muted-foreground'
-            }`}>
-              {localizedFlightStatus(flight.status, language)}
-            </span>
+          <div key={`${flight.flight}-${flight.eta}`} className="flex items-center justify-between gap-2 py-1 border-b border-border/20 last:border-b-0">
+            {/* Flight Code & Origin */}
+            <div className="flex flex-col min-w-0">
+              <span className="font-mono font-bold text-foreground text-xs leading-none">{flight.flight}</span>
+              <span className="text-muted-foreground truncate text-[10px] mt-0.5">{tr(flight.origin.split(" (")[0])}</span>
+            </div>
+            
+            {/* ETA & Gate */}
+            <div className="flex flex-col items-center shrink-0">
+              <span className="font-mono text-foreground text-xs leading-none">{flight.eta}</span>
+              <span className="font-mono text-muted-foreground text-[10px] mt-0.5">{flight.gate.replace("T3 / ", "").replace("Gate ", "")}</span>
+            </div>
+
+            {/* Status */}
+            <div className="text-end shrink-0">
+              <span className={`text-[10px] font-semibold ${
+                flight.tone === 'ok' ? 'text-status-ok' :
+                flight.tone === 'warn' ? 'text-status-warn' :
+                flight.tone === 'crit' ? 'text-status-crit' : 'text-muted-foreground'
+              }`}>
+                {localizedFlightStatus(flight.status, language)}
+              </span>
+            </div>
           </div>
         ))}
       </div>
@@ -446,14 +452,14 @@ function IncomingFlightsPanel({
 function ZoneStatusPanel() {
   const { language } = useLocale();
   return (
-    <section className="panel-inner p-2.5" aria-label={localize({ en: "Terminal zone status", ar: "حالة مناطق المباني" }, language)}>
-      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-primary font-bold">{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
+    <section className="panel-inner p-2 lg:p-2.5" aria-label={localize({ en: "Terminal zone status", ar: "حالة مناطق المباني" }, language)}>
+      <p className="mb-2 font-mono text-[9px] lg:text-[10px] uppercase tracking-[0.15em] text-primary font-bold">{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
       <div className="grid gap-1">
         {zoneStatusRows.map((zone) => (
-          <div key={zone.zone} className="flex items-center justify-between text-xs py-0.5 border-b border-border/30 last:border-b-0">
-            <span className="font-semibold text-foreground">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}</span>
-            <span className="text-muted-foreground text-[11px] truncate max-w-[130px]">{localize(zone.detail, language)}</span>
-            <span className={`text-[10px] font-bold uppercase ${
+          <div key={zone.zone} className="flex items-center justify-between gap-2 text-xs py-1 border-b border-border/20 last:border-b-0">
+            <span className="font-semibold text-foreground shrink-0">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}</span>
+            <span className="text-muted-foreground text-[11px] truncate flex-1 min-w-0 text-start px-1">{localize(zone.detail, language)}</span>
+            <span className={`text-[10px] font-bold uppercase shrink-0 ${
               zone.tone === 'ok' ? 'text-status-ok' :
               zone.tone === 'warn' ? 'text-status-warn' :
               zone.tone === 'crit' ? 'text-status-crit' : 'text-muted-foreground'
