@@ -36,6 +36,9 @@ function DigitalTwinView() {
       const imgDark = new Image();
       imgDark.src = scene.darkImage;
     });
+    // Preload CCTV image to resolve dynamic load latency
+    const cctvImg = new Image();
+    cctvImg.src = "/manager-assets/cctv-live.webp";
   }, []);
 
   useEffect(() => {
@@ -257,10 +260,14 @@ function DigitalTwinView() {
                   </button>
                 </div>
 
-                {/* Hotspot Title & Category & Status */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground/60">{tr(selectedHotspot.category)}</span>
+                {/* Hotspot Title & Status/Time */}
+                <div className="space-y-1.5">
+                  <h3 className="text-base font-bold tracking-tight text-foreground leading-tight">{tr(selectedHotspot.title)}</h3>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${hotspotStatusDetails?.toneStyles}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${hotspotStatusDetails?.toneColor} ${selectedHotspot.status === 'critical' || selectedHotspot.status === 'warning' ? 'animate-pulse' : ''}`}></span>
+                      {hotspotStatusDetails?.statusLabel}
+                    </span>
                     {selectedHotspot.updatedAt && (
                       <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px]">
                         <Clock3 className="h-3 w-3" />
@@ -268,43 +275,31 @@ function DigitalTwinView() {
                       </div>
                     )}
                   </div>
-                  <h3 className="text-base font-bold tracking-tight text-foreground leading-tight">{tr(selectedHotspot.title)}</h3>
-                  <div className="flex items-center">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${hotspotStatusDetails?.toneStyles}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${hotspotStatusDetails?.toneColor} ${selectedHotspot.status === 'critical' || selectedHotspot.status === 'warning' ? 'animate-pulse' : ''}`}></span>
-                      {hotspotStatusDetails?.statusLabel}
-                    </span>
-                  </div>
                 </div>
 
-                {/* Unified Info Card (Impact & Evidence) */}
-                <div className="rounded-xl border border-border bg-secondary/5 overflow-hidden divide-y divide-border/40">
+                {/* Operational Impact & Evidence (Flat flow design) */}
+                <div className="space-y-3 pt-1">
                   {selectedHotspot.impact && (
-                    <div className="p-3 text-xs leading-relaxed text-foreground">
-                      <span className="block font-semibold text-primary/90 uppercase tracking-wider text-[9px] mb-1">{localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}</span>
-                      <p>{tr(selectedHotspot.impact)}</p>
+                    <div className="text-xs leading-relaxed text-foreground">
+                      <span className="block font-bold text-primary uppercase tracking-wider text-[9px] mb-0.5">{localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}</span>
+                      <p className="text-muted-foreground">{tr(selectedHotspot.impact)}</p>
                     </div>
                   )}
                   {selectedHotspot.evidence && (
-                    <div className="p-3 text-xs leading-relaxed text-muted-foreground bg-status-warn/5">
-                      <span className="block font-semibold text-status-warn uppercase tracking-wider text-[9px] mb-1">{localize({ en: "Evidence", ar: "الأدلة" }, language)}</span>
-                      <p>{tr(selectedHotspot.evidence)}</p>
+                    <div className="text-xs leading-relaxed text-foreground">
+                      <span className="block font-bold text-status-warn uppercase tracking-wider text-[9px] mb-0.5">{localize({ en: "Evidence", ar: "الأدلة" }, language)}</span>
+                      <p className="text-muted-foreground">{tr(selectedHotspot.evidence)}</p>
                     </div>
                   )}
                 </div>
 
-                {/* CCTV Feed */}
-                <div className="flex flex-col rounded-xl overflow-hidden border border-border/60 bg-black shadow-sm">
-                  <div className="flex items-center justify-between bg-zinc-950 px-2.5 py-1 border-b border-border/30">
-                    <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-wider">REC // {selectedHotspot.source || "T3-GATE-B12"}</span>
-                    <div className="flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse"></span>
-                      <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">LIVE</span>
-                    </div>
-                  </div>
-                  <div className="h-[96px] overflow-hidden relative">
-                    <CctvTerminalLoop />
-                  </div>
+                {/* CCTV Feed - CCTV image ONLY with rounded edges */}
+                <div className="relative overflow-hidden rounded-xl border border-border bg-black shadow-sm aspect-[16/9] max-h-[140px] w-full">
+                  <img 
+                    src="/manager-assets/cctv-live.webp" 
+                    alt="CCTV live feed" 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
 
                 {/* Action Recommendation Callout */}
@@ -370,23 +365,6 @@ function DigitalTwinView() {
         </div>
       </SectionPanel>
 
-    </div>
-  );
-}
-
-
-function CctvTerminalLoop() {
-  return (
-    <div className="cctv-loop overflow-hidden rounded-lg border border-border bg-black" aria-label="Cairo Airport terminal CCTV view showing passengers moving near departures and boarding gates">
-      <div className="cctv-frame relative w-full h-full">
-        <img 
-          src="/manager-assets/cctv-live.webp" 
-          alt="CCTV live feed" 
-          className="w-full h-full object-cover opacity-85" 
-        />
-        <span className="cctv-scanline" />
-        <span className="cctv-timestamp">CAI CCTV · LIVE FEED</span>
-      </div>
     </div>
   );
 }
