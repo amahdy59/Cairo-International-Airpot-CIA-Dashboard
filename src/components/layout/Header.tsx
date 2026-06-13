@@ -70,11 +70,11 @@ export function Header({
   const ThemeIcon = theme === "dark" ? Sun : Moon;
 
   const handleMenuSelect = (action: () => void) => {
-    action();
-    // Smoothly close the menu after a minor delay to allow microinteraction state update to be visible
+    setIsMenuOpen(false);
+    // Smoothly close the menu first, delaying the heavy layout/theme re-render until the transition finishes
     setTimeout(() => {
-      setIsMenuOpen(false);
-    }, 180);
+      action();
+    }, 280);
   };
   return (
     <header className="fixed top-0 left-0 right-0 w-full z-50 border-b border-white/20 bg-background/40 backdrop-blur-3xl backdrop-saturate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-background/20 dark:border-white/10 dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] supports-[backdrop-filter]:bg-background/30">
@@ -173,8 +173,8 @@ export function Header({
       <div
         className={`xl:hidden overflow-hidden transition-all pointer-events-auto ${
           isMenuOpen
-            ? "max-h-[350px] opacity-100 border-t border-white/20 visible duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-            : "max-h-0 opacity-0 border-t-0 invisible pointer-events-none duration-250 ease-[cubic-bezier(0.7,0,0.84,0)]"
+            ? "max-h-[350px] opacity-100 border-t border-white/20 visible duration-300 ease-out"
+            : "max-h-0 opacity-0 border-t-0 invisible pointer-events-none duration-300 ease-in"
         }`}
       >
         <div className="bg-background/95 backdrop-blur-2xl px-4 py-4 shadow-[inset_0_4px_12px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_4px_12px_rgba(0,0,0,0.15)]">

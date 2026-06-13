@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Zap } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
@@ -309,8 +309,14 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                 <ImageModeIcon className="h-4 w-4" />
               </button>
 
-              {/* Consolidated Navigation Controller (D-pad) in bottom-left */}
-              <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1 rounded-xl border border-border bg-background/85 p-1.5 backdrop-blur-md shadow-lg">
+              {/* Mobile/Tablet: Subtle Drag Indicator */}
+              <div className="absolute bottom-3 left-3 z-10 lg:hidden flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-1 text-[10px] font-medium text-foreground/75 backdrop-blur-md shadow-sm select-none pointer-events-none">
+                <Move className="h-3 w-3 text-primary animate-pulse" />
+                <span>{localize({ en: "Drag to pan", ar: "اسحب للتحريك" }, language)}</span>
+              </div>
+
+              {/* Desktop: Consolidated Navigation Controller (D-pad) in bottom-left */}
+              <div className="hidden lg:block absolute bottom-3 left-3 z-10 flex flex-col gap-1 rounded-xl border border-border bg-background/85 p-1.5 backdrop-blur-md shadow-lg">
                 <div className="grid grid-cols-3 gap-1">
                   {/* Row 1 */}
                   <div />
