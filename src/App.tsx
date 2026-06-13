@@ -68,7 +68,7 @@ export function App() {
         ) : (
         <div key={activeTab} id="main-content" className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
           <ErrorBoundary>
-            {activeTab === "digital" && <DigitalTwinView />}
+            {activeTab === "digital" && <DigitalTwinView theme={theme} />}
             {activeTab === "operations" && <OperationsView />}
             {activeTab === "safety" && <SafetyView />}
           </ErrorBoundary>

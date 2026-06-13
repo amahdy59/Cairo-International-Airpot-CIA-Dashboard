@@ -6,10 +6,16 @@ import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, Incomi
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 
-function DigitalTwinView() {
+function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
   const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    if (theme) {
+      setImageMode(theme);
+    }
+  }, [theme]);
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
 
   
