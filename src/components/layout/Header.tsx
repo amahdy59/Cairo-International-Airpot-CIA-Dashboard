@@ -179,16 +179,13 @@ export function Header({
       >
         <div className="bg-background/95 backdrop-blur-2xl px-4 py-4 shadow-[inset_0_4px_12px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_4px_12px_rgba(0,0,0,0.15)]">
           <div className="flex flex-col gap-4 max-w-xl mx-auto">
-            {/* Clock/Time */}
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/25 p-3">
-              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-primary font-semibold">
-                <Clock3 className="h-4 w-4 animate-pulse" />
-                <span>{tr("Current Time")}</span>
-              </div>
-              <div className="flex items-center gap-4 mt-1">
-                <TimeChip label={tr("Cairo")} value={times.cairo} />
-                <span className="h-4 w-px bg-border" />
-                <TimeChip label={tr("UTC")} value={times.utc} />
+            {/* Clock/Time in a single row matching other buttons */}
+            <div className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/25 px-4 text-sm font-medium select-none">
+              <Clock3 className="h-4 w-4 text-primary shrink-0 animate-pulse" />
+              <div className="flex items-center gap-2.5 font-mono text-xs text-foreground">
+                <span>{tr("Cairo")}: {times.cairo}</span>
+                <span className="text-muted-foreground/30 font-sans">|</span>
+                <span>{tr("UTC")}: {times.utc}</span>
               </div>
             </div>
 
