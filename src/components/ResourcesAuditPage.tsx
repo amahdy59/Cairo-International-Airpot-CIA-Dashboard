@@ -34,38 +34,38 @@ import { localize } from "../utils/helpers";
 const personas = [
   {
     id: "karim",
-    name: { en: "Karim — Operations Manager", ar: "كريم — مدير العمليات" },
+    name: { en: "Karim — Duty Operations Manager", ar: "كريم — مدير عمليات نوبة العمل" },
     avatarPath: "/karim_avatar.png",
-    role: { en: "10y experience, works night shifts on 4K wall displays.", ar: "خبرة ١٠ سنوات، يعمل بنوبات ليلية على شاشات جدارية 4K." },
-    needs: { en: "Needs high-priority anomaly detection visible under 200ms without switching tabs.", ar: "يحتاج لرصد فوري للمشاكل يظهر خلال أقل من ٢٠٠ ملي ثانية دون تغيير التبويبات." },
+    role: { en: "12y command center experience, oversees live terminal operations on 4K wall displays.", ar: "خبرة ١٢ عاماً في مركز القيادة، يشرف على عمليات الصالات الحية على شاشات جدارية 4K." },
+    needs: { en: "Requires immediate anomaly alerts (under 200ms) with aging metrics to prevent dispatch bottlenecks.", ar: "يتطلب تنبيهات فورية عن المشاكل (أقل من ٢٠٠ ملي ثانية) مع مؤشرات تقادم لمنع حدوث تكدس." },
     specs: [
-      { label: { en: "Shift", ar: "النوبة" }, val: { en: "Night (12h)", ar: "ليلية (١٢ ساعة)" } },
-      { label: { en: "Device", ar: "الجهاز" }, val: { en: "4K Wall Display", ar: "شاشة جدارية 4K" } },
-      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Alert aging & escalation", ar: "متابعة وتصعيد التنبيهات" } }
+      { label: { en: "Shift", ar: "النوبة" }, val: { en: "Rotational (12h)", ar: "متناوبة (١٢ ساعة)" } },
+      { label: { en: "Device", ar: "الجهاز" }, val: { en: "4K Video Wall", ar: "شاشة جدارية 4K" } },
+      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Escalation & response SLA", ar: "سرعة الاستجابة والتصعيد" } }
     ]
   },
   {
     id: "sara",
-    name: { en: "Sara — Gate Supervisor", ar: "سارة — مشرف بوابات" },
+    name: { en: "Sarah — Terminal Gate Supervisor", ar: "سارة — مشرف بوابات صالة الركاب" },
     avatarPath: "/sara_avatar.png",
-    role: { en: "Manages T2 departures. Primarily Arabic speaker, works on 10\" tablet.", ar: "تدير مغادرات مبنى ٢. تتحدث العربية أساساً، تعمل على تابلت ١٠ بوصة." },
-    needs: { en: "Requires larger touch targets (44px min) and responsive RTL Arabic support.", ar: "تتطلب مساحات لمس أكبر (٤٤ بكسل كحد أدنى) ودعم متجاوب للغة العربية." },
+    role: { en: "Manages flight boarding and passenger flow on active aprons using standard tablets.", ar: "تدير صعود الركاب وتدفق المسافرين على أرض المطار باستخدام أجهزة التابلت." },
+    needs: { en: "Needs high-contrast layouts and large touch targets (44px min) for easy navigation while walking.", ar: "تحتاج إلى تصميم عالي التباين ومساحات لمس واسعة (٤٤ بكسل كحد أدنى) لسهولة الاستخدام أثناء الحركة." },
     specs: [
-      { label: { en: "Shift", ar: "النوبة" }, val: { en: "Day (8h)", ar: "نهارية (٨ ساعات)" } },
-      { label: { en: "Device", ar: "الجهاز" }, val: { en: "10\" Tablet", ar: "تابلت ١٠ بوصة" } },
-      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Touch target size & RTL Arabic", ar: "حجم اللمس واللغة العربية" } }
+      { label: { en: "Shift", ar: "النوبة" }, val: { en: "Day Shift (8h)", ar: "نهارية (٨ ساعات)" } },
+      { label: { en: "Device", ar: "الجهاز" }, val: { en: "10\" Mobile Tablet", ar: "تابلت ١٠ بوصة" } },
+      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "RTL layout & touch scaling", ar: "التوافق العربي ومساحات اللمس" } }
     ]
   },
   {
     id: "david",
-    name: { en: "David — Safety Auditor", ar: "ديفيد — مدقق السلامة" },
+    name: { en: "David — ICAO Safety Auditor", ar: "ديفيد — مدقق سلامة الطيران (ICAO)" },
     avatarPath: "/david_avatar.png",
-    role: { en: "Performs external regulatory reviews. Works on 13\" laptop.", ar: "يقوم بمراجعات تنظيمية خارجية. يعمل على لابتوب ١٣ بوصة." },
-    needs: { en: "Requires CSV/Excel data export capabilities and high contrast elements for outdoor glare.", ar: "يتطلب إمكانية تصدير البيانات (CSV/Excel) وعناصر تباين عالية للقراءة تحت ضوء الشمس." },
+    role: { en: "Performs safety compliance audits on airport airside and landside equipment.", ar: "يقوم بتدقيق الامتثال لمعايير السلامة للجانب الجوي والأرضي ومعدات المطار." },
+    needs: { en: "Requires tabular data structures and high-contrast styling to audit under outdoor sun glare.", ar: "يتطلب جداول بيانات منظمة وألواناً عالية التباين للتدقيق والقراءة تحت أشعة الشمس المباشرة." },
     specs: [
-      { label: { en: "Shift", ar: "النوبة" }, val: { en: "Intermittent", ar: "متقطعة" } },
-      { label: { en: "Device", ar: "الجهاز" }, val: { en: "13\" Laptop", ar: "لابتوب ١٣ بوصة" } },
-      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "High-contrast reading & CSV export", ar: "تباين القراءة وتصدير البيانات" } }
+      { label: { en: "Shift", ar: "النوبة" }, val: { en: "Intermittent / Audits", ar: "متقطعة / فترات التدقيق" } },
+      { label: { en: "Device", ar: " lلجهاز" }, val: { en: "13\" Workstation", ar: "لابتوب ١٣ بوصة" } },
+      { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Data grid contrast & readability", ar: "تبويب البيانات وقابلية القراءة" } }
     ]
   }
 ];
@@ -73,32 +73,32 @@ const personas = [
 const timelinePhases = [
   {
     id: "discovery",
-    title: { en: "1. Discovery & User Research", ar: "١. الاكتشاف وأبحاث المستخدم" },
-    desc: { en: "Conducted interviews with Karim and Sara. Identified operator cognitive load limits and alarm fatigue under peak times.", ar: "إجراء مقابلات مع كريم وسارة. تم تحديد حدود العبء الذهني للمشغلين وإرهاق الإنذارات في أوقات الذروة." },
+    title: { en: "1. Command Center & Field Observations", ar: "١. الملاحظات الميدانية ومركز القيادة" },
+    desc: { en: "Conducted shadowing in CAI's command center. Discovered operator alarm fatigue during peak flight schedules and high-glare readability issues on active runways.", ar: "تم إجراء معايشة في مركز قيادة مطار القاهرة. تم اكتشاف إرهاق الإنذارات لدى المشغلين في أوقات الذروة وصعوبات القراءة تحت أشعة الشمس." },
     icon: Search,
     bullets: [
-      { en: "Identified need for alerts visibility within 200ms.", ar: "تحديد الحاجة لظهور التنبيهات في أقل من ٢٠٠ ملي ثانية." },
-      { en: "Acknowledged that wall displays require larger key metrics.", ar: "تأكيد أن الشاشات الجدارية تتطلب مؤشرات رئيسية أكبر حجماً." }
+      { en: "Command center monitors require simplified, high-priority visual tokens.", ar: "شاشات المراقبة تتطلب دمج وتبسيط الرموز البصرية عالية الأهمية." },
+      { en: "Apron tablet devices need custom viewports and large touch targets.", ar: "أجهزة التابلت في المطار تتطلب متصفحاً مخصصاً ومساحات لمس أكبر." }
     ]
   },
   {
     id: "ia",
-    title: { en: "2. Information Architecture & Structuring", ar: "٢. هيكلة وتنسيق المعلومات" },
-    desc: { en: "Sorted operational metrics based on priority. Consolidated complex airport feeds into a clean double-tab interface.", ar: "ترتيب مقاييس العمليات بناءً على الأولوية. دمج تدفقات المطار المعقدة في واجهة ثنائية التبويب." },
+    title: { en: "2. Operational Layout & Information Mapping", ar: "٢. تخطيط العمليات وهيكلة المعلومات" },
+    desc: { en: "Mapped 22 raw sensor data streams into 9 core KPI cards. Designed the dual-tab flow (Visual Command Map vs. Tabular lists) to divide visual load.", ar: "تم تقسيم ٢٢ تدفقاً لبيانات المستشعرات إلى ٩ بطاقات أداء. صممنا تدفقاً ثنائي التبويب لتوزيع الحمل البصري." },
     icon: Network,
     bullets: [
-      { en: "Collapsed 22 raw metrics into 9 essential KPI cards.", ar: "دمج ٢٢ معياراً للبيانات في ٩ مؤشرات أداء رئيسية." },
-      { en: "Separated digital twin visualizer from tabular listings.", ar: "فصل مخطط التوأم الرقمي عن الجداول النصية." }
+      { en: "Grouped flights, safety logs, and maintenance alerts logically.", ar: "ترتيب وتجميع الرحلات وسجلات السلامة وصيانة الطائرات منطقياً." },
+      { en: "Integrated interactive visual twin hotspots to accelerate decision workflows.", ar: "دمج نقاط التوأم الرقمي التفاعلية لتسريع وتيرة اتخاذ القرارات التشغيلية." }
     ]
   },
   {
     id: "accessibility",
-    title: { en: "3. Accessibility Audit & Token Refinement", ar: "٣. تدقيق الوصول وتحسين الرموز" },
-    desc: { en: "Validated and aligned theme colors for WCAG 2.1 AA compliance. Created consistent contrast ratios across modes.", ar: "التحقق من توافق ألوان المظهر مع معايير WCAG 2.1 AA. إنشاء نسب تباين متناسقة بين الأنماط." },
+    title: { en: "3. Accessibility & Device Compatibility Refinement", ar: "٣. تحسين سهولة الوصول وتوافق الأجهزة" },
+    desc: { en: "Tested contrast ratios under active apron glare. Standardized color codes for WCAG 2.1 AA and implemented native bi-directional layouts.", ar: "تم اختبار نسب التباين تحت إضاءة المطار. تم توحيد الرموز اللونية لمعيار WCAG 2.1 AA وتطبيق التخطيط ثنائي الاتجاه." },
     icon: ShieldCheck,
     bullets: [
-      { en: "Verified contrast colors (min 4.5:1 ratio) on card backgrounds.", ar: "التحقق من ألوان التباين (٤.٥:١ كحد أدنى) على خلفيات البطاقات." },
-      { en: "Locked logical tab order flow for mouse-less navigation.", ar: "قفل مسار التبويب المنطقي للتنقل بدون ماوس." }
+      { en: "Verified 4.5:1 minimum text contrast ratios across light and dark modes.", ar: "التحقق من تباين النصوص بنسبة ٤.٥:١ كحد أدنى بالنمط الفاتح والداكن." },
+      { en: "Programmed native CSS mirroring for RTL Arabic and LTR English layouts.", ar: "برمجة انعكاس التخطيط التلقائي لدعم العربية RTL والإنجليزية LTR." }
     ]
   }
 ];
@@ -364,7 +364,7 @@ export default function ResourcesAuditPage() {
                   }`}
                 />
                 <span className={`text-xs font-bold tracking-tight truncate w-full ${isActive ? "text-primary" : "text-muted-foreground"}`}>
-                  {localize(p.id === "karim" ? { en: "Karim", ar: "كريم" } : p.id === "sara" ? { en: "Sara", ar: "سارة" } : { en: "David", ar: "ديفيد" }, language)}
+                  {localize(p.id === "karim" ? { en: "Karim", ar: "كريم" } : p.id === "sara" ? { en: "Sarah", ar: "سارة" } : { en: "David", ar: "ديفيد" }, language)}
                 </span>
               </button>
             );

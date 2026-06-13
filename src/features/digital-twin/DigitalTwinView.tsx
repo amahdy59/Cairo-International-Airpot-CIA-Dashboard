@@ -539,22 +539,22 @@ function IncomingFlightsPanel({
       </div>
       <div className="grid gap-1.5">
         {flights.slice(0, 3).map((flight) => (
-          <div key={`${flight.flight}-${flight.eta}`} className="flex items-center justify-between gap-2 py-1 border-b border-border/20 last:border-b-0">
+          <div key={`${flight.flight}-${flight.eta}`} className="grid grid-cols-[2.2fr_1.2fr_1.6fr] items-center gap-2 py-1 border-b border-border/20 last:border-b-0">
             {/* Flight Code & Origin */}
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 text-start">
               <span className="font-mono font-bold text-foreground text-xs leading-none">{flight.flight}</span>
               <span className="text-muted-foreground truncate text-[10px] mt-0.5">{tr(flight.origin.split(" (")[0])}</span>
             </div>
             
             {/* ETA & Gate */}
-            <div className="flex flex-col items-center shrink-0">
+            <div className="flex flex-col items-center shrink-0 text-center">
               <span className="font-mono text-foreground text-xs leading-none">{flight.eta}</span>
-              <span className="font-mono text-muted-foreground text-[10px] mt-0.5">{flight.gate.replace("T3 / ", "").replace("Gate ", "")}</span>
+              <span className="font-mono text-muted-foreground text-[10px] mt-0.5 text-center">{flight.gate.replace("T3 / ", "").replace("Gate ", "")}</span>
             </div>
 
             {/* Status */}
-            <div className="text-end shrink-0">
-              <span className={`text-[10px] font-semibold ${
+            <div className="text-end min-w-0">
+              <span className={`text-[10px] font-semibold block truncate ${
                 flight.tone === 'ok' ? 'text-status-ok' :
                 flight.tone === 'warn' ? 'text-status-warn' :
                 flight.tone === 'crit' ? 'text-status-crit' : 'text-muted-foreground'

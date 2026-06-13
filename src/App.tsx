@@ -78,9 +78,15 @@ export function App() {
       <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
         {c.footer}
         <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
-        <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
-          {c.resources}
-        </a>
+        {activePage === "resources" ? (
+          <a className="font-medium text-primary hover:underline" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
+            {language === "en" ? "Go back to Dashboard" : "العودة إلى لوحة التحكم"}
+          </a>
+        ) : (
+          <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
+            {c.resources}
+          </a>
+        )}
       </footer>
       <BackToTopButton />
     </div>
