@@ -530,7 +530,7 @@ export default function ResourcesAuditPage() {
           {/* Polished Operations View (Right side/Underneath) */}
           <div className="absolute inset-0 w-full h-full">
             <img 
-              src="/manager-assets/overview-dark.webp" 
+              src="/operations_polished.jpg" 
               alt={localize({ en: "Polished Operations View", ar: "التصميم النهائي للوحة العمليات" }, language)} 
               className="w-full h-full object-cover select-none pointer-events-none" 
             />
