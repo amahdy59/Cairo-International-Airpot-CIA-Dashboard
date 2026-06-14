@@ -271,7 +271,7 @@ export default function ResourcesAuditPage() {
               <h3 className="text-lg font-bold text-foreground">
                 {localize({ en: "Ahmed Mahdy", ar: "أحمد مهدي" }, language)}
               </h3>
-              <p className="text-sm text-muted-foreground font-mono">
+              <p className="text-sm text-muted-foreground">
                 {localize({ en: "UX Designer & Data Analyst", ar: "مصمم تجربة مستخدم ومحلل بيانات" }, language)}
               </p>
             </div>
@@ -308,7 +308,7 @@ export default function ResourcesAuditPage() {
         </div>
 
         <div className="border-t border-border/50 pt-3.5 flex justify-between items-center text-sm z-10 relative">
-          <span className="font-mono text-muted-foreground">{localize({ en: "Cairo, Egypt", ar: "القاهرة، مصر" }, language)}</span>
+          <span className="text-muted-foreground">{localize({ en: "Cairo, Egypt", ar: "القاهرة، مصر" }, language)}</span>
           <div className="flex items-center gap-4">
             <a 
               href="https://www.linkedin.com/in/creativemahdy"
@@ -440,11 +440,15 @@ export default function ResourcesAuditPage() {
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{localize(activeData.needs, language)}</p>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-border/40 pt-3 text-xs font-mono text-muted-foreground">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-border/40 pt-3 text-xs text-muted-foreground">
                 {activeData.specs.map((spec, i) => (
-                  <div key={i}>
-                    <div className="font-bold text-muted-foreground text-xs uppercase tracking-wide">{localize(spec.label, language)}</div>
-                    <div className="truncate mt-0.5 text-sm text-foreground font-semibold">{localize(spec.val, language)}</div>
+                  <div key={i} className="flex flex-col gap-0.5">
+                    <span className={`font-bold text-muted-foreground text-[11px] uppercase ${language === 'ar' ? 'tracking-normal' : 'tracking-wider'}`}>
+                      {localize(spec.label, language)}
+                    </span>
+                    <span className="text-sm text-foreground font-semibold">
+                      {localize(spec.val, language)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -471,49 +475,50 @@ export default function ResourcesAuditPage() {
             const Icon = phase.icon;
             const isExpanded = !!expandedPhases[phase.id];
             return (
-              <div key={phase.id} className="relative flex gap-2.5 sm:gap-4">
-                {/* Left phase icon with outer border */}
-                <div className="flex flex-col items-center">
+              <div key={phase.id} className="relative flex gap-2 sm:gap-4">
+                {/* Left phase icon with outer border (smaller on mobile) */}
+                <div className="flex flex-col items-center shrink-0">
                   <button 
                     onClick={() => togglePhase(phase.id)}
-                    className={`relative z-10 w-10 h-10 rounded-xl border flex items-center justify-center transition cursor-pointer ${
+                    className={`relative z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border flex items-center justify-center transition cursor-pointer ${
                       isExpanded ? "border-primary bg-primary/10 text-primary" : "border-border/80 bg-card text-muted-foreground"
                     }`}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                   {/* Visual connector line */}
-                  <div className="w-[1.5px] bg-border flex-1 min-h-[16px] my-1" />
+                  <div className="w-[1.5px] bg-border flex-1 min-h-[12px] my-1" />
                 </div>
 
-                {/* Right side information card */}
+                {/* Right side information card (fully collapsed/expanded accordion) */}
                 <div 
                   onClick={() => togglePhase(phase.id)}
-                  className={`flex-1 bg-transparent border-0 sm:bg-secondary/25 sm:border rounded-none sm:rounded-xl p-0 sm:p-4 transition-all duration-300 cursor-pointer ${
+                  className={`flex-1 min-w-0 bg-transparent border-0 sm:bg-secondary/25 sm:border rounded-none sm:rounded-xl p-0 sm:p-4 transition-all duration-300 cursor-pointer ${
                     isExpanded ? "sm:border-primary/40 sm:bg-secondary/25 shadow-sm" : "sm:border-border/60 sm:hover:border-border"
                   }`}
                 >
                   <div className="flex justify-between items-center gap-2">
-                    <h4 className={`font-semibold text-sm transition-colors ${isExpanded ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                    <h4 className={`font-semibold text-sm transition-colors truncate ${isExpanded ? "text-primary font-bold" : "text-muted-foreground"}`}>
                       {localize(phase.title, language)}
                     </h4>
-                    {isExpanded ? <ChevronUp className="h-4.5 w-4.5 text-primary" /> : <ChevronDown className="h-4.5 w-4.5 text-muted-foreground" />}
+                    {isExpanded ? <ChevronUp className="h-4 w-4 text-primary shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                    {localize(phase.desc, language)}
-                  </p>
 
-                  {/* Expandable deliverables list */}
                   {isExpanded && (
-                    <div className="mt-3.5 pt-3 border-t border-border/40 animate-in fade-in duration-300">
-                      <ul className="space-y-2 pl-0 list-none text-xs text-muted-foreground">
-                        {phase.bullets.map((bullet, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm">
-                            <Check className="h-4 w-4 text-status-ok shrink-0 mt-0.5" />
-                            <span>{localize(bullet, language)}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="mt-2 text-sm text-muted-foreground leading-relaxed animate-in fade-in duration-200">
+                      <p>{localize(phase.desc, language)}</p>
+                      
+                      {/* Expandable deliverables list */}
+                      <div className="mt-3 pt-3 border-t border-border/40">
+                        <ul className="space-y-2 pl-0 list-none text-xs text-muted-foreground">
+                          {phase.bullets.map((bullet, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm">
+                              <Check className="h-4 w-4 text-status-ok shrink-0 mt-0.5" />
+                              <span>{localize(bullet, language)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -904,21 +909,21 @@ export default function ResourcesAuditPage() {
               <tbody className="divide-y divide-border/40 font-medium text-foreground text-xs sm:text-sm">
                 <tr>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Arabic/English Switcher", ar: "تغيير اللغة" }, language)}</td>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "RTL switcher & logical mirroring", ar: "ربط اتجاه الواجهة (RTL) والانعكاس المنطقي" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-xs text-muted-foreground">{localize({ en: "RTL switcher & logical mirroring", ar: "ربط اتجاه الواجهة (RTL) والانعكاس المنطقي" }, language)}</td>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
                     <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20 whitespace-nowrap">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Accessibility (WCAG 2.1 AA)", ar: "معايير تيسير الوصول" }, language)}</td>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "4.5:1 contrast and logical tab sequence", ar: "نسب تباين WCAG 2.1 AA وتسلسل لوحة المفاتيح" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-xs text-muted-foreground">{localize({ en: "4.5:1 contrast and logical tab sequence", ar: "نسب تباين WCAG 2.1 AA وتسلسل لوحة المفاتيح" }, language)}</td>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
                     <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20 whitespace-nowrap">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Live Flight Feed (AODB)", ar: "تغذية الرحلات الجوية" }, language)}</td>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "Simulated live feed status", ar: "تغذية بيانات افتراضية" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-xs text-muted-foreground">{localize({ en: "Simulated live feed status", ar: "تغذية بيانات افتراضية" }, language)}</td>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
                     <span className="text-xs font-mono text-status-warn bg-status-warn/10 px-2 py-0.5 rounded border border-status-warn/20 whitespace-nowrap">{localize({ en: "PENDING", ar: "قيد الانتظار" }, language)}</span>
                   </td>
