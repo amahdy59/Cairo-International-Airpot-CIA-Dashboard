@@ -33,8 +33,8 @@ const personas = [
     id: "karim",
     name: { en: "Karim — Duty Operations Manager", ar: "كريم — مدير عمليات نوبة العمل" },
     avatarPath: "/karim_avatar_v2.png",
-    role: { en: "12y command center experience, oversees live terminal operations on 4K wall displays.", ar: "خبرة ١٢ عاماً في مركز القيادة، يشرف على عمليات الصالات الحية على شاشات جدارية 4K." },
-    needs: { en: "Requires immediate operational alerts (under 200ms) with aging metrics to prevent dispatch bottlenecks.", ar: "يتطلب تنبيهات فورية عن المشاكل (أقل من ٢٠٠ ملي ثانية) مع مؤشرات تقادم لمنع حدوث تكدس." },
+    role: { en: "12 years in command centers. Oversees terminal operations on 4K video walls.", ar: "خبرة ١٢ عاماً في مركز القيادة، يشرف على عمليات الصالات الحية على شاشات جدارية 4K." },
+    needs: { en: "Needs fast operational alerts (under 200ms) with status indicators to prevent terminal bottlenecks.", ar: "يتطلب تنبيهات فورية عن المشاكل (أقل من ٢٠٠ ملي ثانية) مع مؤشرات تقادم لمنع حدوث تكدس." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Rotational (12h)", ar: "متناوبة (١٢ ساعة)" } },
       { label: { en: "Device", ar: "الجهاز" }, val: { en: "4K Video Wall", ar: "شاشة جدارية 4K" } },
@@ -45,8 +45,8 @@ const personas = [
     id: "yasmin",
     name: { en: "Yasmin — Terminal Gate Supervisor", ar: "ياسمين — مشرف بوابات صالة الركاب" },
     avatarPath: "/yasmin_avatar_v2.png",
-    role: { en: "Manages flight boarding and passenger flow on active aprons using standard tablets.", ar: "تدير صعود الركاب وتدفق المسافرين على أرض المطار باستخدام أجهزة التابلت." },
-    needs: { en: "Needs high-contrast layouts and large touch targets (44px min) for easy navigation while walking.", ar: "تحتاج إلى تصميم عالي التباين ومساحات لمس واسعة (٤٤ بكسل كحد أدنى) لسهولة الاستخدام أثناء الحركة." },
+    role: { en: "Manages passenger boarding and terminal gate flows using active tablets.", ar: "تدير صعود الركاب وتدفق المسافرين على أرض المطار باستخدام أجهزة التابلت." },
+    needs: { en: "Needs high-contrast screens and large touch targets (min 44px) for mobile use.", ar: "تحتاج إلى تصميم عالي التباين ومساحات لمس واسعة (٤٤ بكسل كحد أدنى) لسهولة الاستخدام أثناء الحركة." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Day Shift (8h)", ar: "نهارية (٨ ساعات)" } },
       { label: { en: "Device", ar: "الجهاز" }, val: { en: "10\" Mobile Tablet", ar: "تابلت ١٠ بوصة" } },
@@ -57,8 +57,8 @@ const personas = [
     id: "tarek",
     name: { en: "Tarek — ICAO Safety Auditor", ar: "طارق — مدقق سلامة الطيران (ICAO)" },
     avatarPath: "/tarek_avatar_v2.png",
-    role: { en: "Performs safety compliance audits on airport airside and landside equipment.", ar: "يقوم بتدقيق الامتثال لمعايير السلامة للجانب الجوي والأرضي ومعدات المطار." },
-    needs: { en: "Requires tabular data structures and high-contrast styling to audit under outdoor sun glare.", ar: "يتطلب جداول بيانات منظمة وألواناً عالية التباين للتدقيق والقراءة تحت أشعة الشمس المباشرة." },
+    role: { en: "Audits safety compliance for airside and landside airport equipment.", ar: "يقوم بتدقيق الامتثال لمعايير السلامة للجانب الجوي والأرضي ومعدات المطار." },
+    needs: { en: "Needs structured data tables and high-contrast text to read under outdoor glare.", ar: "يتطلب جداول بيانات منظمة وألواناً عالية التباين للتدقيق والقراءة تحت أشعة الشمس المباشرة." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Intermittent / Audits", ar: "متقطعة / فترات التدقيق" } },
       { label: { en: "Device", ar: "الجهاز" }, val: { en: "13\" Workstation", ar: "لابتوب ١٣ بوصة" } },
@@ -70,32 +70,32 @@ const personas = [
 const timelinePhases = [
   {
     id: "discovery",
-    title: { en: "1. Command Center & Field Observations", ar: "١. الملاحظات الميدانية ومركز القيادة" },
-    desc: { en: "Conducted shadowing in CAI's command center. Discovered operator alarm fatigue during peak flight schedules and high-glare readability issues on active runways.", ar: "تم إجراء معايشة في مركز قيادة مطار القاهرة. تم اكتشاف إرهاق الإنذارات لدى المشغلين في أوقات الذروة وصعوبات القراءة تحت أشعة الشمس." },
+    title: { en: "1. Field Research & Observations", ar: "١. الملاحظات الميدانية ومركز القيادة" },
+    desc: { en: "Shadowed operators in Cairo's command center. Identified alarm fatigue and screen readability issues under runway glare.", ar: "تم إجراء معايشة في مركز قيادة مطار القاهرة. تم اكتشاف إرهاق الإنذارات لدى المشغلين في أوقات الذروة وصعوبات القراءة تحت أشعة الشمس." },
     icon: Search,
     bullets: [
-      { en: "Command center monitors require simplified, high-priority visual tokens.", ar: "شاشات المراقبة تتطلب دمج وتبسيط الرموز البصرية عالية الأهمية." },
-      { en: "Apron tablet devices need custom viewports and large touch targets.", ar: "أجهزة التابلت في المطار تتطلب متصفحاً مخصصاً ومساحات لمس أكبر." }
+      { en: "Command center displays need simple, high-priority visual cues.", ar: "شاشات المراقبة تتطلب دمج وتبسيط الرموز البصرية عالية الأهمية." },
+      { en: "Mobile tablets require custom viewports and larger touch targets.", ar: "أجهزة التابلت في المطار تتطلب متصفحاً مخصصاً ومساحات لمس أكبر." }
     ]
   },
   {
     id: "ia",
-    title: { en: "2. Operational Layout & Information Mapping", ar: "٢. تخطيط العمليات وهيكلة المعلومات" },
-    desc: { en: "Mapped 22 raw sensor data streams into 9 core KPI cards. Designed the dual-tab flow (Visual Command Map vs. Tabular lists) to divide visual load.", ar: "تم تقسيم ٢٢ تدفقاً لبيانات المستشعرات إلى ٩ بطاقات أداء. صممنا تدفقاً ثنائي التبويب لتوزيع الحمل البصري." },
+    title: { en: "2. Information Architecture & Layouts", ar: "٢. تخطيط العمليات وهيكلة المعلومات" },
+    desc: { en: "Mapped 22 sensor feeds into 9 key metrics. Designed a dual-tab layout (Visual Map vs. Data Table) to reduce cognitive load.", ar: "تم تقسيم ٢٢ تدفقاً لبيانات المستشعرات إلى ٩ بطاقات أداء. صممنا تدفقاً ثنائي التبويب لتوزيع الحمل البصري." },
     icon: Network,
     bullets: [
-      { en: "Grouped flights, safety logs, and maintenance alerts logically.", ar: "ترتيب وتجميع الرحلات وسجلات السلامة وصيانة الطائرات منطقياً." },
-      { en: "Integrated interactive visual twin hotspots to accelerate decision workflows.", ar: "دمج نقاط التوأم الرقمي التفاعلية لتسريع وتيرة اتخاذ القرارات التشغيلية." }
+      { en: "Grouped flight data, safety logs, and alerts logically.", ar: "ترتيب وتجميع الرحلات وسجلات السلامة وصيانة الطائرات منطقياً." },
+      { en: "Added interactive digital twin hotspots to speed up decisions.", ar: "دمج نقاط التوأم الرقمي التفاعلية لتسريع وتيرة اتخاذ القرارات التشغيلية." }
     ]
   },
   {
     id: "accessibility",
-    title: { en: "3. Accessibility & Device Compatibility Refinement", ar: "٣. تحسين سهولة الوصول وتوافق الأجهزة" },
-    desc: { en: "Tested contrast ratios under active apron glare. Standardized color codes for WCAG 2.1 AA and implemented native bi-directional layouts.", ar: "تم اختبار نسب التباين تحت إضاءة المطار. تم توحيد الرموز اللونية لمعيار WCAG 2.1 AA وتطبيق التخطيط ثنائي الاتجاه." },
+    title: { en: "3. Accessibility & Device Support", ar: "٣. تحسين سهولة الوصول وتوافق الأجهزة" },
+    desc: { en: "Tested contrast ratios under direct sunlight. Met WCAG 2.1 AA guidelines and added native RTL/LTR mirroring.", ar: "تم اختبار نسب التباين تحت إضاءة المطار. تم توحيد الرموز اللونية لمعيار WCAG 2.1 AA وتطبيق التخطيط ثنائي الاتجاه." },
     icon: ShieldCheck,
     bullets: [
-      { en: "Verified 4.5:1 minimum text contrast ratios across light and dark modes.", ar: "التحقق من تباين النصوص بنسبة ٤.٥:١ كحد أدنى بالنمط الفاتح والداكن." },
-      { en: "Programmed native CSS mirroring for RTL Arabic and LTR English layouts.", ar: "برمجة انعكاس التخطيط التلقائي لدعم العربية RTL والإنجليزية LTR." }
+      { en: "Verified 4.5:1 minimum text contrast for light and dark modes.", ar: "التحقق من تباين النصوص بنسبة ٤.٥:١ كحد أدنى بالنمط الفاتح والداكن." },
+      { en: "Programmed native CSS mirroring for English and Arabic.", ar: "برمجة انعكاس التخطيط التلقائي لدعم العربية RTL والإنجليزية LTR." }
     ]
   }
 ];
@@ -170,8 +170,23 @@ export default function ResourcesAuditPage() {
 
   // Draggable Slider State
   const [sliderPos, setSliderPos] = useState(50);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
+
+  useEffect(() => {
+    if (!sliderRef.current) return;
+    setContainerWidth(sliderRef.current.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(sliderRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Responsive visualizer state
   const [activeDevice, setActiveDevice] = useState<"desktop" | "laptop" | "tablet">("laptop");
@@ -219,32 +234,31 @@ export default function ResourcesAuditPage() {
     <div className="flex flex-col min-w-0 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 max-w-4xl mx-auto w-full">
       
       {/* 1. Page Header & Brief Card */}
-      <section className="panel bg-card/50 p-4 sm:p-6 flex flex-col gap-4">
+      <section className="panel bg-card/50 p-3 sm:p-6 flex flex-col gap-4">
         <div>
           <div className="flex items-center gap-2">
             <StatusPill tone="info">{localize({ en: "UX Case Study & Spec Sheet", ar: "دراسة تجربة المستخدم وورقة المواصفات" }, language)}</StatusPill>
-            <span className="text-sm font-mono text-muted-foreground">v1.5.0</span>
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl text-foreground">
             {localize({ en: "Cairo Command Hub Overview", ar: "نظرة عامة على مركز قيادة القاهرة" }, language)}
           </h1>
           <p className="mt-2.5 text-base leading-relaxed text-muted-foreground sm:text-lg">
             {localize({
-              en: "This system is designed exclusively for simulation and training purposes; all showcased operational metrics, flight statuses, and dashboard values are non-factual and modeled for procedural instruction.",
-              ar: "تم تصميم هذا النظام خصيصاً لأغراض المحاكاة والتدريب التشغيلي؛ وتعتبر جميع مقاييس الأداء وحالات الرحلات الجوية والبيانات المعروضة غير حقيقية وتمت نمذجتها لأغراض التدريب والتعليم فقط.",
+              en: "This system is designed solely for simulation and training. All operational data, flight statuses, and metrics shown here are non-factual.",
+              ar: "تم تصميم هذا النظام خصيصاً لأغراض المحاكاة والتدريب التشغيلي؛ وتعتبر جميع البيانات ومقاييس الأداء المعروضة غير حقيقية.",
             }, language)}
           </p>
         </div>
       </section>
 
       {/* 2. About the Creator Card */}
-      <section className="panel bg-primary/5 border border-primary/20 p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden gap-4">
+      <section className="panel bg-primary/5 border border-primary/20 p-3 sm:p-6 flex flex-col justify-between relative overflow-hidden gap-4">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
         <div className="grid gap-3.5 z-10 relative">
           <div className="flex items-center gap-2 mb-1">
-            <User className="h-4 w-4 text-primary" aria-hidden="true" />
+            <User className="h-4 w-4 text-primary hidden sm:inline-block" aria-hidden="true" />
             <h2 className="text-sm font-mono uppercase tracking-[0.1em] text-primary font-semibold">
-              {localize({ en: "About the creator of the site", ar: "نبذة عن منشئ الموقع" }, language)}
+              {localize({ en: "About the Creator", ar: "نبذة عن منشئ الموقع" }, language)}
             </h2>
           </div>
           <div className="flex items-center gap-3.5">
@@ -264,18 +278,18 @@ export default function ResourcesAuditPage() {
           </div>
           <p className="text-sm sm:text-base leading-relaxed text-muted-foreground mt-1">
             {localize({
-              en: "UX Designer & Data Analyst with 4+ years of experience at Advansys IS. Specializes in turning user needs into decision-ready visual systems.",
-              ar: "مصمم تجربة مستخدم ومحلل بيانات بخبرة +٤ سنوات في Advansys IS. متخصص في تحويل احتياجات المستخدمين لأنظمة تفاعلية متكاملة.",
+              en: "UX Designer & Data Analyst with 4+ years of experience. I specialize in turning user needs into clear, decision-ready systems.",
+              ar: "مصمم تجربة مستخدم ومحلل بيانات بخبرة +٤ سنوات. متخصص في تحويل احتياجات المستخدمين لأنظمة واضحة تفاعلية.",
             }, language)}
           </p>
-          <div className="mt-3 rounded-lg border border-border/50 bg-background/50 p-3 sm:p-3.5 flex flex-col gap-2">
+          <div className="mt-3 rounded-none sm:rounded-lg border-0 sm:border border-border/50 bg-transparent sm:bg-background/50 p-0 sm:p-3.5 flex flex-col gap-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              {localize({ en: "Tools used to create this site", ar: "الأدوات المستخدمة في إنشاء الموقع" }, language)}
+              {localize({ en: "Design & Development Tools", ar: "الأدوات المستخدمة" }, language)}
             </h4>
             <p className="text-sm leading-relaxed text-muted-foreground">
               {localize({
-                en: "This project was built using a combination of human UX direction and advanced AI tooling, including Antigravity, OpenAI Codex, Figma, and Lovable.",
-                ar: "تم بناء هذا المشروع باستخدام مزيج من توجيهات تجربة المستخدم البشرية وأدوات الذكاء الاصطناعي المتقدمة، بما في ذلك Antigravity، OpenAI Codex، Figma، و Lovable.",
+                en: "Built using human UX direction paired with AI tools like Antigravity, Figma, and React.",
+                ar: "تم بناء هذا المشروع بتوجيه بشري لتجربة المستخدم مع أدوات مثل Antigravity وFigma وReact.",
               }, language)}
             </p>
           </div>
@@ -320,14 +334,14 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 2b. Core Technology Stack */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-4">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Laptop className="h-5 w-5 text-primary" />
-            <span>{localize({ en: "Core Technology Stack", ar: "بنية التقنيات الأساسية" }, language)}</span>
+            <Laptop className="h-5 w-5 text-primary hidden sm:inline-block" />
+            <span>{localize({ en: "Technology Stack", ar: "بنية التقنيات" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "The developer framework and core libraries driving the Cairo Command Hub dashboard.", ar: "بيئة التطوير والمكتبات البرمجية الأساسية التي تشغل لوحة تحكم مركز قيادة القاهرة." }, language)}
+            {localize({ en: "The frameworks and libraries powering the dashboard.", ar: "الإطارات والمكتبات الأساسية التي تشغل لوحة التحكم." }, language)}
           </p>
         </div>
 
@@ -336,33 +350,33 @@ export default function ResourcesAuditPage() {
             {
               name: "React (v19)",
               desc: {
-                en: "Drives the interactive component states, local translations hook context, and UI state hydration.",
-                ar: "يدير حالة المكونات التفاعلية، وسياق ترجمة اللغات المحلية، وتكامل حالة واجهة المستخدم."
+                en: "Powers the interactive components, language switching context, and UI states.",
+                ar: "يدير المكونات التفاعلية، وسياق تبديل اللغة، وحالات واجهة المستخدم."
               }
             },
             {
               name: "TypeScript",
               desc: {
-                en: "Guarantees robust type safety, interface validation, and strict model parsing for dashboard feeds.",
-                ar: "يضمن سلامة أنواع البيانات المدخلة والمخرجة، والتحقق من الواجهات البرمجية لبيانات التشغيل."
+                en: "Ensures type safety, code reliability, and clean data parsing.",
+                ar: "يضمن سلامة أنواع البيانات، وموثوقية الكود، ومعالجة البيانات النظيفة."
               }
             },
             {
               name: "Vite",
               desc: {
-                en: "Enables fast hot module replacement, optimized static pre-bundling, and smooth compilation.",
-                ar: "يوفر نظام تحديث سريع فوري، وتجميعاً مسبقاً محسناً، وعملية بناء نهائية مرنة."
+                en: "Provides fast hot reloading and optimized builds for smooth compilation.",
+                ar: "يوفر تحديثاً فورياً سريعاً وعملية بناء محسنة لتجميع الكود بسلاسة."
               }
             },
             {
               name: "Tailwind CSS & Lucide Icons",
               desc: {
-                en: "Powers modern responsive styling, theme variable configuration, and dynamically aligned vector iconography.",
-                ar: "يدعم التصميم العصري المتجاوب، وتخصيص متغيرات المظهر، وتنسيق الأيقونات المتجهة ذاتياً."
+                en: "Handles responsive layouts, custom themes, and clean vector icons.",
+                ar: "يدير التخطيطات المتجاوبة، والمظاهر المخصصة، والأيقونات المتجهة النظيفة."
               }
             }
           ].map((tech, i) => (
-            <div key={i} className="bg-secondary/15 border border-border/50 rounded-xl p-4 flex flex-col gap-1.5">
+            <div key={i} className="bg-transparent border-0 sm:bg-secondary/15 sm:border sm:border-border/50 rounded-none sm:rounded-xl p-0 sm:p-4 flex flex-col gap-1.5">
               <span className="font-bold text-foreground text-sm font-mono">{tech.name}</span>
               <p className="text-xs text-muted-foreground leading-relaxed">{localize(tech.desc, language)}</p>
             </div>
@@ -371,14 +385,14 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 3. Interactive Persona Studies Panel */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
+            <Users className="h-5 w-5 text-primary hidden sm:inline-block" />
             <span>{localize({ en: "Persona Studies", ar: "شخصيات المستخدمين" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Select a user persona to audit their unique screen requirements and constraints.", ar: "اختر شخصية مستخدم لمعاينة متطلبات شاشتهم ومحددات العمل الخاصة بهم." }, language)}
+            {localize({ en: "Select a persona to view their workspace needs and constraints.", ar: "اختر شخصية مستخدم لمعاينة متطلبات عمله ومحدداته." }, language)}
           </p>
         </div>
 
@@ -416,10 +430,10 @@ export default function ResourcesAuditPage() {
           const activeData = personas.find((p) => p.id === activePersona);
           if (!activeData) return null;
           return (
-            <div className="bg-secondary/20 border border-border/60 rounded-xl p-3.5 sm:p-4.5 flex flex-col justify-between min-h-[170px] animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="bg-transparent border-0 sm:bg-secondary/20 sm:border sm:border-border/60 rounded-none sm:rounded-xl p-0 sm:p-4.5 flex flex-col justify-between min-h-[170px] animate-in fade-in slide-in-from-top-2 duration-300">
               <div>
                 <h3 className="font-bold text-foreground text-base flex items-center gap-1.5">
-                  <User className="h-4.5 w-4.5 text-primary" />
+                  <User className="h-4.5 w-4.5 text-primary hidden sm:inline-block" />
                   <span>{localize(activeData.name, language)}</span>
                 </h3>
                 <p className="text-sm text-primary font-semibold mt-1">{localize(activeData.role, language)}</p>
@@ -440,14 +454,14 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 4. Graphical Timeline Panel */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Clock3 className="h-5 w-5 text-primary" />
-            <span>{localize({ en: "Design Journey Timeline", ar: "خطة وجدول التصميم" }, language)}</span>
+            <Clock3 className="h-5 w-5 text-primary hidden sm:inline-block" />
+            <span>{localize({ en: "Design Process Timeline", ar: "مراحل التصميم التشغيلي" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Click on any design phase card below to inspect its key deliverables.", ar: "اضغط على أي من بطاقات مراحل التصميم لمعاينة المخرجات الرئيسية." }, language)}
+            {localize({ en: "Click on any phase to see its goals and deliverables.", ar: "اضغط على أي مرحلة لمعاينة الأهداف والمخرجات." }, language)}
           </p>
         </div>
 
@@ -475,8 +489,8 @@ export default function ResourcesAuditPage() {
                 {/* Right side information card */}
                 <div 
                   onClick={() => togglePhase(phase.id)}
-                  className={`flex-1 bg-secondary/15 border rounded-xl p-3 sm:p-4 transition-all duration-300 cursor-pointer ${
-                    isExpanded ? "border-primary/40 bg-secondary/25 shadow-sm" : "border-border/60 hover:border-border"
+                  className={`flex-1 bg-transparent border-0 sm:bg-secondary/25 sm:border rounded-none sm:rounded-xl p-0 sm:p-4 transition-all duration-300 cursor-pointer ${
+                    isExpanded ? "sm:border-primary/40 sm:bg-secondary/25 shadow-sm" : "sm:border-border/60 sm:hover:border-border"
                   }`}
                 >
                   <div className="flex justify-between items-center gap-2">
@@ -510,14 +524,14 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 5. Operations Wireframe vs. Polished View */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col justify-between gap-4">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Eye className="h-5 w-5 text-primary" />
+            <Eye className="h-5 w-5 text-primary hidden sm:inline-block" />
             <span>{localize({ en: "Operations Wireframe vs. Polished View", ar: "مقارنة مخطط العمليات مع التصميم النهائي" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Drag the slider to compare the initial paper wireframe of the operations dashboard with the finalized high-fidelity digital implementation.", ar: "اسحب المقبض لمقارنة الهيكل التخطيطي الورقي الأولي للوحة العمليات مع التصميم الرقمي النهائي عالي الجودة." }, language)}
+            {localize({ en: "Drag the slider to compare the paper wireframe with the final polished dashboard.", ar: "اسحب المقبض لمقارنة المخطط الورقي للواجهة مع التصميم النهائي المصقول." }, language)}
           </p>
         </div>
 
@@ -545,7 +559,7 @@ export default function ResourcesAuditPage() {
               src="/operations_wireframe.jpg" 
               alt={localize({ en: "Wireframe Operations View", ar: "المخطط الورقي للوحة العمليات" }, language)} 
               className="absolute top-0 left-0 h-full object-cover select-none pointer-events-none" 
-              style={{ width: sliderRef.current?.getBoundingClientRect().width }}
+              style={{ width: containerWidth ? `${containerWidth}px` : "100%" }}
             />
           </div>
 
@@ -562,15 +576,15 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 6. Responsive Breakpoint Grid */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col justify-between gap-4">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Laptop className="h-5 w-5 text-primary" />
+              <Laptop className="h-5 w-5 text-primary hidden sm:inline-block" />
               <span>{localize({ en: "Responsive Layout Breakpoints", ar: "نقاط الاستجابة للشاشات المختلفة" }, language)}</span>
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {localize({ en: "Toggle screen sizes to review grid card flow reflow.", ar: "بدل بين أحجام الشاشات لرؤية مرونة ترتيب بطاقات القياس." }, language)}
+              {localize({ en: "Switch device views to test how the layout adapts.", ar: "بدّل بين خيارات الأجهزة التشغيلية لمعاينة تكيف محتوى لوحة التحكم." }, language)}
             </p>
           </div>
           
@@ -592,7 +606,7 @@ export default function ResourcesAuditPage() {
 
         {/* Interactive Viewport Container */}
         <div className="min-h-[220px] bg-slate-950/80 border border-border/60 rounded-xl p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
-          <div className="flex justify-between items-center border-b border-border/30 pb-2 text-xs text-muted-foreground font-mono">
+          <div className="flex justify-between items-center border-b border-border/30 pb-2 text-xs text-slate-400 font-mono">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-status-ok" />
               <span>CAI HUB METRICS GRID</span>
@@ -617,13 +631,13 @@ export default function ResourcesAuditPage() {
           </div>
         </div>
 
-        <div className="bg-background border border-border/40 rounded-xl p-3 sm:p-3.5 text-sm leading-relaxed">
+        <div className="bg-transparent border-0 sm:bg-background sm:border sm:border-border/40 rounded-none sm:rounded-xl p-0 sm:p-3.5 text-sm leading-relaxed">
           {activeDevice === "desktop" && (
             <div>
               <span className="font-bold text-foreground">Desktop 4K Grid Flow: </span>
               <span className="text-muted-foreground">
                 {localize({
-                  en: "Row grid layout showing 4 metrics side-by-side. Provides operators full visual coverage at a glance on command walls.",
+                  en: "A 4-column row layout. Offers full visual coverage at a glance for command center screens.",
                   ar: "تخطيط شبكي أفقي يعرض البطاقات الأربعة متجاورة. يتيح للمشغلين نظرة شاملة على شاشات المراقبة.",
                 }, language)}
               </span>
@@ -634,7 +648,7 @@ export default function ResourcesAuditPage() {
               <span className="font-bold text-foreground">Laptop Workstation (2x2 Grid): </span>
               <span className="text-muted-foreground">
                 {localize({
-                  en: "Grid reflows into 2 columns of 2 cards each. Adapts content to maximize workspace space on average screens.",
+                  en: "Reflows into a 2x2 grid. Fits content efficiently on standard laptop screens.",
                   ar: "يعاد ترتيب المقاييس لشبكة ٢×٢ من عمودين. يعدل المحتوى لاستغلال المساحة المتاحة بالشاشات المتوسطة.",
                 }, language)}
               </span>
@@ -645,7 +659,7 @@ export default function ResourcesAuditPage() {
               <span className="font-bold text-foreground">Mobile & Tablet Single Stack: </span>
               <span className="text-muted-foreground">
                 {localize({
-                  en: "Cards stack vertically in 1 column. Font sizes scale down slightly and touch areas expand to make dashboard operations fully mobile.",
+                  en: "Cards stack in a single column. Scales fonts and expands touch areas for mobile viewports.",
                   ar: "تترتب البطاقات عمودياً في عمود واحد. تتقلص الخطوط قليلاً وتتوسع مساحة اللمس لجعل لوحة التحكم سهلة الاستخدام بالهواتف.",
                 }, language)}
               </span>
@@ -655,33 +669,43 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 7. Accessibility & Typography Specifications (WCAG 2.1 AA) */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span>{localize({ en: "Accessibility & Typography Specifications", ar: "مواصفات تيسير الوصول وحجم الخطوط" }, language)}</span>
+            <ShieldCheck className="h-5 w-5 text-primary hidden sm:inline-block" />
+            <span>{localize({ en: "Accessibility & Typography Specs", ar: "مواصفات تيسير الوصول وحجم الخطوط" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Rigorously audited design specifications complying with WCAG 2.1 AA guidelines.", ar: "مواصفات تصميم خضعت لتدقيق صارم لتتوافق مع معايير WCAG 2.1 AA." }, language)}
+            {localize({ en: "Verified design standards complying with WCAG 2.1 AA guidelines.", ar: "مواصفات تصميم مدققة متوافقة تماماً مع معايير WCAG 2.1 AA." }, language)}
           </p>
         </div>
 
         <div className="grid gap-4 text-sm">
           {/* Color Contrast */}
-          <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
-            <div className="flex justify-between items-center">
+          <div className="bg-transparent border-0 sm:bg-secondary/20 sm:border sm:border-border/50 rounded-none sm:rounded-xl p-0 sm:p-4 flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="font-semibold text-foreground flex items-center gap-1.5 text-sm">
-                <Contrast className="h-4.5 w-4.5 text-primary" />
+                <Contrast className="h-4.5 w-4.5 text-primary hidden sm:inline-block" />
                 <span>{localize({ en: "Color & Contrast Compliance", ar: "التوافق اللوني والتباين" }, language)}</span>
               </span>
-              <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2.5 py-0.5 rounded border border-status-ok/25">PASS</span>
+              <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2.5 py-0.5 rounded border border-status-ok/25 self-start sm:self-auto shrink-0">PASS</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {localize({
-                en: "All text elements maintain contrast ratios above 4.5:1 (WCAG AA). Support is native for Light, Dark, and High Contrast custom modes to reduce glare for active operators.",
-                ar: "تحافظ جميع نصوص الموقع على نسبة تباين تفوق ٤.٥:١. ويدعم النظام الأنماط الفاتحة والداكنة وعالية التباين لتقليل الانعكاس البصري للمشغلين."
+                en: "All text elements maintain a minimum contrast ratio of 4.5:1. Supports light, dark, and high-contrast modes to reduce glare.",
+                ar: "تحافظ جميع نصوص الموقع على نسبة تباين تفوق ٤.٥:١ كحد أدنى. ويدعم النظام الأنماط الفاتحة والداكنة وعالية التباين لتقليل الانعكاس البصري."
               }, language)}
             </p>
+
+            <div className="mt-2 text-xs text-primary bg-primary/10 border border-primary/20 rounded-lg p-2.5 flex items-start gap-2">
+              <span className="font-semibold shrink-0">{localize({ en: "Contrast Tip:", ar: "تلميح التباين:" }, language)}</span>
+              <span>
+                {localize({
+                  en: "A ratio above 4.5:1 ensures standard text remains readable against its background for users with moderate visual impairment.",
+                  ar: "تضمن النسبة الأعلى من ٤.٥:١ وضوح قراءة النصوص العادية مقابل خلفيتها للمستخدمين الذين يعانون من ضعف بصري متوسط."
+                }, language)}
+              </span>
+            </div>
             
             {/* Contrast swatches */}
             <div className="grid grid-cols-4 gap-2.5 pt-1.5">
@@ -691,7 +715,7 @@ export default function ResourcesAuditPage() {
                 { name: { en: "Yellow", ar: "أصفر" }, hex: "#FBBF24", ratio: "4.5:1", bg: "bg-status-warn" },
                 { name: { en: "Red", ar: "أحمر" }, hex: "#EF4444", ratio: "4.6:1", bg: "bg-status-crit" }
               ].map((s, i) => (
-                <div key={i} className="bg-secondary/40 border border-border/40 rounded-lg p-2 flex flex-col items-center text-center">
+                <div key={i} className="bg-transparent border-0 sm:bg-secondary/40 sm:border sm:border-border/40 rounded-none sm:rounded-lg p-0 sm:p-2 flex flex-col items-center text-center">
                   <div className={`w-6 h-6 rounded-full ${s.bg} border border-white/10`} />
                   <span className="text-xs font-bold text-foreground mt-1.5 truncate w-full">{localize(s.name, language)}</span>
                   <span className="text-[10px] font-mono text-muted-foreground mt-0.5">{s.ratio}</span>
@@ -701,32 +725,32 @@ export default function ResourcesAuditPage() {
           </div>
 
           {/* Typography Guidelines */}
-          <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-2">
+          <div className="bg-transparent border-0 sm:bg-secondary/20 sm:border sm:border-border/50 rounded-none sm:rounded-xl p-0 sm:p-4 flex flex-col gap-2">
             <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
-              <span className="w-1.5 h-3 bg-primary rounded-full" />
-              <span>{localize({ en: "Brand Typography & Scaling (Outfit)", ar: "الخطوط والمقاييس الطباعية (أوتفت)" }, language)}</span>
+              <span className="w-1.5 h-3 bg-primary rounded-full hidden sm:inline-block" />
+              <span>{localize({ en: "Typography & Scaling", ar: "الخطوط والمقاييس" }, language)}</span>
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {localize({
-                en: "Utilizes Outfit and Outfit Arabic as standard brand typography for modern high-legibility displays, with Inter and Noto Sans Arabic fallbacks. Strict line-height overrides (minimum 1.5) prevent vertical crowding.",
-                ar: "يعتمد الخطوط القياسية أوتفت وأوتفت العربي لتصميم عصري سهل القراءة، مع خطوط إنتر ونوتو كبدائل احتياطية. وتمنع مسافات الأسطر (لا تقل عن ١.٥) تداخل النصوص عمودياً."
+                en: "Uses Outfit as the main font for high legibility, with Inter and Noto Sans fallbacks. A line height of 1.5 prevents text crowding.",
+                ar: "يعتمد خط Outfit كخط أساسي لتسهيل القراءة، مع خطوط Inter و Noto كبدائل احتياطية. وتمنع مسافات الأسطر (١.٥) تداخل النصوص."
               }, language)}
             </p>
           </div>
 
           {/* Keyboard & Outlines */}
-          <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-2">
-            <div className="flex justify-between items-center">
+          <div className="bg-transparent border-0 sm:bg-secondary/20 sm:border sm:border-border/50 rounded-none sm:rounded-xl p-0 sm:p-4 flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="font-semibold text-foreground flex items-center gap-1.5 text-sm">
-                <Keyboard className="h-4.5 w-4.5 text-primary" />
-                <span>{localize({ en: "Logical Focus Outlines & Skip Links", ar: "التنقل المنطقي وإطار التركيز الموضح" }, language)}</span>
+                <Keyboard className="h-4.5 w-4.5 text-primary hidden sm:inline-block" />
+                <span>{localize({ en: "Logical Focus & Skip Links", ar: "التنقل المنطقي وإطار التركيز" }, language)}</span>
               </span>
-              <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2.5 py-0.5 rounded border border-status-ok/25">COMPLIANT</span>
+              <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2.5 py-0.5 rounded border border-status-ok/25 self-start sm:self-auto shrink-0">COMPLIANT</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {localize({
-                en: "Tab index order maps strictly to the visual sequence. Interactive components expose clear, glowing focus rings (focus-visible:ring-2) and support screen reader content skipping.",
-                ar: "يتطابق تسلسل مفاتيح لوحة المفاتيح مع الترتيب البصري تماماً. وتكشف العناصر التفاعلية عن حلقات تركيز متوهجة (ring-2) لتيسير الاستخدام مع دعم روابط تخطي المحتوى لقارئات الشاشة."
+                en: "Tab order maps strictly to the visual flow. Interactive elements use clear, glowing focus rings and support content skipping.",
+                ar: "يتطابق تسلسل مفاتيح لوحة المفاتيح مع الترتيب البصري تماماً. وتكشف العناصر التفاعلية عن حلقات تركيز واضحة مع دعم روابط تخطي المحتوى."
               }, language)}
             </p>
           </div>
@@ -734,21 +758,21 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 8. Bilingual Context & Mirroring Logic (RTL/LTR) */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Globe className="h-5 w-5 text-primary" />
+            <Globe className="h-5 w-5 text-primary hidden sm:inline-block" />
             <span>{localize({ en: "Bilingual Context & Mirroring Logic", ar: "سياق ثنائية اللغة ومنطق الانعكاس" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Dynamic orientation management for complete language symmetry.", ar: "إدارة ديناميكية للاتجاهات لتناسق وتطابق كامل بين اللغتين." }, language)}
+            {localize({ en: "Dynamic layout adjustment for English and Arabic.", ar: "إدارة ديناميكية للاتجاهات لتناسق وتطابق كامل بين العربية والإنجليزية." }, language)}
           </p>
         </div>
 
-        <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
+        <div className="bg-transparent border-0 sm:bg-secondary/20 sm:border sm:border-border/50 rounded-none sm:rounded-xl p-0 sm:p-4 flex flex-col gap-3">
           <p className="text-sm text-muted-foreground leading-relaxed">
             {localize({
-              en: "The dashboard is engineered to transition dynamically between Arabic and English without horizontal breaks, using logical properties and element overrides.",
+              en: "The dashboard transitions smoothly between LTR (English) and RTL (Arabic) using logical CSS properties.",
               ar: "تم تصميم لوحة التحكم لتنتقل ديناميكياً بين العربية والإنجليزية دون تشوهات أفقية، بالاعتماد على الخصائص المنطقية للغة."
             }, language)}
           </p>
@@ -759,7 +783,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "State Management: ", ar: "إدارة الحالة: " }, language)}</span>
                 {localize({
-                  en: "A global LocaleContext propagates language updates instantly to every widget, preventing async UI mismatches.",
+                  en: "A global LocaleContext updates all widgets instantly to prevent UI rendering delay.",
                   ar: "يقوم LocaleContext العالمي بنشر تحديثات اللغة فورياً لجميع الأدوات التفاعلية، مما يمنع الاختلال البصري غير المتزامن."
                 }, language)}
               </div>
@@ -769,7 +793,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Root Document Attributes: ", ar: "سمات المستند الجذري: " }, language)}</span>
                 {localize({
-                  en: "Modifies standard dir (rtl/ltr) and lang attributes on the documentRoot to trigger native browser mirroring.",
+                  en: "Sets dir (RTL/LTR) and lang attributes on the root element to trigger browser mirroring.",
                   ar: "يقوم بتعديل قيم dir و lang على جذر الصفحة (<html>) لتشغيل انعكاس المتصفح التلقائي."
                 }, language)}
               </div>
@@ -779,7 +803,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Logical CSS properties: ", ar: "التنسيق البنائي المنطقي: " }, language)}</span>
                 {localize({
-                  en: "Uses dynamic start/end and ps-/pe- classes instead of left/right and pl-/pr- to automatically flip borders, absolute coordinates, and grid direction.",
+                  en: "Uses start/end classes instead of left/right to automatically flip borders, alignments, and columns.",
                   ar: "يستخدم فئات start/end و ps-/pe- بدلاً من left/right و pl-/pr- لعكس الحدود والمحاور المطلقة والشبكات ذاتياً."
                 }, language)}
               </div>
@@ -789,7 +813,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Structural Component Mirroring: ", ar: "انعكاس هيكل المكونات: " }, language)}</span>
                 {localize({
-                  en: "Key layouts flip explicitly, including the hamburger button position (top-left for Arabic, top-right for English) and the orientation of information tables.",
+                  en: "Key layouts flip dynamically, such as side navigation drawers and table direction.",
                   ar: "تنعكس بعض التخطيطات بشكل صريح، بما في ذلك زر الهمبرغر (أعلى اليسار بالعربية، وأعلى اليمين بالإنجليزية) واتجاه جداول المعلومات."
                 }, language)}
               </div>
@@ -799,25 +823,25 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 9. Viewport Responsiveness & Recent UX Updates */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <RefreshCw className="h-5 w-5 text-primary" />
-            <span>{localize({ en: "Viewport Responsiveness & Recent UX Updates", ar: "مرونة الشاشات والتحسينات التشغيلية الأخيرة" }, language)}</span>
+            <RefreshCw className="h-5 w-5 text-primary hidden sm:inline-block" />
+            <span>{localize({ en: "Recent Responsiveness & UX Updates", ar: "مرونة الشاشات والتحسينات الأخيرة" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Operational layouts tailored for Cairo Airport workstation, tablet, and mobile viewports.", ar: "تصميمات تشغيلية مهيأة لمحطات العمل والأجهزة اللوحية والهواتف بمطار القاهرة." }, language)}
+            {localize({ en: "Optimized layouts for workstations, tablets, and mobile views.", ar: "تصميمات تشغيلية مهيأة لمحطات العمل والأجهزة اللوحية والهواتف بمطار القاهرة." }, language)}
           </p>
         </div>
 
-        <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
+        <div className="bg-transparent border-0 sm:bg-secondary/20 sm:border sm:border-border/50 rounded-none sm:rounded-xl p-0 sm:p-4 flex flex-col gap-3">
           <ul className="space-y-3.5 pl-0 list-none text-sm text-muted-foreground">
             <li className="flex items-start gap-2.5">
               <Check className="h-4.5 w-4.5 text-status-ok shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Layout Grid Reflows: ", ar: "إعادة تدفق شبكة الواجهة: " }, language)}</span>
                 {localize({
-                  en: "Uses a 4-column layout on desktop, 2-column on laptop/tablet, and single vertical stacks on mobile. Tablet safety views override to single columns and employ height hugging to prevent squeezed contents.",
+                  en: "Stacks cards vertically on mobile, uses 2 columns on tablets, and 4 columns on desktops. Auto-adjusts heights to prevent squeezing.",
                   ar: "تستخدم الشاشات الكبيرة ٤ أعمدة واللابتوب عمودين والهواتف عموداً واحداً. وفي التابلت، تلتف لوحة السلامة عمودياً وتلغى قيود الطول الثابتة لمنع تكدس المحتوى."
                 }, language)}
               </div>
@@ -827,7 +851,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Visual Twin Navigation Controls: ", ar: "أدوات التحكم في التوأم الرقمي: " }, language)}</span>
                 {localize({
-                  en: "Enables native touch gesture dragging on mobile and tablet devices with a semi-transparent 'Drag to pan' visual indicator, while desktop workstation views display a consolidated D-pad keypad overlay.",
+                  en: "Allows touch panning on mobile and tablets with a 'Drag to pan' indicator, and shows a D-pad overlay on desktops.",
                   ar: "يتيح السحب اليدوي باللمس على الهواتف والأجهزة اللوحية مع إظهار مؤشر خفيف 'اسحب للتنقل'، بينما تعرض شاشات الحاسوب لوحة أزرار اتجاهات مجمعة (D-pad) في زاوية الشاشة."
                 }, language)}
               </div>
@@ -837,7 +861,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Theme Sync Observer Hook: ", ar: "خطاف مزامنة سمة المظهر: " }, language)}</span>
                 {localize({
-                  en: "Employs a state observer hook inside the Digital Twin container to automatically synchronize the map visualization theme style (light, dark, contrast) with the global site toggle.",
+                  en: "Synchronizes the digital twin map theme instantly with the global light/dark site toggle.",
                   ar: "يستخدم مراقب حالة داخل التوأم الرقمي لمزامنة مظهر الخريطة تلقائياً (فاتح، داكن، تباين) ليتناسق مع المظهر العام المختار للموقع."
                 }, language)}
               </div>
@@ -847,7 +871,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Transition-First Menu Animation: ", ar: "جدولة الرسوم المتحركة للقائمة: " }, language)}</span>
                 {localize({
-                  en: "Delays heavy theme or language re-render tasks by 280ms when menu options are clicked, ensuring the mobile navigation drawer finishes closing smoothly first.",
+                  en: "Delays rendering by 280ms when switching themes or languages to let the mobile menu close smoothly first.",
                   ar: "يؤخر مهام إعادة البناء الثقيلة للمظهر أو اللغة بمقدار ٢٨٠ ملي ثانية عند النقر، ليتيح لدرج القائمة الجانبية الإغلاق بسلاسة أولاً دون تعليق."
                 }, language)}
               </div>
@@ -857,7 +881,7 @@ export default function ResourcesAuditPage() {
               <div>
                 <span className="font-semibold text-foreground">{localize({ en: "Strict FIDS Column Alignment: ", ar: "المحاذاة العمودية لجدول الرحلات: " }, language)}</span>
                 {localize({
-                  en: "Standardizes incoming flight rows with a strict CSS grid template, aligning flight codes, times, and gates vertically across all rows.",
+                  en: "Aligns flight codes, times, and gates vertically using a unified CSS grid layout.",
                   ar: "يوحد صفوف الرحلات القادمة باستخدام قالب شبكي صارم، لمحاذاة أرقام الرحلات والأوقات والبوابات عمودياً بشكل متناسق."
                 }, language)}
               </div>
@@ -867,14 +891,14 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 10. Project Status & Roadmap Card */}
-      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-3 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-primary" />
+            <Briefcase className="h-5 w-5 text-primary hidden sm:inline-block" />
             <span>{localize({ en: "Project Status & Roadmap", ar: "حالة المشروع وخريطة التطوير" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Current dashboard development milestone status.", ar: "الحالة والخطوات المتبقية لتطوير لوحة التحكم." }, language)}
+            {localize({ en: "Current status of key features in the prototype.", ar: "الحالة والخطوات المتبقية لتطوير لوحة التحكم." }, language)}
           </p>
         </div>
 
@@ -885,28 +909,28 @@ export default function ResourcesAuditPage() {
               <thead>
                 <tr className="border-b border-border bg-secondary/35 text-muted-foreground font-mono uppercase text-xs tracking-wider">
                   <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Requirement", ar: "المتطلب" }, language)}</th>
-                  <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Feature in Prototype", ar: "الميزة بالنموذج" }, language)}</th>
+                  <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Feature / Implementation", ar: "الميزة والتحقق" }, language)}</th>
                   <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-center whitespace-nowrap">{localize({ en: "Status", ar: "الحالة" }, language)}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40 font-medium text-foreground text-xs sm:text-sm">
                 <tr>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Arabic/English Toggle", ar: "تغيير اللغة" }, language)}</td>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "RTL Switcher hook & logical mirroring", ar: "ربط اتجاه الواجهة (RTL) والانعكاس المنطقي" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Arabic/English Switcher", ar: "تغيير اللغة" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "RTL switcher & logical mirroring", ar: "ربط اتجاه الواجهة (RTL) والانعكاس المنطقي" }, language)}</td>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
                     <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20 whitespace-nowrap">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Accessibility Guidelines", ar: "معايير تيسير الوصول" }, language)}</td>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "WCAG 2.1 AA contrast & keyboard sequence", ar: "نسب تباين WCAG 2.1 AA وتسلسل لوحة المفاتيح" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Accessibility (WCAG 2.1 AA)", ar: "معايير تيسير الوصول" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "4.5:1 contrast and logical tab sequence", ar: "نسب تباين WCAG 2.1 AA وتسلسل لوحة المفاتيح" }, language)}</td>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
                     <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20 whitespace-nowrap">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "AODB Flight Feed", ar: "تغذية الرحلات الجوية" }, language)}</td>
-                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "Simulated feed state", ar: "تغذية بيانات افتراضية" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Live Flight Feed (AODB)", ar: "تغذية الرحلات الجوية" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "Simulated live feed status", ar: "تغذية بيانات افتراضية" }, language)}</td>
                   <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
                     <span className="text-xs font-mono text-status-warn bg-status-warn/10 px-2 py-0.5 rounded border border-status-warn/20 whitespace-nowrap">{localize({ en: "PENDING", ar: "قيد الانتظار" }, language)}</span>
                   </td>
