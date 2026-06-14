@@ -531,15 +531,13 @@ export default function ResourcesAuditPage() {
             <span>{localize({ en: "Operations Wireframe vs. Polished View", ar: "مقارنة مخطط العمليات مع التصميم النهائي" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Drag the slider to compare the paper wireframe with the final polished dashboard.", ar: "اسحب المقبض لمقارنة المخطط الورقي للواجهة مع التصميم النهائي المصقول." }, language)}
+            {localize({ en: "Compare the paper wireframe (left) with the final polished dashboard (right).", ar: "قارن بين المخطط الورقي الأولي (يسار) مع لوحة العمليات النهائية (يمين)." }, language)}
           </p>
         </div>
 
         <div 
           ref={sliderRef}
-          className="relative h-[320px] w-full overflow-hidden rounded-xl border border-border bg-background select-none cursor-ew-resize"
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleMouseDown}
+          className="relative h-[320px] w-full overflow-hidden rounded-xl border border-border bg-background select-none"
         >
           {/* Polished Operations View (Right side/Underneath) */}
           <div className="absolute inset-0 w-full h-full">
@@ -550,10 +548,10 @@ export default function ResourcesAuditPage() {
             />
           </div>
 
-          {/* Wireframe Operations View (Left side/Clipped overlay) */}
+          {/* Wireframe Operations View (Left side/Clipped overlay static at 50%) */}
           <div 
-            className="absolute inset-y-0 left-0 h-full overflow-hidden border-r border-dashed border-primary/50 pointer-events-none"
-            style={{ width: `${sliderPos}%` }}
+            className="absolute inset-y-0 left-0 h-full overflow-hidden border-r border-dashed border-primary/40 pointer-events-none"
+            style={{ width: "50%" }}
           >
             <img 
               src="/operations_wireframe.jpg" 
@@ -561,16 +559,6 @@ export default function ResourcesAuditPage() {
               className="absolute top-0 left-0 h-full object-cover select-none pointer-events-none" 
               style={{ width: containerWidth ? `${containerWidth}px` : "100%" }}
             />
-          </div>
-
-          {/* Slider bar */}
-          <div 
-            className="absolute top-0 bottom-0 w-[3px] bg-primary flex items-center justify-center"
-            style={{ left: `${sliderPos}%` }}
-          >
-            <div className="absolute h-7 w-7 rounded-full bg-primary text-primary-foreground border border-primary-glow flex items-center justify-center shadow-md">
-              <span className="text-xs font-bold">↔</span>
-            </div>
           </div>
         </div>
       </section>
