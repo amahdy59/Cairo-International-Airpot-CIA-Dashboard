@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  AlertTriangle,
   Check,
-  CheckCircle2,
   Laptop,
   Monitor,
   Plane,
@@ -45,9 +43,9 @@ const personas = [
     ]
   },
   {
-    id: "sara",
-    name: { en: "Sarah — Terminal Gate Supervisor", ar: "سارة — مشرف بوابات صالة الركاب" },
-    avatarPath: "/sara_avatar.png",
+    id: "yasmin",
+    name: { en: "Yasmin — Terminal Gate Supervisor", ar: "ياسمين — مشرف بوابات صالة الركاب" },
+    avatarPath: "/yasmin_avatar.png",
     role: { en: "Manages flight boarding and passenger flow on active aprons using standard tablets.", ar: "تدير صعود الركاب وتدفق المسافرين على أرض المطار باستخدام أجهزة التابلت." },
     needs: { en: "Needs high-contrast layouts and large touch targets (44px min) for easy navigation while walking.", ar: "تحتاج إلى تصميم عالي التباين ومساحات لمس واسعة (٤٤ بكسل كحد أدنى) لسهولة الاستخدام أثناء الحركة." },
     specs: [
@@ -57,14 +55,14 @@ const personas = [
     ]
   },
   {
-    id: "david",
-    name: { en: "David — ICAO Safety Auditor", ar: "ديفيد — مدقق سلامة الطيران (ICAO)" },
-    avatarPath: "/david_avatar.png",
+    id: "tarek",
+    name: { en: "Tarek — ICAO Safety Auditor", ar: "طارق — مدقق سلامة الطيران (ICAO)" },
+    avatarPath: "/tarek_avatar.png",
     role: { en: "Performs safety compliance audits on airport airside and landside equipment.", ar: "يقوم بتدقيق الامتثال لمعايير السلامة للجانب الجوي والأرضي ومعدات المطار." },
     needs: { en: "Requires tabular data structures and high-contrast styling to audit under outdoor sun glare.", ar: "يتطلب جداول بيانات منظمة وألواناً عالية التباين للتدقيق والقراءة تحت أشعة الشمس المباشرة." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Intermittent / Audits", ar: "متقطعة / فترات التدقيق" } },
-      { label: { en: "Device", ar: " lلجهاز" }, val: { en: "13\" Workstation", ar: "لابتوب ١٣ بوصة" } },
+      { label: { en: "Device", ar: "الجهاز" }, val: { en: "13\" Workstation", ar: "لابتوب ١٣ بوصة" } },
       { label: { en: "Priority", ar: "الأولوية" }, val: { en: "Data grid contrast & readability", ar: "تبويب البيانات وقابلية القراءة" } }
     ]
   }
@@ -233,22 +231,10 @@ export default function ResourcesAuditPage() {
           </h1>
           <p className="mt-2.5 text-base leading-relaxed text-muted-foreground sm:text-lg">
             {localize({
-              en: "Operational dashboard documenting the design principles, user research, accessibility baseline, and current interface status of the Cairo Airport digital twin project.",
-              ar: "لوحة تشغيل توثق مبادئ التصميم، أبحاث المستخدمين، معايير سهولة الوصول، والحالة التشغيلية الحالية لمشروع التوأم الرقمي لمطار القاهرة الدولي.",
+              en: "This system is designed exclusively for simulation and training purposes; all showcased operational metrics, flight statuses, and dashboard values are non-factual and modeled for procedural instruction.",
+              ar: "تم تصميم هذا النظام خصيصاً لأغراض المحاكاة والتدريب التشغيلي؛ وتعتبر جميع مقاييس الأداء وحالات الرحلات الجوية والبيانات المعروضة غير حقيقية وتمت نمذجتها لأغراض التدريب والتعليم فقط.",
             }, language)}
           </p>
-        </div>
-        
-        {/* API Integration Disclaimer */}
-        <div className="mt-1 flex items-start gap-3 rounded-lg border border-status-warn/30 bg-status-warn/10 p-3.5 text-sm text-status-warn">
-          <AlertTriangle className="h-5.5 w-5.5 shrink-0 mt-0.5" />
-          <div className="leading-relaxed">
-            <span className="font-bold">{localize({ en: "Simulated Data Active:", ar: "البيانات التشغيلية الافتراضية مفعلة:" }, language)}</span>{" "}
-            {localize({
-              en: "Live airport API feeds (FIDS/AODB) are pending official client network credentials. Metrics currently reflect modelled local assets.",
-              ar: "الربط المباشر مع واجهات بيانات المطار (FIDS/AODB) قيد انتظار بيانات الاعتماد الرسمية. تعكس المؤشرات حالياً بيانات تشغيلية افتراضية.",
-            }, language)}
-          </div>
         </div>
       </section>
 
@@ -265,12 +251,16 @@ export default function ResourcesAuditPage() {
           <div className="flex items-center gap-3.5">
             <img 
               src="/ahmed-mahdy.png" 
-              alt="Ahmed Mahdy" 
+              alt={localize({ en: "Ahmed Mahdy", ar: "أحمد مهدي" }, language)} 
               className="h-16 w-16 rounded-xl object-cover border border-primary/25 bg-background shrink-0 shadow-sm"
             />
             <div>
-              <h3 className="text-lg font-bold text-foreground">Ahmed Mahdy</h3>
-              <p className="text-sm text-muted-foreground font-mono">UX Designer & Data Analyst</p>
+              <h3 className="text-lg font-bold text-foreground">
+                {localize({ en: "Ahmed Mahdy", ar: "أحمد مهدي" }, language)}
+              </h3>
+              <p className="text-sm text-muted-foreground font-mono">
+                {localize({ en: "UX Designer & Data Analyst", ar: "مصمم تجربة مستخدم ومحلل بيانات" }, language)}
+              </p>
             </div>
           </div>
           <p className="text-sm sm:text-base leading-relaxed text-muted-foreground mt-1">
@@ -415,7 +405,7 @@ export default function ResourcesAuditPage() {
                   }`}
                 />
                 <span className={`text-xs font-bold tracking-tight truncate w-full ${isActive ? "text-primary" : "text-muted-foreground"}`}>
-                  {localize(p.id === "karim" ? { en: "Karim", ar: "كريم" } : p.id === "sara" ? { en: "Sarah", ar: "سارة" } : { en: "David", ar: "ديفيد" }, language)}
+                  {localize(p.id === "karim" ? { en: "Karim", ar: "كريم" } : p.id === "yasmin" ? { en: "Yasmin", ar: "ياسمين" } : { en: "Tarek", ar: "طارق" }, language)}
                 </span>
               </button>
             );
@@ -956,32 +946,7 @@ export default function ResourcesAuditPage() {
             </table>
           </div>
 
-          {/* Roadmap details checklist */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-background border border-border/60 rounded-xl p-4">
-              <h3 className="font-bold text-foreground text-xs uppercase font-mono text-status-ok flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>{localize({ en: "Built Now", ar: "المكتمل" }, language)}</span>
-              </h3>
-              <ul className="mt-2 space-y-1 pl-0 list-none text-muted-foreground text-xs leading-relaxed">
-                <li>{localize({ en: "• Interactive sliders & device simulators", ar: "• عناصر التمرير ومحاكيات الأجهزة التفاعلية" }, language)}</li>
-                <li>{localize({ en: "• Responsive grids & height-hugging overrides", ar: "• الشبكات المتجاوبة وإلغاء الطول الثابت" }, language)}</li>
-                <li>{localize({ en: "• Dynamic D-pad controls & map dragging", ar: "• أزرار الاتجاهات (D-pad) وسحب الخريطة" }, language)}</li>
-                <li>{localize({ en: "• WCAG 2.1 AA contrast & theme observers", ar: "• تباين WCAG 2.1 AA ومراقب الأنماط" }, language)}</li>
-              </ul>
-            </div>
-            <div className="bg-background border border-border/60 rounded-xl p-4">
-              <h3 className="font-bold text-foreground text-xs uppercase font-mono text-status-warn flex items-center gap-1">
-                <RefreshCw className="h-4 w-4 animate-spin" style={{ animationDuration: "3s" }} />
-                <span>{localize({ en: "Next Step", ar: "الخطوة التالية" }, language)}</span>
-              </h3>
-              <ul className="mt-2 space-y-1 pl-0 list-none text-muted-foreground text-xs leading-relaxed">
-                <li>{localize({ en: "• API endpoint linking for AODB FIDS feed", ar: "• ربط نقاط واجهة البرمجة (API) لبيانات AODB" }, language)}</li>
-                <li>{localize({ en: "• Secure client network integration", ar: "• دمج شبكة العميل الموثوقة" }, language)}</li>
-                <li>{localize({ en: "• Operational database setup", ar: "• إعداد قواعد البيانات التشغيلية" }, language)}</li>
-              </ul>
-            </div>
-          </div>
+
         </div>
       </section>
 
