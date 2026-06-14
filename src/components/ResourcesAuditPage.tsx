@@ -3,7 +3,6 @@ import {
   Check,
   Laptop,
   Monitor,
-  Plane,
   RefreshCw,
   Smartphone,
   User,
@@ -220,7 +219,7 @@ export default function ResourcesAuditPage() {
     <div className="flex flex-col min-w-0 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 max-w-4xl mx-auto w-full">
       
       {/* 1. Page Header & Brief Card */}
-      <section className="panel bg-card/50 p-6 flex flex-col gap-4">
+      <section className="panel bg-card/50 p-4 sm:p-6 flex flex-col gap-4">
         <div>
           <div className="flex items-center gap-2">
             <StatusPill tone="info">{localize({ en: "UX Case Study & Spec Sheet", ar: "دراسة تجربة المستخدم وورقة المواصفات" }, language)}</StatusPill>
@@ -239,7 +238,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 2. About the Creator Card */}
-      <section className="panel bg-primary/5 border border-primary/20 p-6 flex flex-col justify-between relative overflow-hidden gap-4">
+      <section className="panel bg-primary/5 border border-primary/20 p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden gap-4">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
         <div className="grid gap-3.5 z-10 relative">
           <div className="flex items-center gap-2 mb-1">
@@ -269,7 +268,7 @@ export default function ResourcesAuditPage() {
               ar: "مصمم تجربة مستخدم ومحلل بيانات بخبرة +٤ سنوات في Advansys IS. متخصص في تحويل احتياجات المستخدمين لأنظمة تفاعلية متكاملة.",
             }, language)}
           </p>
-          <div className="mt-3 rounded-lg border border-border/50 bg-background/50 p-3.5 flex flex-col gap-2">
+          <div className="mt-3 rounded-lg border border-border/50 bg-background/50 p-3 sm:p-3.5 flex flex-col gap-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
               {localize({ en: "Tools used to create this site", ar: "الأدوات المستخدمة في إنشاء الموقع" }, language)}
             </h4>
@@ -321,7 +320,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 2b. Core Technology Stack */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-4">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Laptop className="h-5 w-5 text-primary" />
@@ -372,7 +371,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 3. Interactive Persona Studies Panel */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
@@ -417,7 +416,7 @@ export default function ResourcesAuditPage() {
           const activeData = personas.find((p) => p.id === activePersona);
           if (!activeData) return null;
           return (
-            <div className="bg-secondary/20 border border-border/60 rounded-xl p-4.5 flex flex-col justify-between min-h-[170px] animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="bg-secondary/20 border border-border/60 rounded-xl p-3.5 sm:p-4.5 flex flex-col justify-between min-h-[170px] animate-in fade-in slide-in-from-top-2 duration-300">
               <div>
                 <h3 className="font-bold text-foreground text-base flex items-center gap-1.5">
                   <User className="h-4.5 w-4.5 text-primary" />
@@ -427,7 +426,7 @@ export default function ResourcesAuditPage() {
                 <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{localize(activeData.needs, language)}</p>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border/40 pt-3 text-xs font-mono text-muted-foreground">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-border/40 pt-3 text-xs font-mono text-muted-foreground">
                 {activeData.specs.map((spec, i) => (
                   <div key={i}>
                     <div className="font-bold text-muted-foreground text-xs uppercase tracking-wide">{localize(spec.label, language)}</div>
@@ -441,7 +440,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 4. Graphical Timeline Panel */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Clock3 className="h-5 w-5 text-primary" />
@@ -458,7 +457,7 @@ export default function ResourcesAuditPage() {
             const Icon = phase.icon;
             const isExpanded = !!expandedPhases[phase.id];
             return (
-              <div key={phase.id} className="relative flex gap-4">
+              <div key={phase.id} className="relative flex gap-2.5 sm:gap-4">
                 {/* Left phase icon with outer border */}
                 <div className="flex flex-col items-center">
                   <button 
@@ -476,7 +475,7 @@ export default function ResourcesAuditPage() {
                 {/* Right side information card */}
                 <div 
                   onClick={() => togglePhase(phase.id)}
-                  className={`flex-1 bg-secondary/15 border rounded-xl p-4 transition-all duration-300 cursor-pointer ${
+                  className={`flex-1 bg-secondary/15 border rounded-xl p-3 sm:p-4 transition-all duration-300 cursor-pointer ${
                     isExpanded ? "border-primary/40 bg-secondary/25 shadow-sm" : "border-border/60 hover:border-border"
                   }`}
                 >
@@ -510,74 +509,44 @@ export default function ResourcesAuditPage() {
         </div>
       </section>
 
-      {/* 5. Wireframe vs Polished Slider */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col justify-between gap-4">
+      {/* 5. Operations Wireframe vs. Polished View */}
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Eye className="h-5 w-5 text-primary" />
-            <span>{localize({ en: "Wireframe vs. Polished Card Spec", ar: "مقارنة الهيكل السلكي مع التصميم النهائي" }, language)}</span>
+            <span>{localize({ en: "Operations Wireframe vs. Polished View", ar: "مقارنة مخطط العمليات مع التصميم النهائي" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Drag the slider to preview the structure of a real MetricCard from the dashboard.", ar: "اسحب المقبض لمقارنة الهيكل التخطيطي للبطاقة بالتصميم الفعلي المستخدم بالموقع." }, language)}
+            {localize({ en: "Drag the slider to compare the initial paper wireframe of the operations dashboard with the finalized high-fidelity digital implementation.", ar: "اسحب المقبض لمقارنة الهيكل التخطيطي الورقي الأولي للوحة العمليات مع التصميم الرقمي النهائي عالي الجودة." }, language)}
           </p>
         </div>
 
         <div 
           ref={sliderRef}
-          className="relative h-[200px] w-full overflow-hidden rounded-xl border border-border bg-background select-none cursor-ew-resize"
+          className="relative h-[320px] w-full overflow-hidden rounded-xl border border-border bg-background select-none cursor-ew-resize"
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
         >
-          {/* Polished Card (Right side/Underneath) */}
-          <div className="absolute inset-0 w-full h-full p-4 flex items-center justify-center bg-card">
-            <div className="w-full max-w-[300px] panel relative overflow-hidden p-4 bg-background border border-border/80 shadow-md">
-              {/* Real MetricCard layout replication */}
-              <div className="absolute -top-10 -start-10 h-24 w-24 rounded-full bg-cyan/15 blur-xl pointer-events-none" />
-              <div className="absolute inset-y-0 start-0 w-[3px] bg-gradient-to-b from-cyan to-cyan/0" />
-              <div className="relative z-10 flex items-start justify-between gap-3 ps-1">
-                <div className="min-w-0">
-                  <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground">{localize({ en: "LUGGAGE PROCESSING", ar: "معالجة الحقائب" }, language)}</p>
-                  <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="text-2xl font-semibold tracking-tight text-foreground">94.2</span>
-                    <span className="font-mono text-xs text-muted-foreground">{localize({ en: "bags/min", ar: "حقيبة/دقيقة" }, language)}</span>
-                  </div>
-                  <p className="mt-2 inline-flex items-center gap-1 text-xs text-status-ok font-mono">
-                    {localize({ en: "▲ +4.1% vs last hr", ar: "▲ +4.1% مقارنة بالساعة الماضية" }, language)}
-                  </p>
-                </div>
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-cyan/20 bg-cyan/10 text-cyan">
-                  <Plane className="h-5 w-5" />
-                </div>
-              </div>
-            </div>
+          {/* Polished Operations View (Right side/Underneath) */}
+          <div className="absolute inset-0 w-full h-full">
+            <img 
+              src="/manager-assets/overview-dark.webp" 
+              alt={localize({ en: "Polished Operations View", ar: "التصميم النهائي للوحة العمليات" }, language)} 
+              className="w-full h-full object-cover select-none pointer-events-none" 
+            />
           </div>
 
-          {/* Wireframe Card (Left side/Clipped overlay) */}
+          {/* Wireframe Operations View (Left side/Clipped overlay) */}
           <div 
-            className="absolute inset-y-0 left-0 h-full overflow-hidden bg-secondary border-r border-dashed border-primary/50 pointer-events-none"
+            className="absolute inset-y-0 left-0 h-full overflow-hidden border-r border-dashed border-primary/50 pointer-events-none"
             style={{ width: `${sliderPos}%` }}
           >
-            <div className="absolute top-0 left-0 w-full h-full p-4 flex items-center justify-center min-w-[340px]" style={{ width: sliderRef.current?.getBoundingClientRect().width }}>
-              <div className="w-full max-w-[300px] border border-dashed border-muted-foreground/50 rounded-lg p-4 bg-background/80 grayscale opacity-60 relative">
-                {/* Real MetricCard wireframe layout */}
-                <div className="absolute inset-y-0 start-0 w-[3px] border-r border-dashed border-muted-foreground/40" />
-                <div className="flex items-start justify-between gap-3 ps-1">
-                  <div className="min-w-0">
-                    {/* Label skeleton */}
-                    <div className="h-3 bg-muted border border-dashed border-muted-foreground/30 rounded w-24" />
-                    {/* Value skeleton */}
-                    <div className="mt-2.5 flex items-baseline gap-1.5">
-                      <div className="h-7 bg-muted border border-dashed border-muted-foreground/30 rounded w-18" />
-                      <div className="h-3.5 bg-muted border border-dashed border-muted-foreground/30 rounded w-10" />
-                    </div>
-                    {/* Delta skeleton */}
-                    <div className="h-3.5 bg-muted border border-dashed border-muted-foreground/30 rounded w-20 mt-2" />
-                  </div>
-                  {/* Icon Box wireframe */}
-                  <div className="h-9 w-9 rounded-md border border-dashed border-muted-foreground/40 shrink-0" />
-                </div>
-              </div>
-            </div>
+            <img 
+              src="/operations_wireframe.jpg" 
+              alt={localize({ en: "Wireframe Operations View", ar: "المخطط الورقي للوحة العمليات" }, language)} 
+              className="absolute top-0 left-0 h-full object-cover select-none pointer-events-none" 
+              style={{ width: sliderRef.current?.getBoundingClientRect().width }}
+            />
           </div>
 
           {/* Slider bar */}
@@ -593,8 +562,8 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 6. Responsive Breakpoint Grid */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col justify-between gap-4">
-        <div className="flex justify-between items-start gap-4">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Laptop className="h-5 w-5 text-primary" />
@@ -605,7 +574,7 @@ export default function ResourcesAuditPage() {
             </p>
           </div>
           
-          <div className="flex gap-1.5 bg-secondary/80 p-0.5 rounded-lg border border-border shrink-0">
+          <div className="flex gap-1.5 bg-secondary/80 p-0.5 rounded-lg border border-border shrink-0 self-start">
             {(["desktop", "laptop", "tablet"] as const).map((dev) => (
               <button
                 key={dev}
@@ -622,7 +591,7 @@ export default function ResourcesAuditPage() {
         </div>
 
         {/* Interactive Viewport Container */}
-        <div className="min-h-[220px] bg-slate-950/80 border border-border/60 rounded-xl p-4 flex flex-col justify-between overflow-hidden">
+        <div className="min-h-[220px] bg-slate-950/80 border border-border/60 rounded-xl p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
           <div className="flex justify-between items-center border-b border-border/30 pb-2 text-xs text-muted-foreground font-mono">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-status-ok" />
@@ -632,12 +601,12 @@ export default function ResourcesAuditPage() {
           </div>
 
           {/* Responsive reflow grid */}
-          <div className="flex-1 mt-3.5 overflow-y-auto">
+          <div className="flex-1 mt-3.5 overflow-x-auto scrollbar-thin">
             <div className={`grid gap-3 ${
               activeDevice === "desktop" 
-                ? "grid-cols-4" 
+                ? "grid-cols-4 min-w-[560px] lg:min-w-0" 
                 : activeDevice === "laptop" 
-                  ? "grid-cols-2" 
+                  ? "grid-cols-2 min-w-[320px] md:min-w-0" 
                   : "grid-cols-1"
             }`}>
               <MiniMetricCard label={localize({ en: "LUGGAGE FLOW", ar: "تدفق الأمتعة" }, language)} value="94.2" unit={localize({ en: "bags/m", ar: "حقيبة/د" }, language)} delta={localize({ en: "▲ +4.1%", ar: "▲ +4.1%" }, language)} deltaTone="ok" accent="cyan" />
@@ -648,7 +617,7 @@ export default function ResourcesAuditPage() {
           </div>
         </div>
 
-        <div className="bg-background border border-border/40 rounded-xl p-3.5 text-sm leading-relaxed">
+        <div className="bg-background border border-border/40 rounded-xl p-3 sm:p-3.5 text-sm leading-relaxed">
           {activeDevice === "desktop" && (
             <div>
               <span className="font-bold text-foreground">Desktop 4K Grid Flow: </span>
@@ -686,7 +655,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 7. Accessibility & Typography Specifications (WCAG 2.1 AA) */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
@@ -699,7 +668,7 @@ export default function ResourcesAuditPage() {
 
         <div className="grid gap-4 text-sm">
           {/* Color Contrast */}
-          <div className="bg-secondary/20 border border-border/50 rounded-xl p-4 flex flex-col gap-3">
+          <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-foreground flex items-center gap-1.5 text-sm">
                 <Contrast className="h-4.5 w-4.5 text-primary" />
@@ -732,7 +701,7 @@ export default function ResourcesAuditPage() {
           </div>
 
           {/* Typography Guidelines */}
-          <div className="bg-secondary/20 border border-border/50 rounded-xl p-4 flex flex-col gap-2">
+          <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-2">
             <h3 className="font-semibold text-foreground text-sm flex items-center gap-1.5">
               <span className="w-1.5 h-3 bg-primary rounded-full" />
               <span>{localize({ en: "Brand Typography & Scaling (Outfit)", ar: "الخطوط والمقاييس الطباعية (أوتفت)" }, language)}</span>
@@ -746,7 +715,7 @@ export default function ResourcesAuditPage() {
           </div>
 
           {/* Keyboard & Outlines */}
-          <div className="bg-secondary/20 border border-border/50 rounded-xl p-4 flex flex-col gap-2">
+          <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-foreground flex items-center gap-1.5 text-sm">
                 <Keyboard className="h-4.5 w-4.5 text-primary" />
@@ -765,7 +734,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 8. Bilingual Context & Mirroring Logic (RTL/LTR) */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
@@ -776,7 +745,7 @@ export default function ResourcesAuditPage() {
           </p>
         </div>
 
-        <div className="bg-secondary/20 border border-border/50 rounded-xl p-4 flex flex-col gap-3">
+        <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
           <p className="text-sm text-muted-foreground leading-relaxed">
             {localize({
               en: "The dashboard is engineered to transition dynamically between Arabic and English without horizontal breaks, using logical properties and element overrides.",
@@ -830,7 +799,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 9. Viewport Responsiveness & Recent UX Updates */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <RefreshCw className="h-5 w-5 text-primary" />
@@ -841,7 +810,7 @@ export default function ResourcesAuditPage() {
           </p>
         </div>
 
-        <div className="bg-secondary/20 border border-border/50 rounded-xl p-4 flex flex-col gap-3">
+        <div className="bg-secondary/20 border border-border/50 rounded-xl p-3 sm:p-4 flex flex-col gap-3">
           <ul className="space-y-3.5 pl-0 list-none text-sm text-muted-foreground">
             <li className="flex items-start gap-2.5">
               <Check className="h-4.5 w-4.5 text-status-ok shrink-0 mt-0.5" />
@@ -898,7 +867,7 @@ export default function ResourcesAuditPage() {
       </section>
 
       {/* 10. Project Status & Roadmap Card */}
-      <section className="panel bg-card/30 p-5 md:p-6 flex flex-col gap-5">
+      <section className="panel bg-card/30 p-4 sm:p-6 flex flex-col gap-5">
         <div>
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Briefcase className="h-5 w-5 text-primary" />
@@ -912,34 +881,34 @@ export default function ResourcesAuditPage() {
         <div className="grid gap-4">
           {/* Requirements Matrix Table */}
           <div className="overflow-x-auto border border-border rounded-lg bg-background/50">
-            <table className="w-full text-start text-sm border-collapse">
+            <table className="w-full text-start text-xs sm:text-sm border-collapse">
               <thead>
                 <tr className="border-b border-border bg-secondary/35 text-muted-foreground font-mono uppercase text-xs tracking-wider">
-                  <th className="py-2.5 px-3.5 text-start">{localize({ en: "Requirement", ar: "المتطلب" }, language)}</th>
-                  <th className="py-2.5 px-3.5 text-start">{localize({ en: "Feature in Prototype", ar: "الميزة بالنموذج" }, language)}</th>
-                  <th className="py-2.5 px-3.5 text-center">{localize({ en: "Status", ar: "الحالة" }, language)}</th>
+                  <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Requirement", ar: "المتطلب" }, language)}</th>
+                  <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Feature in Prototype", ar: "الميزة بالنموذج" }, language)}</th>
+                  <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-center whitespace-nowrap">{localize({ en: "Status", ar: "الحالة" }, language)}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/40 font-medium text-foreground text-sm">
+              <tbody className="divide-y divide-border/40 font-medium text-foreground text-xs sm:text-sm">
                 <tr>
-                  <td className="py-3 px-3.5">{localize({ en: "Arabic/English Toggle", ar: "تغيير اللغة" }, language)}</td>
-                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "RTL Switcher hook & logical mirroring", ar: "ربط اتجاه الواجهة (RTL) والانعكاس المنطقي" }, language)}</td>
-                  <td className="py-3 px-3.5 text-center">
-                    <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Arabic/English Toggle", ar: "تغيير اللغة" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "RTL Switcher hook & logical mirroring", ar: "ربط اتجاه الواجهة (RTL) والانعكاس المنطقي" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
+                    <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20 whitespace-nowrap">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-3.5">{localize({ en: "Accessibility Guidelines", ar: "معايير تيسير الوصول" }, language)}</td>
-                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "WCAG 2.1 AA contrast & keyboard sequence", ar: "نسب تباين WCAG 2.1 AA وتسلسل لوحة المفاتيح" }, language)}</td>
-                  <td className="py-3 px-3.5 text-center">
-                    <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "Accessibility Guidelines", ar: "معايير تيسير الوصول" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "WCAG 2.1 AA contrast & keyboard sequence", ar: "نسب تباين WCAG 2.1 AA وتسلسل لوحة المفاتيح" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
+                    <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2 py-0.5 rounded border border-status-ok/20 whitespace-nowrap">{localize({ en: "LIVE", ar: "مباشر" }, language)}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-3.5">{localize({ en: "AODB Flight Feed", ar: "تغذية الرحلات الجوية" }, language)}</td>
-                  <td className="py-3 px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "Simulated feed state", ar: "تغذية بيانات افتراضية" }, language)}</td>
-                  <td className="py-3 px-3.5 text-center">
-                    <span className="text-xs font-mono text-status-warn bg-status-warn/10 px-2 py-0.5 rounded border border-status-warn/20">{localize({ en: "PENDING", ar: "قيد الانتظار" }, language)}</span>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5">{localize({ en: "AODB Flight Feed", ar: "تغذية الرحلات الجوية" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 font-mono text-xs text-muted-foreground">{localize({ en: "Simulated feed state", ar: "تغذية بيانات افتراضية" }, language)}</td>
+                  <td className="py-2.5 px-2.5 sm:py-3 sm:px-3.5 text-center whitespace-nowrap">
+                    <span className="text-xs font-mono text-status-warn bg-status-warn/10 px-2 py-0.5 rounded border border-status-warn/20 whitespace-nowrap">{localize({ en: "PENDING", ar: "قيد الانتظار" }, language)}</span>
                   </td>
                 </tr>
               </tbody>
