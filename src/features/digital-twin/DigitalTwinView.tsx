@@ -372,7 +372,6 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
               anchor={hoverAnchor} 
             />
           )}
-          {/* Selected hotspot popover modal removed in favor of sidebar dashboard panel */}
           </div>
 
           <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 rounded-xl border border-border bg-card/65 backdrop-blur-md h-full overflow-y-auto">
@@ -403,16 +402,24 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                 </div>
 
                 {/* Hotspot Title & Status/Time */}
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-bold tracking-tight text-foreground leading-tight">{tr(selectedHotspot.title)}</h3>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider border ${hotspotStatusDetails?.toneStyles}`}>
+                <div className="space-y-2">
+                  <h3 className="text-[18px] lg:text-[20px] font-bold tracking-tight text-foreground leading-tight">
+                    {tr(selectedHotspot.title)}
+                  </h3>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border ${
+                      language === "ar"
+                        ? "px-2.5 py-1 text-[12px] font-sans font-bold"
+                        : "px-2 py-0.5 text-[11px] font-mono font-bold uppercase tracking-wider"
+                    } ${hotspotStatusDetails?.toneStyles}`}>
                       <span className={`h-1.5 w-1.5 rounded-full ${hotspotStatusDetails?.toneColor} ${selectedHotspot.status === 'critical' || selectedHotspot.status === 'warning' ? 'animate-pulse' : ''}`}></span>
                       {hotspotStatusDetails?.statusLabel}
                     </span>
                     {selectedHotspot.updatedAt && (
-                      <div className="flex items-center gap-1 text-muted-foreground font-mono text-[10px]">
-                        <Clock3 className="h-3 w-3" />
+                      <div className={`flex items-center gap-1 text-muted-foreground ${
+                        language === "ar" ? "text-[12px] font-sans" : "font-mono text-[11px]"
+                      }`}>
+                        <Clock3 className="h-3.5 w-3.5" />
                         <span>{selectedHotspot.updatedAt}</span>
                       </div>
                     )}
@@ -420,16 +427,26 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                 </div>
 
                 {/* Operational Impact & Evidence (Flat flow design) */}
-                <div className="space-y-3 pt-1">
+                <div className="space-y-4 pt-1">
                   {selectedHotspot.impact && (
-                    <div className="text-xs leading-relaxed text-foreground">
-                      <span className="block font-bold text-primary uppercase tracking-wider text-[9px] mb-0.5">{localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}</span>
+                    <div className="text-sm lg:text-base leading-relaxed text-foreground">
+                      <span className={language === "ar"
+                        ? "block font-bold text-primary text-[12px] lg:text-[13px] mb-0.5"
+                        : "block font-bold text-primary uppercase tracking-wider text-[11px] lg:text-[12px] mb-0.5"
+                      }>
+                        {localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}
+                      </span>
                       <p className="text-muted-foreground">{tr(selectedHotspot.impact)}</p>
                     </div>
                   )}
                   {selectedHotspot.evidence && (
-                    <div className="text-xs leading-relaxed text-foreground">
-                      <span className="block font-bold text-status-warn uppercase tracking-wider text-[9px] mb-0.5">{localize({ en: "Evidence", ar: "الأدلة" }, language)}</span>
+                    <div className="text-sm lg:text-base leading-relaxed text-foreground">
+                      <span className={language === "ar"
+                        ? "block font-bold text-status-warn text-[12px] lg:text-[13px] mb-0.5"
+                        : "block font-bold text-status-warn uppercase tracking-wider text-[11px] lg:text-[12px] mb-0.5"
+                      }>
+                        {localize({ en: "Evidence", ar: "الأدلة" }, language)}
+                      </span>
                       <p className="text-muted-foreground">{tr(selectedHotspot.evidence)}</p>
                     </div>
                   )}
@@ -446,15 +463,18 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
 
                 {/* Action Recommendation Callout */}
                 {selectedHotspot.action && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
-                      <Zap className="h-4 w-4" />
+                  <div className="flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
+                      <Zap className="h-4.5 w-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <span className="block font-mono text-[9px] uppercase tracking-widest text-primary font-bold">
+                      <span className={language === "ar"
+                        ? "block text-[12px] lg:text-[13px] text-primary font-bold"
+                        : "block font-mono text-[11px] lg:text-[12px] uppercase tracking-widest text-primary font-bold"
+                      }>
                         {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
                       </span>
-                      <p className="mt-1 text-xs text-foreground font-semibold leading-relaxed">
+                      <p className="mt-1 text-sm lg:text-base text-foreground font-semibold leading-relaxed">
                         {tr(selectedHotspot.action)}
                       </p>
                     </div>
@@ -531,7 +551,10 @@ function IncomingFlightsPanel({
   return (
     <section className="panel-inner p-2 lg:p-2.5" aria-label={localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="font-mono text-[9px] lg:text-[10px] uppercase tracking-[0.15em] text-primary font-bold">{localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}</p>
+        <p className={language === "ar"
+          ? "text-[12px] lg:text-[13px] text-primary font-bold"
+          : "font-mono text-[11px] lg:text-[12px] uppercase tracking-[0.15em] text-primary font-bold"
+        }>{localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}</p>
         <div className="flex items-center gap-1.5">
           <span className="text-[9px] text-muted-foreground font-mono">{updatedAt}</span>
           <StatusPill tone={sourceTone} className="text-[8px] px-1.5 py-0">{sourceLabel}</StatusPill>
@@ -573,7 +596,10 @@ function ZoneStatusPanel() {
   const { language } = useLocale();
   return (
     <section className="panel-inner p-2 lg:p-2.5" aria-label={localize({ en: "Terminal zone status", ar: "حالة مناطق المباني" }, language)}>
-      <p className="mb-2 font-mono text-[9px] lg:text-[10px] uppercase tracking-[0.15em] text-primary font-bold">{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
+      <p className={language === "ar"
+        ? "mb-2 text-[12px] lg:text-[13px] text-primary font-bold"
+        : "mb-2 font-mono text-[11px] lg:text-[12px] uppercase tracking-[0.15em] text-primary font-bold"
+      }>{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
       <div className="grid gap-1">
         {zoneStatusRows.map((zone) => (
           <div key={zone.zone} className="flex items-center justify-between gap-2 text-xs py-1 border-b border-border/20 last:border-b-0">
@@ -616,14 +642,22 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
       <div className="panel overflow-hidden p-0 shadow-[0_8px_32px_rgba(0,0,0,0.8)] border border-primary bg-[#0B121A]/95 backdrop-blur-xl w-max max-w-[320px]">
         <div className="flex items-center justify-between gap-4 p-3 pb-2 whitespace-nowrap">
           <h3 className="text-sm font-bold tracking-tight text-foreground">{tr(hotspot.title)}</h3>
-          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider border ${toneStyles}`}>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 border ${
+            language === "ar"
+              ? "text-[12px] font-sans font-bold"
+              : "text-[10px] font-mono font-bold uppercase tracking-wider"
+          } ${toneStyles}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${toneColor}`}></span>
             {statusLabel}
           </span>
         </div>
         <div className="flex flex-col p-3 pt-0 w-0 min-w-full whitespace-normal">
           <p className="text-xs text-muted-foreground line-clamp-2">{tr(hotspot.impact)}</p>
-          <div className="text-[10px] text-primary/80 uppercase tracking-widest font-mono mt-2">{localize({en: "Click hotspot to expand", ar: "انقر للتوسيع"}, language)}</div>
+          <div className={`mt-2 ${
+            language === "ar"
+              ? "text-[12px] text-primary/80 font-sans"
+              : "text-[10px] text-primary/80 uppercase tracking-widest font-mono"
+          }`}>{localize({en: "Click hotspot to expand", ar: "انقر للتوسيع"}, language)}</div>
         </div>
       </div>
       <svg className="absolute left-1/2 bottom-[-14px] transform -translate-x-1/2 pointer-events-none" width="2" height="14">

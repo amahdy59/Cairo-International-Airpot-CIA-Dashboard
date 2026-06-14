@@ -37,7 +37,7 @@ const personas = [
     name: { en: "Karim — Duty Operations Manager", ar: "كريم — مدير عمليات نوبة العمل" },
     avatarPath: "/karim_avatar.png",
     role: { en: "12y command center experience, oversees live terminal operations on 4K wall displays.", ar: "خبرة ١٢ عاماً في مركز القيادة، يشرف على عمليات الصالات الحية على شاشات جدارية 4K." },
-    needs: { en: "Requires immediate anomaly alerts (under 200ms) with aging metrics to prevent dispatch bottlenecks.", ar: "يتطلب تنبيهات فورية عن المشاكل (أقل من ٢٠٠ ملي ثانية) مع مؤشرات تقادم لمنع حدوث تكدس." },
+    needs: { en: "Requires immediate operational alerts (under 200ms) with aging metrics to prevent dispatch bottlenecks.", ar: "يتطلب تنبيهات فورية عن المشاكل (أقل من ٢٠٠ ملي ثانية) مع مؤشرات تقادم لمنع حدوث تكدس." },
     specs: [
       { label: { en: "Shift", ar: "النوبة" }, val: { en: "Rotational (12h)", ar: "متناوبة (١٢ ساعة)" } },
       { label: { en: "Device", ar: "الجهاز" }, val: { en: "4K Video Wall", ar: "شاشة جدارية 4K" } },

@@ -23,7 +23,7 @@ function DigitalOperationalGrid() {
         <GateWaitChart />
       </div>
       <div className="grid gap-3 lg:gap-4">
-        <AnomalyWarningsPanel />
+        <AlertsPanel />
       </div>
     </section>
   );
@@ -141,7 +141,7 @@ function GateWaitChart() {
   );
 }
 
-function AnomalyWarningsPanel() {
+function AlertsPanel() {
   const { language } = useLocale();
   const warnings = [
     { icon: Gauge, title: { en: "Threshold warning", ar: "تحذير حد تشغيلي" }, detail: { en: "Deploy 3 additional screening staff to T2 security immediately.", ar: "قم بتوجيه 3 موظفي فحص إضافيين لأمن مبنى 2 فوراً." }, tone: "warn" as Tone },
@@ -149,7 +149,7 @@ function AnomalyWarningsPanel() {
     { icon: DoorOpen, title: { en: "Open counter recommendation", ar: "توصية فتح كاونتر" }, detail: { en: "Open two counters before the +2h forecast peak.", ar: "افتح كاونترين قبل ذروة التوقع بعد ساعتين." }, tone: "info" as Tone },
   ];
   return (
-    <SectionPanel title={localize({ en: "Anomaly alerts and recommendations", ar: "تنبيهات الشذوذ والتوصيات" }, language)} action={<StatusPill tone="info">AI</StatusPill>}>
+    <SectionPanel title={localize({ en: "Alerts & Recommendations", ar: "التنبيهات والتوصيات" }, language)} action={<StatusPill tone="info">AI</StatusPill>}>
       <div className="grid gap-3">
         {warnings.map((warning) => {
           const Icon = warning.icon;
