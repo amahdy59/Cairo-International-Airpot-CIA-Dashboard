@@ -313,12 +313,13 @@ export default function ResourcesAuditPage() {
             <a 
               href="https://www.linkedin.com/in/creativemahdy"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors font-medium"
               aria-label="LinkedIn"
             >
               <Linkedin className="h-4 w-4" />
               <span className="hidden sm:inline">LinkedIn</span>
+              <ExternalLink className="h-3.5 w-3.5 opacity-80" />
             </a>
             <a 
               href="https://mahdy-resume.vercel.app/"

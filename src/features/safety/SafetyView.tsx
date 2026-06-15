@@ -69,7 +69,7 @@ function PriorityActionsPanel() {
   return (
     <SectionPanel
       title={tr("Decision recommendations")}
-      action={<div className="flex gap-2"><StatusPill tone="warn">{tr("3 items")}</StatusPill><StatusPill tone="neutral">{tr("Controls to prevent issue build-up")}</StatusPill></div>}
+      action={<div className="flex flex-wrap gap-1.5 sm:gap-2"><StatusPill tone="warn">{tr("3 items")}</StatusPill><StatusPill tone="neutral">{tr("Controls to prevent issue build-up")}</StatusPill></div>}
     >
       <div className="grid gap-3 sm:grid-cols-3">
         {actions.map((action) => {
