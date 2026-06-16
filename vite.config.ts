@@ -5,5 +5,5 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), tsconfigPaths()],
-  base: process.env.GITHUB_ACTIONS ? "/Cairo-International-Airpot-CIA-Dashboard/" : "/",
+  base: process.env.VERCEL ? "/" : "/Cairo-International-Airpot-CIA-Dashboard/",
 });
