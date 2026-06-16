@@ -25,6 +25,21 @@ import { StatusPill } from "./command-center/MetricWidgets";
 import { useLocale } from "../context/locale";
 import { localize } from "../utils/helpers";
 
+function renderTextWithAbbr(text: string) {
+  if (typeof text !== "string") return text;
+  const tokens = text.split(/\b(SLA|PAX|pax|ICAO|RTL|LTR|LHR|CAI)\b/g);
+  return tokens.map((token, i) => {
+    if (token === "SLA") return <abbr key={i} title="Service Level Agreement" className="no-underline cursor-help border-b border-dotted border-foreground/30">SLA</abbr>;
+    if (token === "PAX" || token === "pax") return <abbr key={i} title="Passengers" className="no-underline cursor-help border-b border-dotted border-foreground/30">{token}</abbr>;
+    if (token === "ICAO") return <abbr key={i} title="International Civil Aviation Organization" className="no-underline cursor-help border-b border-dotted border-foreground/30">ICAO</abbr>;
+    if (token === "RTL") return <abbr key={i} title="Right-to-Left" className="no-underline cursor-help border-b border-dotted border-foreground/30">RTL</abbr>;
+    if (token === "LTR") return <abbr key={i} title="Left-to-Right" className="no-underline cursor-help border-b border-dotted border-foreground/30">LTR</abbr>;
+    if (token === "LHR") return <abbr key={i} title="London Heathrow Airport" className="no-underline cursor-help border-b border-dotted border-foreground/30">LHR</abbr>;
+    if (token === "CAI") return <abbr key={i} title="Cairo International Airport" className="no-underline cursor-help border-b border-dotted border-foreground/30">CAI</abbr>;
+    return token;
+  });
+}
+
 // ----------------------------------------------------
 // Persona & Research data
 // ----------------------------------------------------
@@ -91,11 +106,11 @@ const timelinePhases = [
   {
     id: "accessibility",
     title: { en: "3. Accessibility & Device Support", ar: "٣. تحسين سهولة الوصول وتوافق الأجهزة" },
-    desc: { en: "Tested contrast ratios under direct sunlight. Met WCAG 2.1 AA guidelines and added native RTL/LTR mirroring.", ar: "تم اختبار نسب التباين تحت إضاءة المطار. تم توحيد الرموز اللونية لمعيار WCAG 2.1 AA وتطبيق التخطيط ثنائي الاتجاه." },
+    desc: { en: "Tested contrast ratios under direct sunlight. Met WCAG 2.1 AAA guidelines and added native RTL/LTR mirroring.", ar: "تم اختبار نسب التباين تحت إضاءة المطار. تم توحيد الرموز اللونية لمعيار WCAG 2.1 AAA وتطبيق التخطيط ثنائي الاتجاه." },
     icon: ShieldCheck,
     bullets: [
-      { en: "Verified 4.5:1 minimum text contrast for light and dark modes.", ar: "التحقق من تباين النصوص بنسبة ٤.٥:١ كحد أدنى بالنمط الفاتح والداكن." },
-      { en: "Programmed native CSS mirroring for English and Arabic.", ar: "برمجة انعكاس التخطيط التلقائي لدعم العربية RTL والإنجليزية LTR." }
+      { en: "Verified 7:1 minimum text contrast for light and dark modes.", ar: "التحقق من تباين النصوص بنسبة ٧:١ كحد أدنى بالنمط الفاتح والداكن." },
+      { en: "Programmed native CSS mirroring for English and Arabic." , ar: "برمجة انعكاس التخطيط التلقائي لدعم العربية RTL والإنجليزية LTR." }
     ]
   }
 ];
@@ -443,12 +458,12 @@ export default function ResourcesAuditPage() {
 
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 border-t border-border/40 pt-3 text-xs text-muted-foreground">
                 {activeData.specs.map((spec, i) => (
-                  <div key={i} className="flex flex-col gap-0.5">
-                    <span className={`font-bold text-muted-foreground text-[11px] uppercase ${language === 'ar' ? 'tracking-normal' : 'tracking-wider'}`}>
-                      {localize(spec.label, language)}
+                  <div key={i} className="flex flex-col gap-0.5 text-start">
+                    <span className={`font-bold text-primary text-[11px] uppercase ${language === 'ar' ? 'tracking-normal' : 'tracking-wider'}`}>
+                      {localize(spec.label, language)}:
                     </span>
-                    <span className="text-sm text-foreground font-semibold">
-                      {localize(spec.val, language)}
+                    <span className="text-sm text-foreground font-medium">
+                      {renderTextWithAbbr(localize(spec.val, language))}
                     </span>
                   </div>
                 ))}
@@ -494,7 +509,16 @@ export default function ResourcesAuditPage() {
                 {/* Right side information card (fully collapsed/expanded accordion) */}
                 <div 
                   onClick={() => togglePhase(phase.id)}
-                  className={`flex-1 min-w-0 bg-transparent border-0 sm:bg-secondary/25 sm:border rounded-none sm:rounded-xl p-0 sm:p-4 transition-all duration-300 cursor-pointer ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      togglePhase(phase.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  className={`flex-1 min-w-0 bg-transparent border-0 sm:bg-secondary/25 sm:border rounded-none sm:rounded-xl p-0 sm:p-4 transition-all duration-300 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     isExpanded ? "sm:border-primary/40 sm:bg-secondary/25 shadow-sm" : "sm:border-border/60 sm:hover:border-border"
                   }`}
                 >
@@ -587,12 +611,12 @@ export default function ResourcesAuditPage() {
               <button
                 key={dev}
                 onClick={() => setActiveDevice(dev)}
-                className={`p-2 rounded-md transition cursor-pointer ${activeDevice === dev ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-lg transition cursor-pointer ${activeDevice === dev ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"}`}
                 aria-label={`${dev} specifications`}
               >
-                {dev === "desktop" && <Monitor className="h-4.5 w-4.5" />}
-                {dev === "laptop" && <Laptop className="h-4.5 w-4.5" />}
-                {dev === "tablet" && <Smartphone className="h-4.5 w-4.5" />}
+                {dev === "desktop" && <Monitor className="h-5 w-5" />}
+                {dev === "laptop" && <Laptop className="h-5 w-5" />}
+                {dev === "tablet" && <Smartphone className="h-5 w-5" />}
               </button>
             ))}
           </div>

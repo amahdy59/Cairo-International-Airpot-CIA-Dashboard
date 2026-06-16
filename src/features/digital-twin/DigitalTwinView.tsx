@@ -198,6 +198,13 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
         id={`hotspot-marker-${hotspot.id}`}
         transform={`translate(${hotspot.cx * 16}, ${hotspot.cy * 9})`} 
         onClick={(e) => handleHotspotClick(hotspot.id, e)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            selectHotspotAndScene(hotspot.id);
+            setHoveredHotspotId(null);
+          }
+        }}
         onPointerEnter={(e) => {
           if (selectedHotspotId !== hotspot.id) {
             setHoveredHotspotId(hotspot.id);

@@ -134,7 +134,7 @@
   
   --border: #E2E8F0;
   --muted: #F8FAFC;
-  --muted-foreground: #475569; /* Better contrast secondary text */
+  --muted-foreground: #334155; /* Meets WCAG AAA 7:1 contrast ratio against slate background */
 
   --status-ok: #047857;
   --status-info: #1D4ED8;

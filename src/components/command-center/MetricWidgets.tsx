@@ -175,7 +175,14 @@ export function ProgressBar({ value, max = 100, color = "var(--cyan)", className
   const percent = Math.min(100, Math.max(0, (value / max) * 100));
 
   return (
-    <div className={`relative h-1.5 w-full overflow-hidden rounded-full bg-secondary ${className}`}>
+    <div 
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-label={`${value} out of ${max}`}
+      className={`relative h-1.5 w-full overflow-hidden rounded-full bg-secondary ${className}`}
+    >
       <div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${percent}%`, background: color, boxShadow: `0 0 10px ${color}` }} />
     </div>
   );
