@@ -165,6 +165,77 @@ function MiniMetricCard({
   );
 }
 
+interface ScrollableImageContainerProps {
+  src: string;
+  alt: string;
+  title: string;
+  helperText: string;
+}
+
+function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableImageContainerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const scrollLeft = useRef(0);
+  const scrollTop = useRef(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    startX.current = e.pageX - containerRef.current!.offsetLeft;
+    startY.current = e.pageY - containerRef.current!.offsetTop;
+    scrollLeft.current = containerRef.current!.scrollLeft;
+    scrollTop.current = containerRef.current!.scrollTop;
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current!.offsetLeft;
+    const y = e.pageY - containerRef.current!.offsetTop;
+    const walkX = (x - startX.current) * 1.5;
+    const walkY = (y - startY.current) * 1.5;
+    containerRef.current!.scrollLeft = scrollLeft.current - walkX;
+    containerRef.current!.scrollTop = scrollTop.current - walkY;
+  };
+
+  return (
+    <div className="flex flex-col gap-2 w-full">
+      <span className="text-xs font-mono font-semibold uppercase tracking-wider text-primary px-1">{title}</span>
+      <div 
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        tabIndex={0}
+        aria-label={`${title}. ${helperText}`}
+        className="relative h-[320px] w-full overflow-auto no-scrollbar rounded-xl border border-border bg-background cursor-grab active:cursor-grabbing select-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+      >
+        <div className="relative w-[1100px] h-[650px]">
+          <img 
+            src={src} 
+            alt={alt} 
+            className="w-full h-full object-cover select-none pointer-events-none rounded-xl" 
+          />
+        </div>
+      </div>
+      <span className="text-[10px] text-muted-foreground/60 px-1 text-center md:text-start flex items-center gap-1">
+        <span>🖱️</span>
+        <span>{helperText}</span>
+      </span>
+    </div>
+  );
+}
+
 export default function ResourcesAuditPage() {
   const { language } = useLocale();
 
@@ -183,67 +254,8 @@ export default function ResourcesAuditPage() {
     }));
   };
 
-  // Draggable Slider State
-  const [sliderPos, setSliderPos] = useState(50);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-
-  useEffect(() => {
-    if (!sliderRef.current) return;
-    setContainerWidth(sliderRef.current.getBoundingClientRect().width);
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-
-    observer.observe(sliderRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // Responsive visualizer state
   const [activeDevice, setActiveDevice] = useState<"desktop" | "laptop" | "tablet">("laptop");
-
-  // Slider Mouse/Touch Handlers
-  const handleSliderMove = (clientX: number) => {
-    if (!sliderRef.current) return;
-    const rect = sliderRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    setSliderPos(percentage);
-  };
-
-  const handleMouseDown = () => {
-    isDragging.current = true;
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging.current) handleSliderMove(e.clientX);
-    };
-    const handleMouseUp = () => {
-      isDragging.current = false;
-    };
-    const handleTouchMove = (e: TouchEvent) => {
-      if (isDragging.current && e.touches.length > 0) {
-        handleSliderMove(e.touches[0].clientX);
-      }
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    window.addEventListener("touchmove", handleTouchMove);
-    window.addEventListener("touchend", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleMouseUp);
-    };
-  }, []);
 
   return (
     <div className="flex flex-col min-w-0 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 max-w-4xl mx-auto w-full">
@@ -561,35 +573,23 @@ export default function ResourcesAuditPage() {
             <span>{localize({ en: "Operations Wireframe vs. Polished View", ar: "مقارنة مخطط العمليات مع التصميم النهائي" }, language)}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {localize({ en: "Compare the paper wireframe (left) with the final polished dashboard (right).", ar: "قارن بين المخطط الورقي الأولي (يسار) مع لوحة العمليات النهائية (يمين)." }, language)}
+            {localize({ en: "Compare the paper wireframe (left/top) with the final polished dashboard (right/bottom).", ar: "قارن بين المخطط الورقي الأولي مع لوحة العمليات النهائية." }, language)}
           </p>
         </div>
 
-        <div 
-          ref={sliderRef}
-          className="relative h-[320px] w-full overflow-hidden rounded-xl border border-border bg-background select-none"
-        >
-          {/* Polished Operations View (Right side/Underneath) */}
-          <div className="absolute inset-0 w-full h-full">
-            <img 
-              src={import.meta.env.BASE_URL + "operations_polished.jpg"} 
-              alt={localize({ en: "Polished Operations View", ar: "التصميم النهائي للوحة العمليات" }, language)} 
-              className="w-full h-full object-cover select-none pointer-events-none" 
-            />
-          </div>
-
-          {/* Wireframe Operations View (Left side/Clipped overlay static at 50%) */}
-          <div 
-            className="absolute inset-y-0 left-0 h-full overflow-hidden border-r border-dashed border-primary/40 pointer-events-none"
-            style={{ width: "50%" }}
-          >
-            <img 
-              src={import.meta.env.BASE_URL + "operations_wireframe.jpg"} 
-              alt={localize({ en: "Wireframe Operations View", ar: "المخطط الورقي للوحة العمليات" }, language)} 
-              className="absolute top-0 left-0 h-full object-cover select-none pointer-events-none" 
-              style={{ width: containerWidth ? `${containerWidth}px` : "100%" }}
-            />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+          <ScrollableImageContainer 
+            src={import.meta.env.BASE_URL + "operations_wireframe.jpg"} 
+            alt={localize({ en: "Operations Paper Wireframe View", ar: "عرض المخطط الورقي للوحة العمليات" }, language)}
+            title={localize({ en: "Paper Wireframe View", ar: "عرض المخطط الورقي" }, language)}
+            helperText={localize({ en: "Click and drag or use arrow keys to pan the view", ar: "اسحب بالماوس أو استخدم الأسهم للتنقل واستكشاف المخطط" }, language)}
+          />
+          <ScrollableImageContainer 
+            src={import.meta.env.BASE_URL + "operations_polished.jpg"} 
+            alt={localize({ en: "Light Mode Polished Operations View", ar: "عرض التصميم النهائي للوحة العمليات بالوضع الفاتح" }, language)}
+            title={localize({ en: "Light Mode Polished Dashboard", ar: "التصميم النهائي (الوضع الفاتح)" }, language)}
+            helperText={localize({ en: "Click and drag or use arrow keys to pan the view", ar: "اسحب بالماوس أو استخدم الأسهم للتنقل واستكشاف المخطط" }, language)}
+          />
         </div>
       </section>
 

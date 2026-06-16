@@ -246,8 +246,8 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
 
   return (
     <div className="grid min-w-0 gap-3 lg:gap-4">
-      <SectionPanel className="overflow-hidden p-0!" title="">
-        <nav className="border-b border-border bg-card/70 px-2 lg:px-4 py-2" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+      <SectionPanel className="overflow-visible p-0!" title="">
+        <nav className="sticky top-16 z-30 border-b border-border bg-background/95 backdrop-blur-md px-2 lg:px-4 py-2" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
           <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-2.5">
               <h2 className="shrink-0 text-sm sm:text-base font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
