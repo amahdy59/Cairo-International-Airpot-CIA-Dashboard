@@ -35,7 +35,7 @@ export function BackToTopButton() {
 function TimeChip({ label, value }: { label: string; value: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="hidden xl:inline font-mono text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
       <span className="font-mono text-sm font-bold leading-none">{value}</span>
     </span>
   );
@@ -130,25 +130,25 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2 order-3 sm:order-none">
-          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 xl:flex" title={tr("Current Cairo and UTC Time")}>
+          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex" title={tr("Current Cairo and UTC Time")}>
             <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
             <TimeChip label={tr("Cairo")} value={times.cairo} />
             <span className="h-5 w-px bg-border" />
             <TimeChip label={tr("UTC")} value={times.utc} />
           </div>
-          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
+          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
           </button>
-          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
+          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
             <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden xl:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
             <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
           <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="relative grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary xl:hidden transition-colors overflow-hidden"
+            className="relative grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary lg:hidden transition-colors overflow-hidden"
             aria-expanded={isMenuOpen}
             aria-label={tr("Toggle navigation menu")}
             title={tr("Toggle navigation menu")}
@@ -171,7 +171,7 @@ export function Header({
 
       {/* Mobile/Tablet Navigation Dropdown with microinteractions */}
       <div
-        className={`xl:hidden overflow-hidden transition-all pointer-events-auto ${
+        className={`lg:hidden overflow-hidden transition-all pointer-events-auto ${
           isMenuOpen
             ? "max-h-[350px] opacity-100 border-t border-white/20 visible duration-300 ease-out"
             : "max-h-0 opacity-0 border-t-0 invisible pointer-events-none duration-300 ease-in"
