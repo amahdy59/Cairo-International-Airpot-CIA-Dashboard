@@ -179,6 +179,35 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
   const startY = useRef(0);
   const scrollLeft = useRef(0);
   const scrollTop = useRef(0);
+  const [imgRatio, setImgRatio] = useState<number | null>(null);
+  const [containerDim, setContainerDim] = useState({ width: 0, height: 320 });
+
+  useEffect(() => {
+    const img = new window.Image();
+    img.src = src;
+    img.onload = () => {
+      setImgRatio(img.naturalWidth / img.naturalHeight);
+    };
+  }, [src]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    
+    setContainerDim({
+      width: container.clientWidth,
+      height: container.clientHeight || 320,
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      setContainerDim({
+        width: container.clientWidth,
+        height: container.clientHeight || 320,
+      });
+    });
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
@@ -207,6 +236,33 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
     containerRef.current!.scrollTop = scrollTop.current - walkY;
   };
 
+  let imgStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  };
+
+  if (imgRatio && containerDim.width > 0) {
+    const containerRatio = containerDim.width / containerDim.height;
+    if (containerRatio > imgRatio) {
+      imgStyle = {
+        width: containerDim.width,
+        height: containerDim.width / imgRatio,
+        minHeight: containerDim.height,
+        maxHeight: "none",
+        maxWidth: "none",
+      };
+    } else {
+      imgStyle = {
+        height: containerDim.height,
+        width: containerDim.height * imgRatio,
+        minWidth: containerDim.width,
+        maxWidth: "none",
+        maxHeight: "none",
+      };
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2 w-full">
       <span className="text-xs font-mono font-semibold uppercase tracking-wider text-primary px-1">{title}</span>
@@ -220,13 +276,12 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
         aria-label={`${title}. ${helperText}`}
         className="relative h-[320px] w-full overflow-auto no-scrollbar rounded-xl border border-border bg-background cursor-grab active:cursor-grabbing select-none focus:outline-none focus:ring-2 focus:ring-primary/50"
       >
-        <div className="relative w-[125%] h-auto min-h-full">
-          <img 
-            src={src} 
-            alt={alt} 
-            className="w-full h-auto min-h-[320px] object-cover select-none pointer-events-none rounded-xl" 
-          />
-        </div>
+        <img 
+          src={src} 
+          alt={alt} 
+          style={imgStyle}
+          className="select-none pointer-events-none rounded-xl block" 
+        />
       </div>
       <span className="text-[10px] text-muted-foreground/60 px-1 text-center md:text-start flex items-center gap-1">
         <span>🖱️</span>
@@ -585,9 +640,9 @@ export default function ResourcesAuditPage() {
             helperText={localize({ en: "Click and drag or use arrow keys to pan the view", ar: "اسحب بالماوس أو استخدم الأسهم للتنقل واستكشاف المخطط" }, language)}
           />
           <ScrollableImageContainer 
-            src={import.meta.env.BASE_URL + "operations_polished.jpg"} 
-            alt={localize({ en: "Light Mode Polished Operations View", ar: "عرض التصميم النهائي للوحة العمليات بالوضع الفاتح" }, language)}
-            title={localize({ en: "Light Mode Polished Dashboard", ar: "التصميم النهائي (الوضع الفاتح)" }, language)}
+            src={import.meta.env.BASE_URL + "operations_polished.png"} 
+            alt={localize({ en: "Dark Mode Polished Operations View", ar: "عرض التصمیم النهائي للوحة العمليات بالوضع الداكن" }, language)}
+            title={localize({ en: "Dark Mode Polished Dashboard", ar: "التصميم النهائي (الوضع الداكن)" }, language)}
             helperText={localize({ en: "Click and drag or use arrow keys to pan the view", ar: "اسحب بالماوس أو استخدم الأسهم للتنقل واستكشاف المخطط" }, language)}
           />
         </div>
