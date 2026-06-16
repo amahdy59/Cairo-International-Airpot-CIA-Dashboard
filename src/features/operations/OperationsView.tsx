@@ -173,7 +173,7 @@ function AlertsPanel() {
 function OperationsView() {
   const { tr } = useLocale();
   return (
-    <div className="grid gap-3 lg:gap-4">
+    <div className="grid gap-3 lg:gap-4 mt-3 lg:mt-4">
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
         <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
         <MetricCard label={tr("Aircraft movements")} value="412" unit="/ 540" hint={tr("390 average")} delta={tr("On schedule")} icon={Activity} accent="cyan" />

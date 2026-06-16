@@ -6,7 +6,7 @@ import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-
 
 function SafetyView() {
   return (
-    <div className="flex flex-col gap-3 lg:gap-4">
+    <div className="flex flex-col gap-3 lg:gap-4 mt-3 lg:mt-4">
       {/* Top Section: 2x2 grid on desktop, single column on tablet/mobile */}
       <div className="grid gap-3 lg:gap-4 lg:grid-cols-2">
         <SafetyAlertAge />

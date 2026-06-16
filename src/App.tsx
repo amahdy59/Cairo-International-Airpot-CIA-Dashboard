@@ -58,9 +58,9 @@ export function App() {
     <LocaleContext.Provider value={language}>
     <div className="min-h-screen">
       <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard} />
-      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-3 overflow-x-hidden px-2 pb-4 pt-[76px] sm:pt-20 sm:gap-3 sm:px-4 lg:gap-4 lg:px-6">
+      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-3 overflow-x-hidden px-2 pb-4 pt-16 sm:pt-16 sm:gap-3 sm:px-4 lg:gap-4 lg:px-6">
         {activePage === "resources" ? (
-          <div id="main-content">
+          <div id="main-content" className="mt-3 lg:mt-4">
             <ErrorBoundary>
               <ResourcesAuditPage theme={theme} />
             </ErrorBoundary>
