@@ -291,8 +291,17 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
   );
 }
 
-export default function ResourcesAuditPage() {
+export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" | "light" }) {
   const { language } = useLocale();
+
+  const isDark = theme === "dark";
+  const polishedSrc = import.meta.env.BASE_URL + (isDark ? "operations_polished_dark.png" : "operations_polished_light.png");
+  const polishedAlt = isDark 
+    ? localize({ en: "Dark Mode Polished Operations View", ar: "عرض التصميم النهائي للوحة العمليات بالوضع الداكن" }, language)
+    : localize({ en: "Light Mode Polished Operations View", ar: "عرض التصميم النهائي للوحة العمليات بالوضع الفاتح" }, language);
+  const polishedTitle = isDark
+    ? localize({ en: "Dark Mode Polished Dashboard", ar: "التصميم النهائي (الوضع الداكن)" }, language)
+    : localize({ en: "Light Mode Polished Dashboard", ar: "التصميم النهائي (الوضع الفاتح)" }, language);
 
   // Interactive Persona State
   const [activePersona, setActivePersona] = useState<string>("karim");
@@ -640,9 +649,9 @@ export default function ResourcesAuditPage() {
             helperText={localize({ en: "Click and drag or use arrow keys to pan the view", ar: "اسحب بالماوس أو استخدم الأسهم للتنقل واستكشاف المخطط" }, language)}
           />
           <ScrollableImageContainer 
-            src={import.meta.env.BASE_URL + "operations_polished.png"} 
-            alt={localize({ en: "Dark Mode Polished Operations View", ar: "عرض التصمیم النهائي للوحة العمليات بالوضع الداكن" }, language)}
-            title={localize({ en: "Dark Mode Polished Dashboard", ar: "التصميم النهائي (الوضع الداكن)" }, language)}
+            src={polishedSrc} 
+            alt={polishedAlt}
+            title={polishedTitle}
             helperText={localize({ en: "Click and drag or use arrow keys to pan the view", ar: "اسحب بالماوس أو استخدم الأسهم للتنقل واستكشاف المخطط" }, language)}
           />
         </div>

@@ -62,7 +62,7 @@ export function App() {
         {activePage === "resources" ? (
           <div id="main-content">
             <ErrorBoundary>
-              <ResourcesAuditPage />
+              <ResourcesAuditPage theme={theme} />
             </ErrorBoundary>
           </div>
         ) : (
