@@ -361,8 +361,8 @@ export const scenes: AirportScene[] = [
     label: "Terminal 1",
     title: "Terminal 1 Operations",
     summary: "Separate terminal area serving selected domestic and international operations.",
-    image: "/manager-assets/terminal-1-light.webp",
-    darkImage: "/manager-assets/terminal-1-dark.webp",
+    image: import.meta.env.BASE_URL + "manager-assets/terminal-1-light.webp",
+    darkImage: import.meta.env.BASE_URL + "manager-assets/terminal-1-dark.webp",
     hotspots: [
       { id: "t1-stand-turnaround", cx: 60.0, cy: 35.0, status: "warning", title: "Remote Stand Turnaround Pressure", category: "Airside", impact: "Two narrow-body turns may exceed the planned ground time if fueling and catering overlap.", evidence: "Stand team is 9 minutes behind the service milestone.", action: "Move one ground support unit from the adjacent stand.", source: "Turnaround control", updatedAt: "14:00" }
     ]
@@ -372,8 +372,8 @@ export const scenes: AirportScene[] = [
     label: "Terminal 2",
     title: "Terminal 2 Operations",
     summary: "International terminal connected operationally with Terminal 3.",
-    image: "/manager-assets/terminal-2-light.webp",
-    darkImage: "/manager-assets/terminal-2-dark.webp",
+    image: import.meta.env.BASE_URL + "manager-assets/terminal-2-light.webp",
+    darkImage: import.meta.env.BASE_URL + "manager-assets/terminal-2-dark.webp",
     hotspots: [
       { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Departing passengers may reach passport control late during the next arrival/departure overlap.", evidence: "Security queue reached 17m. Open secondary screening lanes immediately.", action: "Open one extra screening lane for 30 minutes.", source: "Queue sensor", updatedAt: "14:15" }
     ]
@@ -383,8 +383,8 @@ export const scenes: AirportScene[] = [
     label: "Terminal 3",
     title: "Terminal 3 Operations",
     summary: "Main international terminal with gate, flow, and connection monitoring.",
-    image: "/manager-assets/terminal-3-light.webp",
-    darkImage: "/manager-assets/terminal-3-dark.webp",
+    image: import.meta.env.BASE_URL + "manager-assets/terminal-3-light.webp",
+    darkImage: import.meta.env.BASE_URL + "manager-assets/terminal-3-dark.webp",
     hotspots: [
       { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Passenger processing is stable across check-in, passport control, and departure gates.", evidence: "Average wait is below 5 minutes.", source: "Queue sensor", updatedAt: "14:04" },
       { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Risk", category: "Operations", impact: "A late inbound aircraft may compress boarding time and create connection pressure.", evidence: "Inbound aircraft is 18 minutes behind stand target.", action: "Assign a ramp runner and pre-stage boarding staff.", source: "Gate control", updatedAt: "14:10" }
@@ -395,8 +395,8 @@ export const scenes: AirportScene[] = [
     label: "Landside Access",
     title: "Landside Access",
     summary: "Parking, access roads, curbside flow, and public-side movement.",
-    image: "/manager-assets/landside-light.webp",
-    darkImage: "/manager-assets/landside-dark.webp",
+    image: import.meta.env.BASE_URL + "manager-assets/landside-light.webp",
+    darkImage: import.meta.env.BASE_URL + "manager-assets/landside-dark.webp",
     hotspots: [
       { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Entry Queue", category: "Landside", impact: "Curbside access may slow for passengers arriving by car or shuttle.", evidence: "Entry queue is above 15 vehicles.", action: "Deploy two traffic wardens at the parking entry split.", source: "Traffic camera", updatedAt: "14:02" }
     ]
@@ -406,8 +406,8 @@ export const scenes: AirportScene[] = [
     label: "Support Services",
     title: "Support Services",
     summary: "Maintenance, catering, and airport support facilities.",
-    image: "/manager-assets/support-services-light.webp",
-    darkImage: "/manager-assets/support-services-dark.webp",
+    image: import.meta.env.BASE_URL + "manager-assets/support-services-light.webp",
+    darkImage: import.meta.env.BASE_URL + "manager-assets/support-services-dark.webp",
     hotspots: [
       { id: "catering-facility", cx: 70.0, cy: 40.0, status: "good", title: "Catering Dispatch Stable", category: "Services", impact: "Catering dispatch is meeting the planned departure wave.", evidence: "All priority flights have catering assigned.", source: "Facilities control", updatedAt: "14:10" }
     ]

@@ -128,7 +128,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
     });
     // Preload CCTV image to resolve dynamic load latency
     const cctvImg = new Image();
-    cctvImg.src = "/manager-assets/cctv-live.webp";
+    cctvImg.src = import.meta.env.BASE_URL + "manager-assets/cctv-live.webp";
   }, []);
 
   useEffect(() => {
@@ -904,63 +904,83 @@ function renderEvidenceContent(
 }
 
 function getPrimaryCctvFeed(hotspotId: string) {
+  let feed;
   switch (hotspotId) {
     case "t1-stand-turnaround":
-      return { src: "/manager-assets/cctv-t1-apron.webp", label: "CAM 012 | T1 APRON STAND 4" };
+      feed = { src: "manager-assets/cctv-t1-apron.webp", label: "CAM 012 | T1 APRON STAND 4" };
+      break;
     case "t2-security":
-      return { src: "/manager-assets/cctv-t2-security.webp", label: "CAM 088 | T2 SECURITY LANE 3" };
+      feed = { src: "manager-assets/cctv-t2-security.webp", label: "CAM 088 | T2 SECURITY LANE 3" };
+      break;
     case "t3-flow":
-      return { src: "/manager-assets/cctv-live.webp", label: "CAM 054 | CAI T3 DEP GATES" };
+      feed = { src: "manager-assets/cctv-live.webp", label: "CAM 054 | CAI T3 DEP GATES" };
+      break;
     case "gate-b12":
-      return { src: "/manager-assets/cctv-t3-gate.webp", label: "CAM 112 | CAI T3 GATE B12" };
+      feed = { src: "manager-assets/cctv-t3-gate.webp", label: "CAM 112 | CAI T3 GATE B12" };
+      break;
     case "parking-congestion":
-      return { src: "/manager-assets/cctv-landside.webp", label: "CAM 201 | CAI LANDSIDE ACCESS" };
+      feed = { src: "manager-assets/cctv-landside.webp", label: "CAM 201 | CAI LANDSIDE ACCESS" };
+      break;
     case "catering-facility":
-      return { src: "/manager-assets/cctv-services.webp", label: "CAM 304 | CAI SERVICES DEPOT" };
+      feed = { src: "manager-assets/cctv-services.webp", label: "CAM 304 | CAI SERVICES DEPOT" };
+      break;
     default:
-      return { src: "/manager-assets/cctv-live.webp", label: "CAM 054 | CAI T3 DEP GATES" };
+      feed = { src: "manager-assets/cctv-live.webp", label: "CAM 054 | CAI T3 DEP GATES" };
+      break;
   }
+  return { ...feed, src: import.meta.env.BASE_URL + feed.src };
 }
 
 function getAlternativeFeeds(hotspotId: string) {
+  let feeds: Array<{ src: string; label: string; name: { en: string; ar: string } }> = [];
   switch (hotspotId) {
     case "t1-stand-turnaround":
-      return [
-        { src: "/manager-assets/cctv-t1-apron.webp", label: "CAM 012 | T1 APRON STAND 4", name: { en: "Apron Stand 4", ar: "موقف الطائرات ٤" } },
-        { src: "/manager-assets/cctv-services.webp", label: "CAM 013 | T1 APRON STAND 5", name: { en: "Apron Stand 5", ar: "موقف الطائرات ٥" } },
-        { src: "/manager-assets/cctv-landside.webp", label: "CAM 014 | T1 TAXIWAY CHARLIE", name: { en: "Taxiway Charlie", ar: "الممر الملاحي ج" } }
+      feeds = [
+        { src: "manager-assets/cctv-t1-apron.webp", label: "CAM 012 | T1 APRON STAND 4", name: { en: "Apron Stand 4", ar: "موقف الطائرات ٤" } },
+        { src: "manager-assets/cctv-services.webp", label: "CAM 013 | T1 APRON STAND 5", name: { en: "Apron Stand 5", ar: "موقف الطائرات ٥" } },
+        { src: "manager-assets/cctv-landside.webp", label: "CAM 014 | T1 TAXIWAY CHARLIE", name: { en: "Taxiway Charlie", ar: "الممر الملاحي ج" } }
       ];
+      break;
     case "t2-security":
-      return [
-        { src: "/manager-assets/cctv-t2-security.webp", label: "CAM 088 | T2 SECURITY LANE 3", name: { en: "Security Lane 3", ar: "ممر أمني ٣" } },
-        { src: "/manager-assets/cctv-live.webp", label: "CAM 089 | T2 DEPARTURES LOBBY", name: { en: "Departures Lobby", ar: "صالة المغادرة" } },
-        { src: "/manager-assets/cctv-t3-gate.webp", label: "CAM 090 | T2 GATE AREA 14", name: { en: "Gate Area 14", ar: "منطقة البوابة ١٤" } }
+      feeds = [
+        { src: "manager-assets/cctv-t2-security.webp", label: "CAM 088 | T2 SECURITY LANE 3", name: { en: "Security Lane 3", ar: "ممر أمني ٣" } },
+        { src: "manager-assets/cctv-live.webp", label: "CAM 089 | T2 DEPARTURES LOBBY", name: { en: "Departures Lobby", ar: "صالة المغادرة" } },
+        { src: "manager-assets/cctv-t3-gate.webp", label: "CAM 090 | T2 GATE AREA 14", name: { en: "Gate Area 14", ar: "منطقة البوابة ١٤" } }
       ];
+      break;
     case "t3-flow":
-      return [
-        { src: "/manager-assets/cctv-live.webp", label: "CAM 054 | CAI T3 DEP GATES", name: { en: "Departures Corridor", ar: "ممر المغادرين" } },
-        { src: "/manager-assets/cctv-t3-gate.webp", label: "CAM 112 | CAI T3 GATE B12", name: { en: "Gate B12 Boarding", ar: "بوابة صعود ب١٢" } },
-        { src: "/manager-assets/cctv-t2-security.webp", label: "CAM 055 | T3 CHECK-IN HALL", name: { en: "Check-in Hall", ar: "صالة تسجيل الوصول" } }
+      feeds = [
+        { src: "manager-assets/cctv-live.webp", label: "CAM 054 | CAI T3 DEP GATES", name: { en: "Departures Corridor", ar: "ممر المغادرين" } },
+        { src: "manager-assets/cctv-t3-gate.webp", label: "CAM 112 | CAI T3 GATE B12", name: { en: "Gate B12 Boarding", ar: "بوابة صعود ب١٢" } },
+        { src: "manager-assets/cctv-t2-security.webp", label: "CAM 055 | T3 CHECK-IN HALL", name: { en: "Check-in Hall", ar: "صالة تسجيل الوصول" } }
       ];
+      break;
     case "gate-b12":
-      return [
-        { src: "/manager-assets/cctv-t3-gate.webp", label: "CAM 112 | CAI T3 GATE B12", name: { en: "Gate B12 Boarding", ar: "بوابة صعود ب١٢" } },
-        { src: "/manager-assets/cctv-live.webp", label: "CAM 113 | CAI T3 GATE B11", name: { en: "Gate B11 Waiting Area", ar: "منطقة انتظار ب١١" } },
-        { src: "/manager-assets/cctv-t1-apron.webp", label: "CAM 114 | CAI T3 APRON B12", name: { en: "Gate B12 Exterior Apron", ar: "الجانب الجوي لبوابة ب١٢" } }
+      feeds = [
+        { src: "manager-assets/cctv-t3-gate.webp", label: "CAM 112 | CAI T3 GATE B12", name: { en: "Gate B12 Boarding", ar: "بوابة صعود ب١٢" } },
+        { src: "manager-assets/cctv-live.webp", label: "CAM 113 | CAI T3 GATE B11", name: { en: "Gate B11 Waiting Area", ar: "منطقة انتظار ب١١" } },
+        { src: "manager-assets/cctv-t1-apron.webp", label: "CAM 114 | CAI T3 APRON B12", name: { en: "Gate B12 Exterior Apron", ar: "الجانب الجوي لبوابة ب١٢" } }
       ];
+      break;
     case "parking-congestion":
-      return [
-        { src: "/manager-assets/cctv-landside.webp", label: "CAM 201 | CAI LANDSIDE ACCESS", name: { en: "Parking Entry Gates", ar: "بوابات دخول الموقف" } },
-        { src: "/manager-assets/cctv-services.webp", label: "CAM 202 | CAI SHUTTLE LANE", name: { en: "Shuttle Bus Lane", ar: "مسار حافلات النقل" } },
-        { src: "/manager-assets/cctv-live.webp", label: "CAM 203 | CAI DEPARTURES CURB", name: { en: "Departures Curbside", ar: "رصيف صالة المغادرة" } }
+      feeds = [
+        { src: "manager-assets/cctv-landside.webp", label: "CAM 201 | CAI LANDSIDE ACCESS", name: { en: "Parking Entry Gates", ar: "بوابات دخول الموقف" } },
+        { src: "manager-assets/cctv-services.webp", label: "CAM 202 | CAI SHUTTLE LANE", name: { en: "Shuttle Bus Lane", ar: "مسار حافلات النقل" } },
+        { src: "manager-assets/cctv-live.webp", label: "CAM 203 | CAI DEPARTURES CURB", name: { en: "Departures Curbside", ar: "رصيف صالة المغادرة" } }
       ];
+      break;
     case "catering-facility":
-      return [
-        { src: "/manager-assets/cctv-services.webp", label: "CAM 304 | CAI SERVICES DEPOT", name: { en: "Catering Depot Dock 2", ar: "رصيف خدمات الطعام ٢" } },
-        { src: "/manager-assets/cctv-t1-apron.webp", label: "CAM 305 | CAI SERVICES ENTRANCE", name: { en: "Depot Entrance Gate", ar: "بوابة دخول المستودع" } },
-        { src: "/manager-assets/cctv-landside.webp", label: "CAM 306 | CAI FUELING STATION", name: { en: "Fueling Station Area", ar: "منطقة محطة الوقود" } }
+      feeds = [
+        { src: "manager-assets/cctv-services.webp", label: "CAM 304 | CAI SERVICES DEPOT", name: { en: "Catering Depot Dock 2", ar: "رصيف خدمات الطعام ٢" } },
+        { src: "manager-assets/cctv-t1-apron.webp", label: "CAM 305 | CAI SERVICES ENTRANCE", name: { en: "Depot Entrance Gate", ar: "بوابة دخول المستودع" } },
+        { src: "manager-assets/cctv-landside.webp", label: "CAM 306 | CAI FUELING STATION", name: { en: "Fueling Station Area", ar: "منطقة محطة الوقود" } }
       ];
+      break;
     default:
       return [];
   }
+  return feeds.map(feed => ({
+    ...feed,
+    src: import.meta.env.BASE_URL + feed.src
+  }));
 }

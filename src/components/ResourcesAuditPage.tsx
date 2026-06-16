@@ -47,7 +47,7 @@ const personas = [
   {
     id: "karim",
     name: { en: "Karim — Duty Operations Manager", ar: "كريم — مدير عمليات نوبة العمل" },
-    avatarPath: "/karim_avatar_v2.png",
+    avatarPath: import.meta.env.BASE_URL + "karim_avatar_v2.png",
     role: { en: "12 years in command centers. Oversees terminal operations on 4K video walls.", ar: "خبرة ١٢ عاماً في مركز القيادة، يشرف على عمليات الصالات الحية على شاشات جدارية 4K." },
     needs: { en: "Needs fast operational alerts (under 200ms) with status indicators to prevent terminal bottlenecks.", ar: "يتطلب تنبيهات فورية عن المشاكل (أقل من ٢٠٠ ملي ثانية) مع مؤشرات تقادم لمنع حدوث تكدس." },
     specs: [
@@ -59,7 +59,7 @@ const personas = [
   {
     id: "yasmin",
     name: { en: "Yasmin — Terminal Gate Supervisor", ar: "ياسمين — مشرف بوابات صالة الركاب" },
-    avatarPath: "/yasmin_avatar_v2.png",
+    avatarPath: import.meta.env.BASE_URL + "yasmin_avatar_v2.png",
     role: { en: "Manages passenger boarding and terminal gate flows using active tablets.", ar: "تدير صعود الركاب وتدفق المسافرين على أرض المطار باستخدام أجهزة التابلت." },
     needs: { en: "Needs high-contrast screens and large touch targets (min 44px) for mobile use.", ar: "تحتاج إلى تصميم عالي التباين ومساحات لمس واسعة (٤٤ بكسل كحد أدنى) لسهولة الاستخدام أثناء الحركة." },
     specs: [
@@ -71,7 +71,7 @@ const personas = [
   {
     id: "tarek",
     name: { en: "Tarek — ICAO Safety Auditor", ar: "طارق — مدقق سلامة الطيران (ICAO)" },
-    avatarPath: "/tarek_avatar_v2.png",
+    avatarPath: import.meta.env.BASE_URL + "tarek_avatar_v2.png",
     role: { en: "Audits safety compliance for airside and landside airport equipment.", ar: "يقوم بتدقيق الامتثال لمعايير السلامة للجانب الجوي والأرضي ومعدات المطار." },
     needs: { en: "Needs structured data tables and high-contrast text to read under outdoor glare.", ar: "يتطلب جداول بيانات منظمة وألواناً عالية التباين للتدقيق والقراءة تحت أشعة الشمس المباشرة." },
     specs: [
@@ -278,7 +278,7 @@ export default function ResourcesAuditPage() {
           </div>
           <div className="flex items-center gap-3.5">
             <img 
-              src="/ahmed-mahdy.png" 
+              src={import.meta.env.BASE_URL + "ahmed-mahdy.png"} 
               alt={localize({ en: "Ahmed Mahdy", ar: "أحمد مهدي" }, language)} 
               className="h-16 w-16 rounded-xl object-cover border border-primary/25 bg-background shrink-0 shadow-sm"
             />
@@ -572,7 +572,7 @@ export default function ResourcesAuditPage() {
           {/* Polished Operations View (Right side/Underneath) */}
           <div className="absolute inset-0 w-full h-full">
             <img 
-              src="/operations_polished.jpg" 
+              src={import.meta.env.BASE_URL + "operations_polished.jpg"} 
               alt={localize({ en: "Polished Operations View", ar: "التصميم النهائي للوحة العمليات" }, language)} 
               className="w-full h-full object-cover select-none pointer-events-none" 
             />
@@ -584,7 +584,7 @@ export default function ResourcesAuditPage() {
             style={{ width: "50%" }}
           >
             <img 
-              src="/operations_wireframe.jpg" 
+              src={import.meta.env.BASE_URL + "operations_wireframe.jpg"} 
               alt={localize({ en: "Wireframe Operations View", ar: "المخطط الورقي للوحة العمليات" }, language)} 
               className="absolute top-0 left-0 h-full object-cover select-none pointer-events-none" 
               style={{ width: containerWidth ? `${containerWidth}px` : "100%" }}
