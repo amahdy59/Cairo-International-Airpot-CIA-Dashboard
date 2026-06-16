@@ -220,11 +220,11 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
         aria-label={`${title}. ${helperText}`}
         className="relative h-[320px] w-full overflow-auto no-scrollbar rounded-xl border border-border bg-background cursor-grab active:cursor-grabbing select-none focus:outline-none focus:ring-2 focus:ring-primary/50"
       >
-        <div className="relative w-[1100px] h-[650px]">
+        <div className="relative w-[125%] h-auto min-h-full">
           <img 
             src={src} 
             alt={alt} 
-            className="w-full h-full object-cover select-none pointer-events-none rounded-xl" 
+            className="w-full h-auto min-h-[320px] object-cover select-none pointer-events-none rounded-xl" 
           />
         </div>
       </div>
