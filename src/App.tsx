@@ -66,9 +66,9 @@ export function App() {
 
   return (
     <LocaleContext.Provider value={language}>
-    <div className="min-h-screen">
+    <div className={`flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""} ${activeTab === "digital" && activePage !== "resources" ? "h-screen overflow-hidden" : "min-h-screen overflow-x-hidden"}`} dir={language === "ar" ? "rtl" : "ltr"}>
       <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard} />
-      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 overflow-x-hidden px-2 pb-4 pt-16 sm:px-4 lg:px-6">
+      <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pb-3 lg:pb-4">
         <h1 className="sr-only">{c.brand} — {c.airport}</h1>
         {activePage === "resources" ? (
           <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
@@ -77,7 +77,7 @@ export function App() {
             </ErrorBoundary>
           </div>
         ) : (
-        <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : 'Safety & Compliance'} className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
+        <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : 'Safety & Compliance'} className="flex flex-col flex-1 min-h-0 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
           <ErrorBoundary>
             {activeTab === "digital" && <DigitalTwinView theme={theme} />}
             {activeTab === "operations" && <OperationsView />}
@@ -86,19 +86,21 @@ export function App() {
         </div>
         )}
       </main>
-      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
-        {c.footer}
-        <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
-        {activePage === "resources" ? (
-          <a className="font-medium text-primary hover:underline" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
-            {language === "en" ? "Go back to Dashboard" : "العودة إلى لوحة التحكم"}
-          </a>
-        ) : (
-          <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
-            {c.resources}
-          </a>
-        )}
-      </footer>
+      {activeTab !== "digital" && (
+        <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+          {c.footer}
+          <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
+          {activePage === "resources" ? (
+            <a className="font-medium text-primary hover:underline" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
+              {language === "en" ? "Go back to Dashboard" : "العودة إلى لوحة التحكم"}
+            </a>
+          ) : (
+            <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
+              {c.resources}
+            </a>
+          )}
+        </footer>
+      )}
       <BackToTopButton />
     </div>
     </LocaleContext.Provider>

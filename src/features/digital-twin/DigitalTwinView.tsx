@@ -245,8 +245,8 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
 
 
   return (
-    <div className="grid min-w-0 gap-2 lg:gap-3">
-      <nav className="sticky top-16 z-30 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+    <div className="flex flex-col flex-1 min-h-0 min-w-0 gap-2 lg:gap-3">
+      <nav className="relative z-10 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
         <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2.5">
             <h2 className="shrink-0 text-sm sm:text-base font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
@@ -276,8 +276,8 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
         </div>
       </nav>
 
-      <SectionPanel className="overflow-visible p-0!" title="">
-        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] md:h-[calc(100vh-148px)] md:min-h-[500px]">
+      <SectionPanel className="flex flex-col flex-1 min-h-0 overflow-visible p-0!" title="">
+        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] flex-1 min-h-0 h-full">
           <div className="flex flex-col min-w-0 h-full relative">
             <div id="digital-twin-image-viewport" className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
               <div 
