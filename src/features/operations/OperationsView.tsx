@@ -204,6 +204,7 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
     <SectionPanel title={title} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info">{tr("Next 60 min")}</StatusPill></div>}>
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[580px] text-sm">
+          <caption className="sr-only">{title}</caption>
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-1 py-2 text-start">{tr("Flight")}</th>

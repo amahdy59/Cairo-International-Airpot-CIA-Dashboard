@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
     <meta
       name="description"
       content="CAI Command Hub is a focused Cairo International Airport management dashboard for operations, safety, passenger flow, and maintenance decisions."
@@ -17,7 +18,12 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <noscript>
+      <p style="padding:2rem;text-align:center;font-family:system-ui,sans-serif;font-size:1.125rem">
+        JavaScript is required to run the CAI Command Hub dashboard. Please enable JavaScript in your browser settings.
+      </p>
+    </noscript>
+    <div id="root" aria-busy="true"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

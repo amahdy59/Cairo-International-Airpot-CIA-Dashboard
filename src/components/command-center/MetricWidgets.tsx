@@ -123,14 +123,15 @@ export function SectionPanel({
   dense?: boolean;
   className?: string;
 }) {
+  const headingId = useId();
   return (
-    <section className={`panel ${dense ? "p-3" : "p-4"} ${className}`}>
+    <section className={`panel ${dense ? "p-3" : "p-4"} ${className}`} aria-labelledby={title ? headingId : undefined}>
       {(title || action) && (
         <header className="mb-3 grid gap-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
           {title && (
             <div className="flex min-w-0 items-center gap-2">
               <span className="h-3 w-[3px] shrink-0 rounded bg-primary" />
-              <h2 className="text-base font-bold tracking-tight text-foreground">{title}</h2>
+              <h2 id={headingId} className="text-base font-bold tracking-tight text-foreground">{title}</h2>
             </div>
           )}
           {action}

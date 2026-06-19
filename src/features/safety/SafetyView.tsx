@@ -173,6 +173,7 @@ function MaintenanceTable() {
     <SectionPanel title={tr("Recent aircraft maintenance")} className="h-full flex flex-col overflow-hidden">
       <div className="-mx-1 flex-1 overflow-x-auto overflow-y-auto">
         <table className="w-full min-w-[620px] text-sm">
+          <caption className="sr-only">{tr("Recent aircraft maintenance")}</caption>
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-1 py-2 text-start">{tr("A/C")}</th>
@@ -205,6 +206,7 @@ function AircraftRiskTable() {
     <SectionPanel title={tr("Aircraft requiring attention")} action={<div className="flex flex-wrap gap-2"><span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span></div>} className="flex flex-col">
       <div className="-mx-1 overflow-x-auto flex-1 pb-1">
         <table className="w-full min-w-[780px] text-sm">
+          <caption className="sr-only">{tr("Aircraft requiring attention")}</caption>
           <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-1 py-2 text-start">{tr("Registration")}</th>

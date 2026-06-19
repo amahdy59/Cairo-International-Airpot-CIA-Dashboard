@@ -245,7 +245,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
 
 
   return (
-    <div className="grid min-w-0 gap-3 lg:gap-4">
+    <div className="grid min-w-0 gap-2 lg:gap-3">
       <nav className="sticky top-16 z-30 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
         <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-2.5">
@@ -277,18 +277,25 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
       </nav>
 
       <SectionPanel className="overflow-visible p-0!" title="">
-        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] md:h-[calc(100vh-170px)] md:min-h-[500px]">
+        <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] md:h-[calc(100vh-148px)] md:min-h-[500px]">
           <div className="flex flex-col min-w-0 h-full relative">
             <div id="digital-twin-image-viewport" className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
               <div 
                 id="digital-twin-image-container" 
                 ref={imageContainerRef} 
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowUp") { e.preventDefault(); scrollMap("up"); }
+                  if (e.key === "ArrowDown") { e.preventDefault(); scrollMap("down"); }
+                  if (e.key === "ArrowLeft") { e.preventDefault(); scrollMap("left"); }
+                  if (e.key === "ArrowRight") { e.preventDefault(); scrollMap("right"); }
+                }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
-                className="w-full h-full overflow-auto no-scrollbar cursor-grab active:cursor-grabbing select-none"
+                className="w-full h-full overflow-auto no-scrollbar cursor-grab active:cursor-grabbing select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
               >
                 <div className="min-h-[120%] sm:min-h-[115%] md:min-h-[110%] min-w-[145%] sm:min-w-[130%] md:min-w-[125%] relative">
                   <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
@@ -404,9 +411,9 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
           )}
           </div>
 
-          <aside ref={sidebarRef} className="grid min-w-0 content-start gap-0 rounded-xl border border-border bg-card/65 backdrop-blur-md h-full overflow-y-auto">
+          <aside ref={sidebarRef} aria-label={selectedHotspot ? tr(selectedHotspot.title) : localize({ en: "Area overview", ar: "نظرة عامة على المنطقة" }, language)} className="grid min-w-0 content-start gap-0 rounded-xl border border-border bg-card/65 backdrop-blur-md h-full overflow-y-auto">
             {selectedHotspot ? (
-              <div className="px-2.5 py-4 lg:p-4.5 flex flex-col gap-4">
+              <div className="px-3 py-5 lg:p-5 flex flex-col gap-4">
                 {/* Header: Back to Overview & Close button */}
                 <div className="flex items-center justify-between border-b border-border/40 pb-3">
                   <button
@@ -507,7 +514,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
               </div>
             ) : (
               <>
-                <div className="px-3 py-4 lg:p-4.5">
+                <div className="px-3 py-5 lg:p-5">
                   <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary font-bold">{tr("Area Overview")}</p>
                   <h3 className="mt-1.5 text-lg font-bold tracking-tight text-foreground">{tr(activeScene.title)}</h3>
                   <p className="mt-1.5 text-sm leading-normal text-muted-foreground line-clamp-2">{tr(activeScene.summary)}</p>
@@ -704,7 +711,7 @@ function renderCctvEvidence(
       <div className="relative overflow-hidden rounded-xl border border-border bg-black shadow-sm aspect-[16/9] max-h-[160px] w-full">
         <img 
           src={feed.src} 
-          alt="CCTV live feed" 
+          alt={localize({ en: `CCTV feed: ${feed.label}`, ar: `تغذية كاميرا: ${feed.label}` }, language)} 
           className="w-full h-full object-cover" 
         />
         <div className="absolute top-2 start-2 bg-status-crit text-white font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider animate-pulse flex items-center gap-1">

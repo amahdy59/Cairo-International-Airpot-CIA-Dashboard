@@ -35,10 +35,20 @@ export function App() {
   }, [highContrast, language, theme]);
 
   useEffect(() => {
+    document.getElementById("root")?.removeAttribute("aria-busy");
+  }, []);
+
+  useEffect(() => {
     const onHashChange = () => setActivePage(getInitialPageView());
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  useEffect(() => {
+    if (activePage !== "resources") {
+      document.getElementById("main-content")?.focus();
+    }
+  }, [activeTab, activePage]);
 
   const showDashboard = () => {
     setActivePage("dashboard");
@@ -58,16 +68,16 @@ export function App() {
     <LocaleContext.Provider value={language}>
     <div className="min-h-screen">
       <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard} />
-      {/* Main layout container with aligned padding-top (pt-16) to fit 64px header flush */}
-      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 gap-3 overflow-x-hidden px-2 pb-4 pt-16 sm:pt-16 sm:gap-3 sm:px-4 lg:gap-4 lg:px-6">
+      <main id="main" className="mx-auto grid w-full max-w-[1480px] min-w-0 overflow-x-hidden px-2 pb-4 pt-16 sm:px-4 lg:px-6">
+        <h1 className="sr-only">{c.brand} — {c.airport}</h1>
         {activePage === "resources" ? (
-          <div id="main-content" className="mt-3 lg:mt-4">
+          <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
             <ErrorBoundary>
               <ResourcesAuditPage theme={theme} />
             </ErrorBoundary>
           </div>
         ) : (
-        <div key={activeTab} id="main-content" className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+        <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : 'Safety & Compliance'} className="grid min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
           <ErrorBoundary>
             {activeTab === "digital" && <DigitalTwinView theme={theme} />}
             {activeTab === "operations" && <OperationsView />}

@@ -93,8 +93,36 @@ export function Header({
         </a>
 
         {/* Navigation Tabs - Visible on all screens, centered absolutely on medium-and-above screens */}
-        <nav className="order-2 flex flex-1 justify-center md:order-none md:absolute md:left-1/2 md:-translate-x-1/2 md:top-1/2 md:-translate-y-1/2 md:z-10 md:w-auto" role="tablist" aria-label={tr("Manager dashboard sections")}>
-          <div className="flex h-10 items-center justify-center gap-1 rounded-lg border border-white/10 bg-background/30 p-0.5 backdrop-blur-md dark:bg-secondary/30">
+        <nav className="order-2 flex flex-1 justify-center md:order-none md:absolute md:left-1/2 md:-translate-x-1/2 md:top-1/2 md:-translate-y-1/2 md:z-10 md:w-auto" aria-label={tr("Manager dashboard sections")}>
+          <div role="tablist" aria-orientation="horizontal" className="flex h-10 items-center justify-center gap-1 rounded-lg border border-white/10 bg-background/30 p-0.5 backdrop-blur-md dark:bg-secondary/30"
+            onKeyDown={(e) => {
+              const tabs = ["digital", "operations", "safety"] as const;
+              const currentIndex = tabs.indexOf(activeTab as any);
+              let nextIndex = currentIndex;
+              
+              if (e.key === "ArrowRight") {
+                nextIndex = (currentIndex + 1) % tabs.length;
+                e.preventDefault();
+              } else if (e.key === "ArrowLeft") {
+                nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                e.preventDefault();
+              } else if (e.key === "Home") {
+                nextIndex = 0;
+                e.preventDefault();
+              } else if (e.key === "End") {
+                nextIndex = tabs.length - 1;
+                e.preventDefault();
+              }
+              
+              if (nextIndex !== currentIndex && nextIndex !== -1) {
+                const nextTab = tabs[nextIndex];
+                setActiveTab(nextTab as any);
+                onShowDashboard();
+                setIsMenuOpen(false);
+                setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
+              }
+            }}
+          >
             {[
               { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
               { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
@@ -105,7 +133,9 @@ export function Header({
               return (
                 <button
                   key={tab.id}
+                  id={`tab-${tab.id}`}
                   role="tab"
+                  tabIndex={isActive ? 0 : -1}
                   aria-selected={isActive}
                   aria-controls="main-content"
                   onClick={() => {

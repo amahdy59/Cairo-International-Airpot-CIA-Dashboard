@@ -496,6 +496,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
               <button
                 key={p.id}
                 onClick={() => setActivePersona(p.id)}
+                aria-pressed={isActive}
                 className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border text-center transition-all cursor-pointer ${
                   isActive 
                     ? "border-primary bg-primary/10 shadow-md ring-1 ring-primary/20" 
@@ -504,7 +505,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
               >
                 <img
                   src={p.avatarPath}
-                  alt={p.id}
+                  alt={localize(p.name, language)}
                   className={`w-14 h-14 rounded-full border object-cover transition ${
                     isActive ? "border-primary shadow" : "border-border/60 opacity-70"
                   }`}
