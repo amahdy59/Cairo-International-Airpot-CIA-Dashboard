@@ -68,7 +68,7 @@ export function App() {
     <LocaleContext.Provider value={language}>
     <div className={`flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""} ${activeTab === "digital" && activePage !== "resources" ? "h-screen overflow-hidden" : "min-h-screen overflow-x-hidden"}`} dir={language === "ar" ? "rtl" : "ltr"}>
       <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard} />
-      <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pb-3 lg:pb-4">
+      <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pt-28 md:pt-16 pb-3 lg:pb-4">
         <h1 className="sr-only">{c.brand} — {c.airport}</h1>
         {activePage === "resources" ? (
           <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
