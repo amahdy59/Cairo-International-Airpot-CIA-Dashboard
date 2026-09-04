@@ -290,7 +290,7 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[580px] text-sm">
           <caption className="sr-only">{title}</caption>
-          <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
               <th className="px-1 py-2 text-start">{tr("Flight")}</th>
               <th className="px-1 py-2 text-start">{direction === "to" ? tr("To") : tr("From")}</th>

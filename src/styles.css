@@ -298,22 +298,42 @@ html.light body {
     overflow-wrap: anywhere;
   }
 
-  html[dir="rtl"] body {
-    letter-spacing: 0;
+  /* Critical RTL & Arabic Typography Protection: strictly prevent letter-spacing / tracking from breaking cursive Arabic words */
+  html[dir="rtl"],
+  html[dir="rtl"] *,
+  [dir="rtl"],
+  [dir="rtl"] * {
+    letter-spacing: normal !important;
   }
 
-  html[dir="rtl"] .font-mono {
-    font-family: var(--font-display);
-    letter-spacing: 0;
-    font-feature-settings: normal;
+  html[dir="rtl"] .font-mono:not([dir="ltr"]):not(code):not(kbd):not(pre),
+  [dir="rtl"] .font-mono:not([dir="ltr"]):not(code):not(kbd):not(pre) {
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif !important;
   }
 
-  html[dir="rtl"] [class*="tracking-"] {
-    letter-spacing: 0;
+  html[dir="rtl"] .uppercase,
+  [dir="rtl"] .uppercase {
+    text-transform: none !important;
   }
 
-  html[dir="rtl"] .uppercase {
-    text-transform: none;
+  @keyframes radar-pulse {
+    0% {
+      transform: scale(0.9);
+      opacity: 0.85;
+    }
+    70% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+  .radar-ring {
+    animation: radar-pulse 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    transform-box: fill-box;
+    transform-origin: center;
   }
 
   button,

@@ -151,7 +151,7 @@ function MiniMetricCard({
       <div className={`absolute inset-y-0 start-0 w-[2px] bg-gradient-to-b ${accentClass}`} />
       <div className="min-w-0 flex flex-col justify-between h-full gap-2">
         <div>
-          <p className="text-xs font-mono uppercase tracking-[0.08em] text-muted-foreground truncate">{label}</p>
+          <p className="text-xs font-mono rtl:font-sans uppercase rtl:normal-case tracking-[0.08em] rtl:tracking-normal text-muted-foreground truncate">{label}</p>
           <div className="mt-1 flex items-baseline gap-1">
             <span className="text-sm font-semibold tracking-tight text-foreground">{value}</span>
             <span className="text-xs font-mono text-muted-foreground">{unit}</span>
@@ -265,7 +265,7 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <span className="text-xs font-mono font-semibold uppercase tracking-wider text-primary px-1">{title}</span>
+      <span className="text-xs font-mono rtl:font-sans font-semibold uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-primary px-1">{title}</span>
       <div 
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -348,7 +348,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
         <div className="grid gap-3.5 z-10 relative">
           <div className="flex items-center gap-2 mb-1">
             <User className="h-4 w-4 text-primary hidden sm:inline-block" aria-hidden="true" />
-            <h2 className="text-sm font-mono uppercase tracking-[0.1em] text-primary font-semibold">
+            <h2 className="text-sm font-mono rtl:font-sans uppercase rtl:normal-case tracking-[0.1em] rtl:tracking-normal text-primary font-semibold">
               {localize({ en: "About the Creator", ar: "نبذة عن منشئ الموقع" }, language)}
             </h2>
           </div>
@@ -374,7 +374,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
             }, language)}
           </p>
           <div className="mt-3 rounded-none sm:rounded-lg border-0 sm:border border-border/50 bg-transparent sm:bg-background/50 p-0 sm:p-3.5 flex flex-col gap-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="text-xs font-semibold uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-foreground">
               {localize({ en: "Design & Development Tools", ar: "الأدوات المستخدمة" }, language)}
             </h4>
             <p className="text-sm leading-relaxed text-muted-foreground">
@@ -388,7 +388,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
         
         {/* Certifications Badge row */}
         <div className="z-10 relative">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+          <h4 className="text-[10px] font-bold uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground mb-1.5">
             {localize({ en: "Certifications & Skills", ar: "الشهادات والمهارات" }, language)}
           </h4>
           <div className="flex flex-wrap gap-1.5 text-xs font-mono">
@@ -993,7 +993,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
           <div className="overflow-x-auto border border-border rounded-lg bg-background/50">
             <table className="w-full text-start text-xs sm:text-sm border-collapse">
               <thead>
-                <tr className="border-b border-border bg-secondary/35 text-muted-foreground font-mono uppercase text-xs tracking-wider">
+                <tr className="border-b border-border bg-secondary/35 text-muted-foreground font-mono rtl:font-sans uppercase rtl:normal-case text-xs tracking-wider rtl:tracking-normal">
                   <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Requirement", ar: "المتطلب" }, language)}</th>
                   <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-start whitespace-nowrap">{localize({ en: "Feature / Implementation", ar: "الميزة والتحقق" }, language)}</th>
                   <th className="py-2 px-2.5 sm:py-2.5 sm:px-3.5 text-center whitespace-nowrap">{localize({ en: "Status", ar: "الحالة" }, language)}</th>

@@ -247,6 +247,16 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
           opacity="0.25" 
           className={hotspot.status === "critical" ? "animate-pulse" : ""}
         />
+        {/* Radar Ping Microinteraction for active alerts */}
+        {(hotspot.status === "critical" || hotspot.status === "warning") && (
+          <circle
+            r="16"
+            fill="none"
+            stroke={color}
+            strokeWidth="1.5"
+            className="radar-ring pointer-events-none"
+          />
+        )}
         {/* Main Ring */}
         <circle 
           r={isSelected ? "14" : "10"} 
@@ -285,7 +295,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                     selectHotspotAndScene(null);
                   }}
                   aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl border px-3 sm:px-4 text-xs lg:text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  className={`inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl border px-3 sm:px-4 text-xs lg:text-sm font-semibold transition-all duration-200 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     active ? "border-primary/50 bg-primary/[0.16] text-foreground shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "border-transparent text-muted-foreground hover:border-border hover:bg-background/65 hover:text-foreground"
                   }`}
                 >
@@ -561,7 +571,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                           type="button"
                           disabled={dispatchedHotspots[selectedHotspot.id] === 'dispatching'}
                           onClick={() => handleDispatch(selectedHotspot.id, tr(selectedHotspot.title), tr(selectedHotspot.action!))}
-                          className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground transition hover:opacity-90 active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition hover:opacity-90 active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
                         >
                           {dispatchedHotspots[selectedHotspot.id] === 'dispatching' ? (
                             <>
@@ -586,7 +596,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
             ) : (
               <>
                 <div className="px-3 py-5 lg:p-5">
-                  <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary font-bold">{tr("Area Overview")}</p>
+                  <p className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-[0.18em] rtl:tracking-normal text-primary font-bold">{tr("Area Overview")}</p>
                   <h3 className="mt-1.5 text-lg font-bold tracking-tight text-foreground">{tr(activeScene.title)}</h3>
                   <p className="mt-1.5 text-sm leading-normal text-muted-foreground line-clamp-2">{tr(activeScene.summary)}</p>
                   
@@ -707,7 +717,7 @@ function ZoneStatusPanel() {
           <div key={zone.zone} className="flex items-center justify-between gap-2.5 text-sm py-1.5 border-b border-border/20 last:border-b-0">
             <span className="font-bold text-foreground shrink-0">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}</span>
             <span className="text-muted-foreground text-xs truncate flex-1 min-w-0 text-start px-1.5">{localize(zone.detail, language)}</span>
-            <span className={`text-xs sm:text-sm font-bold uppercase shrink-0 ${
+            <span className={`text-xs sm:text-sm font-bold uppercase rtl:normal-case shrink-0 ${
               zone.tone === 'ok' ? 'text-status-ok' :
               zone.tone === 'warn' ? 'text-status-warn' :
               zone.tone === 'crit' ? 'text-status-crit' : 'text-muted-foreground'

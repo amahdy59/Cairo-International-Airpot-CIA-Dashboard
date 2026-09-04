@@ -36,9 +36,9 @@ export function BackToTopButton() {
 
 function TimeChip({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="hidden xl:inline font-mono text-xs uppercase tracking-widest text-muted-foreground">{label}</span>
-      <span className="font-mono text-sm font-bold leading-none">{value}</span>
+    <span className="inline-flex items-center gap-1 text-xs">
+      <span className="hidden xl:inline text-muted-foreground font-sans font-medium select-none">{label}</span>
+      <span dir="ltr" className="font-mono font-bold leading-none">{value}</span>
     </span>
   );
 }
@@ -91,19 +91,19 @@ export function Header({
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
         {tr("Skip to content")}
       </a>
-      <div className="relative mx-auto flex min-h-16 max-w-[1480px] flex-wrap items-center justify-between gap-3 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); setIsMenuOpen(false); }} className="flex min-w-0 items-center gap-3 rounded-md" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
+      <div className="relative mx-auto flex min-h-16 max-w-[1480px] items-center justify-between gap-2 sm:gap-4 px-3 py-2 sm:px-5 lg:px-6">
+        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); setIsMenuOpen(false); }} className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 rounded-md active:scale-98 transition-transform" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
             <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
           </span>
           <span className="hidden min-w-0 xl:block xl:max-w-none">
-            <span className="block truncate font-mono text-xs uppercase tracking-[0.18em] text-primary xl:tracking-[0.22em]">{c.airport}</span>
+            <span className="block truncate font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-[0.18em] rtl:tracking-normal text-primary xl:tracking-[0.22em] rtl:xl:tracking-normal">{c.airport}</span>
             <span className="block truncate text-sm font-bold">{c.brand}</span>
           </span>
         </a>
 
-        {/* Navigation Tabs - Visible on all screens, centered absolutely on medium-and-above screens */}
-        <nav className="order-2 flex flex-1 justify-center md:order-none md:absolute md:left-1/2 md:-translate-x-1/2 md:top-1/2 md:-translate-y-1/2 md:z-10 md:w-auto" aria-label={tr("Manager dashboard sections")}>
+        {/* Navigation Tabs - Desktop (flexed and collision-free) */}
+        <nav className="hidden md:flex flex-1 justify-center min-w-0 px-2 lg:px-4" aria-label={tr("Manager dashboard sections")}>
           <div role="tablist" aria-orientation="horizontal" className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-background/30 p-1 backdrop-blur-md dark:bg-secondary/30"
             onKeyDown={(e) => {
               const tabs: ManagerTab[] = ["digital", "operations", "safety"];
@@ -156,13 +156,13 @@ export function Header({
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   title={tab.label}
-                  className={`group relative flex h-9 sm:h-9 min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-32 lg:min-w-36 nav-tab-btn ${
+                  className={`group relative flex h-9 sm:h-9 min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-200 ease-out focus-visible:z-10 active:scale-95 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-30 lg:min-w-36 nav-tab-btn ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-[0_8px_22px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
+                      ? "bg-primary text-primary-foreground shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
                       : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
                   }`}
                 >
-                  <Icon aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 sm:h-4 sm:w-4 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
+                  <Icon aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 sm:h-4 sm:w-4 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
                   <span className="truncate nav-tab-text">{tab.label}</span>
                 </button>
               );
@@ -170,7 +170,7 @@ export function Header({
           </div>
         </nav>
 
-        <div className="flex items-center gap-2 order-3 sm:order-none">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {onOpenCommandPalette && (
             <button
               type="button"
@@ -237,6 +237,46 @@ export function Header({
           </button>
         </div>
       </div>
+
+      {/* Mobile navigation tab strip for small viewports (< md) */}
+      <nav className="md:hidden border-t border-border/40 bg-background/95 px-3 py-1.5 flex justify-center" aria-label={tr("Manager dashboard sections")}>
+        <div role="tablist" aria-orientation="horizontal" className="flex h-10 w-full max-w-md items-center justify-between gap-1 rounded-xl border border-white/10 bg-secondary/30 p-1">
+          {[
+            { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
+            { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
+            { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isCurrentDashboardTab = activeTab === tab.id;
+            const isActive = !isResourcesPage && isCurrentDashboardTab;
+            return (
+              <button
+                key={`mob-${tab.id}`}
+                id={`tab-mob-${tab.id}`}
+                role="tab"
+                tabIndex={isCurrentDashboardTab ? 0 : -1}
+                aria-selected={isActive}
+                aria-controls={isResourcesPage ? undefined : "main-content"}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  onShowDashboard();
+                  setIsMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                title={tab.label}
+                className={`flex-1 flex h-8 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold transition-all duration-200 active:scale-95 ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "bg-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* Mobile/Tablet Navigation Dropdown with microinteractions */}
       <div

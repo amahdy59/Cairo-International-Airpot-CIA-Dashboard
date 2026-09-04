@@ -61,7 +61,7 @@ export function MetricCard({
       <div className={`absolute inset-y-0 start-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100 transition-transform duration-500 origin-top group-hover:scale-y-110`} />
       <div className="relative z-10 flex items-start justify-between gap-3 ps-1">
         <div className="min-w-0">
-          <p className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">{label}</p>
+          <p className="text-xs font-mono rtl:font-sans uppercase rtl:normal-case tracking-[0.15em] rtl:tracking-normal text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">{label}</p>
           <div className="mt-2 flex items-baseline gap-1.5">
             <span className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">{isNumeric ? animatedValue : value}</span>
             {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
@@ -103,7 +103,7 @@ export function StatusPill({
   }[tone];
 
   return (
-    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono text-xs font-semibold uppercase tracking-wider ${toneClass}`}>
+    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono rtl:font-sans text-xs font-semibold uppercase rtl:normal-case tracking-wider rtl:tracking-normal ${toneClass}`}>
       {icon}
       {children}
     </span>

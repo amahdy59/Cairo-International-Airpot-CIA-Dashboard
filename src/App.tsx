@@ -127,7 +127,7 @@ export function App() {
         onShowResources={showResources}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
-      <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pt-16 pb-3 lg:pb-4">
+      <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pt-28 md:pt-20 pb-3 lg:pb-4">
         <h1 className="sr-only">{c.brand} - {c.airport}</h1>
         {activePage === "resources" ? (
           <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">

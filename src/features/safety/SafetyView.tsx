@@ -119,7 +119,7 @@ function PriorityActionsPanel() {
                   <button
                     type="button"
                     onClick={() => handleAuthorize(action.title, action.outcome)}
-                    className="flex w-full min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary hover:text-primary-foreground active:scale-98 cursor-pointer"
+                    className="flex w-full min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs font-bold text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground active:scale-95 cursor-pointer"
                   >
                     <Zap className="h-3.5 w-3.5" />
                     <span>{localize({ en: "Authorize Directive", ar: "اعتماد التوجيه" }, language)}</span>
@@ -210,7 +210,7 @@ function MaintenanceTable() {
       <div className="-mx-1 flex-1 overflow-x-auto overflow-y-auto">
         <table className="w-full min-w-[620px] text-sm">
           <caption className="sr-only">{tr("Recent aircraft maintenance")}</caption>
-          <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
               <th className="px-1 py-2 text-start">{tr("A/C")}</th>
               <th className="px-1 py-2 text-start">{tr("Task")}</th>
@@ -243,7 +243,7 @@ function AircraftRiskTable() {
       <div className="-mx-1 overflow-x-auto flex-1 pb-1">
         <table className="w-full min-w-[780px] text-sm">
           <caption className="sr-only">{tr("Aircraft requiring attention")}</caption>
-          <thead className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+          <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
               <th className="px-1 py-2 text-start">{tr("Registration")}</th>
               <th className="px-1 py-2 text-start">{tr("Type")}</th>
