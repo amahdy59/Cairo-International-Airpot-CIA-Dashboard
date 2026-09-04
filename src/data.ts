@@ -485,3 +485,204 @@ export const aircraftRiskRows = [
   { reg: "SU-GCH", type: "A330-200", events: 5, mtbf: "210h", issue: "Galley power, IFE", risk: 54 },
   { reg: "SU-GEK", type: "B787-9", events: 3, mtbf: "320h", issue: "Cabin sensors", risk: 38 },
 ];
+
+// ----------------------------------------------------
+// Cairo Airfield Weather & METAR Data
+// ----------------------------------------------------
+export type MetarData = {
+  station: string;
+  airportName: LocalizedText;
+  raw: string;
+  observedAt: string;
+  windDirectionDeg: number;
+  windSpeedKt: number;
+  windGustKt?: number;
+  tempC: number;
+  dewPointC: number;
+  qnhHpa: number;
+  visibilityKm: number;
+  flightCategory: "VFR" | "MVFR" | "IFR" | "LIFR";
+  activeRunways: {
+    arrival: string;
+    departure: string;
+  };
+  condition: LocalizedText;
+};
+
+export const hecaMetarBaseline: MetarData = {
+  station: "HECA",
+  airportName: { en: "Cairo International Airport", ar: "مطار القاهرة الدولي" },
+  raw: "HECA 041900Z 04011KT CAVOK 32/16 Q1014 NOSIG",
+  observedAt: "19:00 UTC",
+  windDirectionDeg: 40,
+  windSpeedKt: 11,
+  tempC: 32,
+  dewPointC: 16,
+  qnhHpa: 1014,
+  visibilityKm: 10,
+  flightCategory: "VFR",
+  activeRunways: {
+    arrival: "05L / 05C",
+    departure: "05C / 23C",
+  },
+  condition: { en: "Clear & CAVOK", ar: "صحو ورؤية ممتازة" },
+};
+
+// ----------------------------------------------------
+// Shift Wave Time Windows
+// ----------------------------------------------------
+export type ShiftWaveId = "all" | "morning" | "midday" | "night";
+
+export interface ShiftWave {
+  id: ShiftWaveId;
+  label: LocalizedText;
+  window: string;
+  description: LocalizedText;
+  benchmarkMovement: number;
+  benchmarkPassengers: string;
+}
+
+export const shiftWaves: ShiftWave[] = [
+  {
+    id: "all",
+    label: { en: "All Waves (24h)", ar: "كامل اليوم (٢٤ س)" },
+    window: "00:00 - 24:00",
+    description: { en: "Full 24-hour operational cycle across all terminals", ar: "دورة العمليات الكاملة على مدار ٢٤ ساعة لجميع المباني" },
+    benchmarkMovement: 540,
+    benchmarkPassengers: "85k",
+  },
+  {
+    id: "morning",
+    label: { en: "Morning Wave", ar: "فترة الصباح" },
+    window: "06:00 - 14:00",
+    description: { en: "European & domestic arrivals / early business departures", ar: "رحلات الوصول الأوروبية والداخلية ومغادرة رحلات الأعمال" },
+    benchmarkMovement: 195,
+    benchmarkPassengers: "32k",
+  },
+  {
+    id: "midday",
+    label: { en: "Midday Peak", ar: "ذروة الظهيرة" },
+    window: "14:00 - 22:00",
+    description: { en: "Gulf regional banks and high-density passenger influx", ar: "رحلات الخليج الإقليمية وتدفق كثيف للركاب" },
+    benchmarkMovement: 240,
+    benchmarkPassengers: "38k",
+  },
+  {
+    id: "night",
+    label: { en: "Night Wave", ar: "فترة الليل" },
+    window: "22:00 - 06:00",
+    description: { en: "Long-haul African/Asian departures and cargo operations", ar: "الرحلات الطويلة لأفريقيا وآسيا وعمليات الشحن الجوي" },
+    benchmarkMovement: 105,
+    benchmarkPassengers: "15k",
+  },
+];
+
+// ----------------------------------------------------
+// Emergency Scenario Drills ("What-If" Sandbox)
+// ----------------------------------------------------
+export type ScenarioId = "baseline" | "sandstorm" | "baggage-failure";
+
+export interface InjectedDirective {
+  title: string;
+  outcome: string;
+  badge: string;
+  badgeTone: Tone;
+  controlText: string;
+  controlBadge: string;
+  controlTone: Tone;
+}
+
+export interface DrillScenario {
+  id: ScenarioId;
+  title: LocalizedText;
+  badge: LocalizedText;
+  tone: Tone;
+  summary: LocalizedText;
+  metarOverride?: Partial<MetarData>;
+  kpiOverrides?: {
+    avgTaxiOut?: string;
+    activeAlerts?: string;
+    deltaTone?: Tone;
+  };
+  injectedDirectives: InjectedDirective[];
+}
+
+export const drillScenarios: DrillScenario[] = [
+  {
+    id: "baseline",
+    title: { en: "Normal Operations (Live)", ar: "العمليات العادية (مباشر)" },
+    badge: { en: "Nominal", ar: "طبيعي" },
+    tone: "ok",
+    summary: { en: "Standard airfield and terminal flow under nominal weather conditions.", ar: "انسيابية حركة الساحات والمباني وفق المعدلات القياسية والطقس المستقر." },
+    injectedDirectives: [],
+  },
+  {
+    id: "sandstorm",
+    title: { en: "Drill: Sandstorm & Low Visibility Cat II", ar: "محاكاة: عاصفة ترابية وانخفاض الرؤية (Cat II)" },
+    badge: { en: "Weather Drill", ar: "محاكاة طقس" },
+    tone: "crit",
+    summary: { en: "Khamasin desert wind gusting 38kt with visibility dropping to 350m. Low Visibility Operations (LVO) initiated.", ar: "رياح خماسينية ترابية بهبات تصل ٣٨ عقدة وانخفاض الرؤية إلى ٣٥٠م. تفعيل إجراءات الرؤية المنخفضة." },
+    metarOverride: {
+      raw: "HECA 041900Z 34024G38KT 0350 R05L/0400N SA BKN010 29/11 Q1008 TEMPO 0200 DS",
+      windDirectionDeg: 340,
+      windSpeedKt: 24,
+      windGustKt: 38,
+      visibilityKm: 0.35,
+      flightCategory: "LIFR",
+      condition: { en: "Sandstorm / Cat II LVO", ar: "عاصفة رملية / تدني الرؤية الفئة الثانية" },
+      activeRunways: {
+        arrival: "05L (ILS Cat II)",
+        departure: "05C (LVO Protected)",
+      },
+    },
+    kpiOverrides: {
+      avgTaxiOut: "28 min",
+      activeAlerts: "8",
+      deltaTone: "crit",
+    },
+    injectedDirectives: [
+      {
+        title: "Dispatch Runway Friction & Debris Sweeper Teams",
+        outcome: "Maintains Cat II braking coefficient",
+        badge: "Airfield",
+        badgeTone: "crit",
+        controlText: "Runway sweeps mandated every 30m during dust storms",
+        controlBadge: "LVO SOP-4",
+        controlTone: "warn",
+      },
+      {
+        title: "Activate Low Visibility Holding Points",
+        outcome: "Protects ILS localizer sensitive areas",
+        badge: "ATC / Safety",
+        badgeTone: "crit",
+        controlText: "Aircraft held at CAT II stopbars; separation increased to 8NM",
+        controlBadge: "ILS Protected",
+        controlTone: "info",
+      },
+    ],
+  },
+  {
+    id: "baggage-failure",
+    title: { en: "Drill: Terminal 3 Sortation Line Stoppage", ar: "محاكاة: توقف نظام سيور الفرز بمبنى الركاب ٣" },
+    badge: { en: "Terminal Drill", ar: "محاكاة مباني" },
+    tone: "warn",
+    summary: { en: "Mechanical fault on transfer loop B causing baggage congestion across T3 international check-in rows.", ar: "عطل ميكانيكي بحلقة فرز الحقائب ب يؤدي لاختناق منصات إنهاء إجراءات السفر الدولية بمبنى ٣." },
+    kpiOverrides: {
+      avgTaxiOut: "19 min",
+      activeAlerts: "5",
+      deltaTone: "warn",
+    },
+    injectedDirectives: [
+      {
+        title: "Deploy Manual Baggage Tug Surge Crew",
+        outcome: "Prevents flight departure hold delays",
+        badge: "Ground Ops",
+        badgeTone: "warn",
+        controlText: "Manual sortation contingency protocol activated at T3 basement",
+        controlBadge: "SOP Contingency",
+        controlTone: "info",
+      },
+    ],
+  },
+];
+

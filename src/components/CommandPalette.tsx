@@ -12,10 +12,15 @@ import {
   Plane, 
   MapPin, 
   ArrowRight,
-  X
+  X,
+  Tv,
+  ShieldAlert,
+  RotateCcw,
+  Clock3,
 } from 'lucide-react';
 import { ManagerTab, Language, ThemeMode, departures, arrivals, scenes } from '../data';
 import { localize } from '../utils/helpers';
+import { useSimulation } from '../context/simulation';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -33,7 +38,7 @@ interface CommandPaletteProps {
 
 interface CommandItem {
   id: string;
-  category: 'views' | 'scenes' | 'flights' | 'settings';
+  category: 'views' | 'scenes' | 'flights' | 'drills' | 'settings';
   categoryLabel: { en: string; ar: string };
   title: string;
   subtitle?: string;
@@ -59,6 +64,8 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const { toggleKiosk, setScenarioId, resetDrill, setActiveShiftWave } = useSimulation();
 
   useEffect(() => {
     if (isOpen) {
@@ -113,6 +120,18 @@ export function CommandPalette({
         },
       },
       {
+        id: 'view-kiosk',
+        category: 'views',
+        categoryLabel: { en: 'Views & Tabs', ar: 'الأقسام والتبويبات' },
+        title: language === 'ar' ? 'تشغيل / إيقاف شاشة العمليات AOCC' : 'Toggle AOCC Video Wall Auto-Cycle',
+        subtitle: language === 'ar' ? 'دوران تلقائي بين الشاشات كل ٢٥ ثانية مع عداد تنازلي' : 'Auto-cycles through views every 25 seconds',
+        icon: Tv,
+        action: () => {
+          toggleKiosk();
+          onClose();
+        },
+      },
+      {
         id: 'view-resources',
         category: 'views',
         categoryLabel: { en: 'Views & Tabs', ar: 'الأقسام والتبويبات' },
@@ -121,6 +140,102 @@ export function CommandPalette({
         icon: FileText,
         action: () => {
           onShowResources();
+          onClose();
+        },
+      }
+    );
+
+    // Operational Shift Waves
+    list.push(
+      {
+        id: 'shift-morning',
+        category: 'views',
+        categoryLabel: { en: 'Shift Waves', ar: 'نوبات العمل' },
+        title: language === 'ar' ? 'تفعيل نوبة: الصباح (٠٦:٠٠ - ١٤:٠٠)' : 'Select Shift: Morning (06:00 - 14:00)',
+        subtitle: language === 'ar' ? 'مستهدف ٣٢ ألف راكب و١٩٥ حركة طيران' : 'Benchmark 32k passengers, 195 movements',
+        icon: Clock3,
+        action: () => {
+          setActiveShiftWave('morning');
+          onSelectTab('operations');
+          onClose();
+        },
+      },
+      {
+        id: 'shift-midday',
+        category: 'views',
+        categoryLabel: { en: 'Shift Waves', ar: 'نوبات العمل' },
+        title: language === 'ar' ? 'تفعيل نوبة: الظهيرة (١٤:٠٠ - ٢٢:٠٠)' : 'Select Shift: Midday Peak (14:00 - 22:00)',
+        subtitle: language === 'ar' ? 'مستهدف ٣٨ ألف راكب و٢٤٠ حركة طيران' : 'Benchmark 38k passengers, 240 movements',
+        icon: Clock3,
+        action: () => {
+          setActiveShiftWave('midday');
+          onSelectTab('operations');
+          onClose();
+        },
+      },
+      {
+        id: 'shift-night',
+        category: 'views',
+        categoryLabel: { en: 'Shift Waves', ar: 'نوبات العمل' },
+        title: language === 'ar' ? 'تفعيل نوبة: الليل (٢٢:٠٠ - ٠٦:٠٠)' : 'Select Shift: Night Wave (22:00 - 06:00)',
+        subtitle: language === 'ar' ? 'مستهدف ١٥ ألف راكب و١٠٥ حركات طيران' : 'Benchmark 15k passengers, 105 movements',
+        icon: Clock3,
+        action: () => {
+          setActiveShiftWave('night');
+          onSelectTab('operations');
+          onClose();
+        },
+      },
+      {
+        id: 'shift-all',
+        category: 'views',
+        categoryLabel: { en: 'Shift Waves', ar: 'نوبات العمل' },
+        title: language === 'ar' ? 'تفعيل كامل اليوم (٢٤ ساعة)' : 'Select Shift: Full 24 Hours (All Waves)',
+        subtitle: language === 'ar' ? 'مستهدف ٨٥ ألف راكب و٥٤٠ حركة طيران' : 'Benchmark 85k passengers, 540 movements',
+        icon: Clock3,
+        action: () => {
+          setActiveShiftWave('all');
+          onSelectTab('operations');
+          onClose();
+        },
+      }
+    );
+
+    // Emergency Scenario Drills
+    list.push(
+      {
+        id: 'drill-sandstorm',
+        category: 'drills',
+        categoryLabel: { en: 'Emergency Drills', ar: 'محاكاة الطوارئ' },
+        title: language === 'ar' ? 'محاكاة: عاصفة رملية وتدني الرؤية (Cat II)' : 'Trigger Drill: Sandstorm & Cat II LVO',
+        subtitle: language === 'ar' ? 'رياح خماسينية بهبات ٣٨ عقدة ورؤية ٣٥٠م' : 'Khamasin gusts 38kt, 350m visibility, LVO protocols',
+        icon: ShieldAlert,
+        action: () => {
+          setScenarioId('sandstorm');
+          onClose();
+        },
+      },
+      {
+        id: 'drill-baggage',
+        category: 'drills',
+        categoryLabel: { en: 'Emergency Drills', ar: 'محاكاة الطوارئ' },
+        title: language === 'ar' ? 'محاكاة: توقف سيور فرز الحقائب بمبنى ٣' : 'Trigger Drill: T3 Sortation Stoppage',
+        subtitle: language === 'ar' ? 'عطل بحلقة فرز الحقائب ب وتدفق الطواقم الأرضية' : 'Mechanical fault on loop B, surge staffing deployment',
+        icon: ShieldAlert,
+        action: () => {
+          setScenarioId('baggage-failure');
+          onClose();
+        },
+      },
+      {
+        id: 'drill-reset',
+        category: 'drills',
+        categoryLabel: { en: 'Emergency Drills', ar: 'محاكاة الطوارئ' },
+        title: language === 'ar' ? 'استعادة العمليات المباشرة (إلغاء المحاكاة)' : 'Restore Live Baseline Operations',
+        subtitle: language === 'ar' ? 'إعادة ضبط كافة مقاييس المطار إلى الوضع الطبيعي' : 'Reset all airfield and terminal metrics to nominal',
+        icon: RotateCcw,
+        action: () => {
+          resetDrill();
           onClose();
         },
       }
@@ -212,7 +327,7 @@ export function CommandPalette({
     );
 
     return list;
-  }, [language, theme, highContrast, onSelectTab, onSelectScene, onShowResources, setHighContrast, setLanguage, setTheme, onClose]);
+  }, [language, theme, highContrast, onSelectTab, onSelectScene, onShowResources, setHighContrast, setLanguage, setTheme, onClose, toggleKiosk, setScenarioId, resetDrill, setActiveShiftWave]);
 
   const filteredItems = useMemo(() => {
     if (!query.trim()) return items;

@@ -1,8 +1,10 @@
 import { memo, useState, useMemo } from 'react';
-import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen, Search, X } from 'lucide-react';
+import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen, Search, X, Download } from 'lucide-react';
 import { localize, toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
-import { influxForecastRows, gateWaitRows, departures, arrivals, queueRows, FlightRow, Tone } from '../../data';
+import { useSimulation } from '../../context/simulation';
+import { exportToCsv } from '../../utils/exportCsv';
+import { influxForecastRows, gateWaitRows, departures, arrivals, queueRows, FlightRow, Tone, shiftWaves } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
 
 function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
@@ -178,15 +180,145 @@ function AlertsPanel() {
   );
 }
 
+function ShiftWaveSelector() {
+  const { language } = useLocale();
+  const { activeShiftWave, setActiveShiftWave } = useSimulation();
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label={localize({ en: "Operational Shift Waves", ar: "نوبات العمل التشغيلية" }, language)}
+      className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl border border-border/80 bg-secondary/20"
+    >
+      <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground me-1">
+        <Clock3 className="h-3.5 w-3.5 text-primary" />
+        <span className="hidden sm:inline">{localize({ en: "Shift Wave:", ar: "فترة النوبة:" }, language)}</span>
+      </div>
+      {shiftWaves.map((wave) => {
+        const isSelected = activeShiftWave === wave.id;
+        return (
+          <button
+            key={wave.id}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            onClick={() => setActiveShiftWave(wave.id)}
+            className={`min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 active:scale-95 cursor-pointer ${
+              isSelected
+                ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                : "bg-background/60 text-muted-foreground hover:bg-background hover:text-foreground"
+            }`}
+            title={localize(wave.description, language)}
+          >
+            <span>{localize(wave.label, language)}</span>
+            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${isSelected ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+              {wave.window}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function OperationsView() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
+  const { activeShiftWave, activeScenario, isDrillActive } = useSimulation();
+
+  // Metrics dynamic to activeShiftWave
+  const shiftMetrics = useMemo(() => {
+    switch (activeShiftWave) {
+      case "morning":
+        return {
+          passengers: "28,640",
+          paxHint: localize({ en: "Wave benchmark 32k", ar: "مستهدف النوبة ٣٢ ألف" }, language),
+          paxDelta: localize({ en: "+2.4% vs plan", ar: "+٢.٤٪ عن الخطة" }, language),
+          movements: "148",
+          moveUnit: "/ 195",
+          moveHint: localize({ en: "140 average", ar: "المتوسط ١٤٠" }, language),
+        };
+      case "midday":
+        return {
+          passengers: "37,120",
+          paxHint: localize({ en: "Wave benchmark 38k", ar: "مستهدف النوبة ٣٨ ألف" }, language),
+          paxDelta: localize({ en: "+5.1% vs plan", ar: "+٥.١٪ عن الخطة" }, language),
+          movements: "194",
+          moveUnit: "/ 240",
+          moveHint: localize({ en: "180 average", ar: "المتوسط ١٨٠" }, language),
+        };
+      case "night":
+        return {
+          passengers: "13,950",
+          paxHint: localize({ en: "Wave benchmark 15k", ar: "مستهدف النوبة ١٥ ألف" }, language),
+          paxDelta: localize({ en: "-1.2% vs plan", ar: "-١.٢٪ عن الخطة" }, language),
+          movements: "78",
+          moveUnit: "/ 105",
+          moveHint: localize({ en: "75 average", ar: "المتوسط ٧٥" }, language),
+        };
+      case "all":
+      default:
+        return {
+          passengers: "58,420",
+          paxHint: tr("Daily benchmark 85k"),
+          paxDelta: tr("+4.1% vs yesterday"),
+          movements: "412",
+          moveUnit: "/ 540",
+          moveHint: tr("390 average"),
+        };
+    }
+  }, [activeShiftWave, language, tr]);
+
+  // Drill overrides for Taxi and Alerts
+  const taxiOutValue = activeScenario.kpiOverrides?.avgTaxiOut?.replace(" min", "") || "14";
+  const taxiDelta = isDrillActive ? localize({ en: "+14 min hold", ar: "+١٤ د تأخير" }, language) : "-2 min";
+  const taxiTone = isDrillActive ? "crit" : "warn";
+
+  const alertsValue = activeScenario.kpiOverrides?.activeAlerts || "3";
+  const alertsHint = isDrillActive ? localize({ en: "Drill Influx Active", ar: "تنبيهات المحاكاة نشطة" }, language) : tr("2 medium, 1 high");
+  const alertsTone = (activeScenario.kpiOverrides?.deltaTone || "warn") as Tone;
+
   return (
     <div className="grid gap-3 lg:gap-4 mt-3 lg:mt-4">
+      {/* Shift Wave Time-Slice Selector */}
+      <ShiftWaveSelector />
+
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
-        <MetricCard label={tr("Passengers today")} value="58,420" hint={tr("Daily benchmark 85k")} delta={tr("+4.1% vs yesterday")} icon={Users} accent="cyan" />
-        <MetricCard label={tr("Aircraft movements")} value="412" unit="/ 540" hint={tr("390 average")} delta={tr("On schedule")} icon={Activity} accent="cyan" />
-        <MetricCard label={tr("Avg taxi-out")} value="14" unit="min" hint={tr("CIA operations")} delta="-2 min" deltaTone="warn" icon={Clock3} accent="warn" />
-        <MetricCard label={tr("Active alerts")} value="3" hint={tr("2 medium, 1 high")} delta={tr("Needs review")} deltaTone="warn" icon={AlertTriangle} accent="warn" />
+        <MetricCard
+          label={tr("Passengers today")}
+          value={shiftMetrics.passengers}
+          hint={shiftMetrics.paxHint}
+          delta={shiftMetrics.paxDelta}
+          icon={Users}
+          accent="cyan"
+        />
+        <MetricCard
+          label={tr("Aircraft movements")}
+          value={shiftMetrics.movements}
+          unit={shiftMetrics.moveUnit}
+          hint={shiftMetrics.moveHint}
+          delta={tr("On schedule")}
+          icon={Activity}
+          accent="cyan"
+        />
+        <MetricCard
+          label={tr("Avg taxi-out")}
+          value={taxiOutValue}
+          unit="min"
+          hint={tr("CIA operations")}
+          delta={taxiDelta}
+          deltaTone={taxiTone}
+          icon={Clock3}
+          accent={taxiTone === "crit" ? "crit" : "warn"}
+        />
+        <MetricCard
+          label={tr("Active alerts")}
+          value={alertsValue}
+          hint={alertsHint}
+          delta={tr("Needs review")}
+          deltaTone={alertsTone}
+          icon={AlertTriangle}
+          accent={alertsTone === "crit" ? "crit" : "warn"}
+        />
       </section>
 
       {/* Middle: Charts for visual absorption */}
@@ -227,11 +359,42 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
     });
   }, [rows, search, filter, tr]);
 
+  const handleExportCsv = () => {
+    exportToCsv({
+      filename: `CIA_${direction === "to" ? "Departures" : "Arrivals"}_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers: [
+        tr("Flight"),
+        direction === "to" ? tr("To") : tr("From"),
+        tr("Time"),
+        tr("Gate"),
+        tr("Status"),
+      ],
+      rows: filteredRows.map((r) => [
+        r.flight,
+        tr(r.city),
+        r.time,
+        r.gate,
+        tr(r.status),
+      ]),
+      sheetTitle: `${title} - Cairo International Airport`,
+    });
+  };
+
   return (
     <SectionPanel
       title={title}
       action={
         <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="min-h-[44px] inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/30 px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/70 hover:text-primary active:scale-95 transition cursor-pointer"
+            aria-label={localize({ en: `Export ${title} to CSV`, ar: `تصدير ${title} كملف CSV` }, language)}
+            title={localize({ en: `Export ${title} to CSV (Excel format)`, ar: `تصدير ${title} كملف CSV متوافق مع إكسيل` }, language)}
+          >
+            <Download className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden sm:inline">{localize({ en: "Export", ar: "تصدير" }, language)}</span>
+          </button>
           <span className="text-xs font-mono text-muted-foreground me-1">
             {localize({ en: `${filteredRows.length} of ${rows.length}`, ar: `${filteredRows.length} من ${rows.length}` }, language)}
           </span>

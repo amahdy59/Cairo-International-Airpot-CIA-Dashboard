@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Users, AlertTriangle, UserCheck, Plane, Clock3, Wrench, CheckCircle2, Zap } from 'lucide-react';
+import { Users, AlertTriangle, UserCheck, Plane, Clock3, Wrench, CheckCircle2, Zap, Download, ShieldAlert } from 'lucide-react';
 import { toneCssVar, localize } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
+import { useSimulation } from '../../context/simulation';
+import { exportToCsv } from '../../utils/exportCsv';
 import { safetyChecks, maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
 import { notifyManager } from '../../utils/toast';
@@ -33,6 +35,7 @@ function SafetyView() {
 
 function PriorityActionsPanel() {
   const { tr, language } = useLocale();
+  const { activeScenario, isDrillActive } = useSimulation();
   const [authorizedActions, setAuthorizedActions] = useState<Record<string, boolean>>({});
 
   const handleAuthorize = (title: string, outcome: string) => {
@@ -44,7 +47,7 @@ function PriorityActionsPanel() {
     );
   };
 
-  const actions = [
+  const baseActions = [
     {
       icon: Users,
       title: "Rebalance security staff",
@@ -55,6 +58,7 @@ function PriorityActionsPanel() {
       controlText: "3 findings open longer than 24h",
       controlBadge: "Medium",
       controlTone: "warn" as Tone,
+      isDrill: false,
     },
     {
       icon: Plane,
@@ -66,6 +70,7 @@ function PriorityActionsPanel() {
       controlText: "Every safety item has an owner and due time",
       controlBadge: "Assigned",
       controlTone: "ok" as Tone,
+      isDrill: false,
     },
     {
       icon: Wrench,
@@ -77,13 +82,44 @@ function PriorityActionsPanel() {
       controlText: "Escalates if action has not started",
       controlBadge: "Auto-escalation",
       controlTone: "info" as Tone,
+      isDrill: false,
     },
   ];
+
+  const drillActions = isDrillActive
+    ? activeScenario.injectedDirectives.map((d) => ({
+        icon: ShieldAlert,
+        title: d.title,
+        outcome: d.outcome,
+        badge: d.badge,
+        badgeTone: d.badgeTone,
+        controlIcon: AlertTriangle,
+        controlText: d.controlText,
+        controlBadge: d.controlBadge,
+        controlTone: d.controlTone,
+        isDrill: true,
+      }))
+    : [];
+
+  const actions = [...drillActions, ...baseActions];
 
   return (
     <SectionPanel
       title={tr("Decision recommendations")}
-      action={<div className="flex flex-wrap gap-1.5 sm:gap-2"><StatusPill tone="warn">{tr("3 items")}</StatusPill><StatusPill tone="neutral">{tr("Controls to prevent issue build-up")}</StatusPill></div>}
+      action={
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <StatusPill tone={isDrillActive ? "crit" : "warn"}>
+            {localize(
+              {
+                en: `${actions.length} items${isDrillActive ? " (Drill Active)" : ""}`,
+                ar: `${actions.length} عناصر${isDrillActive ? " (المحاكاة نشطة)" : ""}`,
+              },
+              language
+            )}
+          </StatusPill>
+          <StatusPill tone="neutral">{tr("Controls to prevent issue build-up")}</StatusPill>
+        </div>
+      }
     >
       <div className="grid gap-3 sm:grid-cols-3">
         {actions.map((action) => {
@@ -102,7 +138,14 @@ function PriorityActionsPanel() {
                   <ActionIcon aria-hidden="true" className="h-5 w-5" style={{ color: toneCssVar(action.badgeTone) }} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground">{tr(action.title)}</h3>
+                  <div className="flex items-center justify-center gap-1.5">
+                    {action.isDrill && (
+                      <span className="rounded bg-status-crit/20 px-1.5 py-0.5 text-[10px] font-bold text-status-crit font-mono">
+                        DRILL
+                      </span>
+                    )}
+                    <h3 className="text-sm font-bold text-foreground">{tr(action.title)}</h3>
+                  </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{tr(action.outcome)}</p>
                 </div>
                 <StatusPill tone={action.badgeTone}>{tr(action.badge)}</StatusPill>
@@ -204,9 +247,48 @@ function SafetyChecks() {
 }
 
 function MaintenanceTable() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
+
+  const handleExportMaintenance = () => {
+    exportToCsv({
+      filename: `CIA_Aircraft_Maintenance_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers: [
+        tr("A/C"),
+        tr("Task"),
+        tr("Airline"),
+        tr("Date"),
+        tr("Dur"),
+        tr("Status"),
+      ],
+      rows: maintenanceRows.map((item) => [
+        `${item.reg} (${item.type})`,
+        tr(item.task),
+        tr("EgyptAir"),
+        tr(item.date),
+        tr(item.duration),
+        tr(item.status),
+      ]),
+      sheetTitle: "Cairo Airport Aircraft Maintenance Log",
+    });
+  };
+
   return (
-    <SectionPanel title={tr("Recent aircraft maintenance")} className="h-full flex flex-col overflow-hidden">
+    <SectionPanel
+      title={tr("Recent aircraft maintenance")}
+      action={
+        <button
+          type="button"
+          onClick={handleExportMaintenance}
+          className="min-h-[44px] inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/30 px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/70 hover:text-primary active:scale-95 transition cursor-pointer"
+          aria-label={localize({ en: "Export maintenance log to CSV", ar: "تصدير سجل الصيانة كملف CSV" }, language)}
+          title={localize({ en: "Export maintenance log to CSV (Excel compatible)", ar: "تصدير سجل الصيانة كملف CSV متوافق مع إكسيل" }, language)}
+        >
+          <Download className="h-3.5 w-3.5 text-primary" />
+          <span className="hidden sm:inline">{localize({ en: "Export CSV", ar: "تصدير CSV" }, language)}</span>
+        </button>
+      }
+      className="h-full flex flex-col overflow-hidden"
+    >
       <div className="-mx-1 flex-1 overflow-x-auto overflow-y-auto">
         <table className="w-full min-w-[620px] text-sm">
           <caption className="sr-only">{tr("Recent aircraft maintenance")}</caption>
@@ -237,9 +319,51 @@ function MaintenanceTable() {
 }
 
 function AircraftRiskTable() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
+
+  const handleExportRisk = () => {
+    exportToCsv({
+      filename: `CIA_Aircraft_Risk_Scorecard_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers: [
+        tr("Registration"),
+        tr("Type"),
+        tr("Events"),
+        tr("MTBF"),
+        tr("Top issue"),
+        tr("Risk"),
+      ],
+      rows: aircraftRiskRows.map((aircraft) => [
+        aircraft.reg,
+        aircraft.type,
+        String(aircraft.events),
+        tr(aircraft.mtbf),
+        tr(aircraft.issue),
+        `${aircraft.risk}%`,
+      ]),
+      sheetTitle: "Cairo Airport 30-Day Aircraft Risk Scorecard",
+    });
+  };
+
   return (
-    <SectionPanel title={tr("Aircraft requiring attention")} action={<div className="flex flex-wrap gap-2"><span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span></div>} className="flex flex-col">
+    <SectionPanel
+      title={tr("Aircraft requiring attention")}
+      action={
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportRisk}
+            className="min-h-[44px] inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/30 px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/70 hover:text-primary active:scale-95 transition cursor-pointer"
+            aria-label={localize({ en: "Export risk scorecard to CSV", ar: "تصدير بطاقة تقييم المخاطر كملف CSV" }, language)}
+            title={localize({ en: "Export risk scorecard to CSV (Excel compatible)", ar: "تصدير بطاقة تقييم المخاطر كملف CSV متوافق مع إكسيل" }, language)}
+          >
+            <Download className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden sm:inline">{localize({ en: "Export CSV", ar: "تصدير CSV" }, language)}</span>
+          </button>
+          <span className="text-xs text-muted-foreground">{tr("30-day risk score")}</span>
+        </div>
+      }
+      className="flex flex-col"
+    >
       <div className="-mx-1 overflow-x-auto flex-1 pb-1">
         <table className="w-full min-w-[780px] text-sm">
           <caption className="sr-only">{tr("Aircraft requiring attention")}</caption>

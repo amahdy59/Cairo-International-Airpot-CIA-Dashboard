@@ -14,10 +14,13 @@ import {
   Menu,
   X,
   Search,
+  Tv,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
+import { useSimulation } from "../../context/simulation";
 import { localize } from "../../utils/helpers";
+import { MetarWidget } from "../common/MetarWidget";
 
 export function BackToTopButton() {
   const { language } = useLocale();
@@ -74,6 +77,7 @@ export function Header({
 }) {
   const c = copy[language];
   const { tr } = useLocale();
+  const { toggleKiosk, isKioskActive } = useSimulation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   const isResourcesPage = activePage === "resources";
@@ -171,6 +175,22 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="hidden sm:block">
+            <MetarWidget />
+          </div>
+          <button
+            type="button"
+            onClick={toggleKiosk}
+            className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
+              isKioskActive
+                ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
+                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+            }`}
+            aria-label={language === "ar" ? "تفعيل نمط شاشة العمليات AOCC" : "Toggle AOCC Video Wall Mode"}
+            title={language === "ar" ? "تفعيل نمط شاشة العمليات AOCC" : "Toggle AOCC Video Wall Mode"}
+          >
+            <Tv aria-hidden="true" className="h-4 w-4" />
+          </button>
           {onOpenCommandPalette && (
             <button
               type="button"
@@ -300,6 +320,28 @@ export function Header({
 
             {/* Menu options with full text */}
             <div className="grid gap-2">
+              {/* Airfield Weather & Runway Status (Mobile) */}
+              <div className="sm:hidden flex justify-center py-1">
+                <MetarWidget />
+              </div>
+
+              {/* Video Wall Mode Toggle */}
+              <button
+                type="button"
+                onClick={() => handleMenuSelect(toggleKiosk)}
+                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
+                  isKioskActive
+                    ? "border-primary/50 bg-primary/15 text-primary"
+                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
+                }`}
+              >
+                <Tv className="h-4 w-4 text-primary" />
+                <span>
+                  {language === "ar"
+                    ? isKioskActive ? "إيقاف شاشة العمليات AOCC" : "تشغيل شاشة العمليات AOCC"
+                    : isKioskActive ? "Exit AOCC Video Wall Mode" : "Start AOCC Video Wall Mode"}
+                </span>
+              </button>
               {/* Resources & Case Study Link */}
               <button
                 type="button"
