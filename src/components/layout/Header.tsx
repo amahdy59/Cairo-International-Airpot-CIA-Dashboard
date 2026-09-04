@@ -13,6 +13,7 @@ import {
   Sun,
   Menu,
   X,
+  Search,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
@@ -55,6 +56,7 @@ export function Header({
   setActiveTab,
   onShowDashboard,
   onShowResources,
+  onOpenCommandPalette,
 }: {
   language: Language;
   setLanguage: (language: Language) => void;
@@ -68,6 +70,7 @@ export function Header({
   setActiveTab: (tab: ManagerTab) => void;
   onShowDashboard: () => void;
   onShowResources: () => void;
+  onOpenCommandPalette?: () => void;
 }) {
   const c = copy[language];
   const { tr } = useLocale();
@@ -168,6 +171,17 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2 order-3 sm:order-none">
+          {onOpenCommandPalette && (
+            <button
+              type="button"
+              onClick={onOpenCommandPalette}
+              className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground transition-colors cursor-pointer"
+              aria-label={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
+              title={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
+            >
+              <Search aria-hidden="true" className="h-4 w-4" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -246,6 +260,18 @@ export function Header({
 
             {/* Menu options with full text */}
             <div className="grid gap-2">
+              {onOpenCommandPalette && (
+                <button
+                  type="button"
+                  onClick={() => handleMenuSelect(onOpenCommandPalette)}
+                  className="flex h-11 w-full items-center gap-3 rounded-lg border border-primary/40 bg-primary/10 px-4 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground transition-all active:scale-[0.97] duration-200 cursor-pointer"
+                >
+                  <Search className="h-4 w-4" />
+                  <span>
+                    {language === "ar" ? "لوحة الأوامر والبحث السريع (Ctrl+K)" : "Command Palette & Quick Search (Ctrl+K)"}
+                  </span>
+                </button>
+              )}
               {/* Theme Mode Toggle */}
               <button
                 type="button"

@@ -9,6 +9,8 @@ import OperationsView from './features/operations/OperationsView';
 import SafetyView from './features/safety/SafetyView';
 import { Header, BackToTopButton } from './components/layout/Header';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
+import { CommandPalette } from './components/CommandPalette';
+import { ToastContainer } from './components/common/Toast';
 
 function getInitialPageView(): PageView {
   if (typeof window === "undefined") {
@@ -23,6 +25,8 @@ export function App() {
   const [language, setLanguage] = useState<Language>("en");
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [highContrast, setHighContrast] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [selectedSceneId, setSelectedSceneId] = useState<string | undefined>(undefined);
   const times = useHeaderClock();
   const c = copy[language];
   const isDigitalDashboard = activeTab === "digital" && activePage !== "resources";
@@ -51,6 +55,46 @@ export function App() {
     }
   }, [activeTab, activePage]);
 
+  // Global Keyboard Shortcuts (Ctrl+K palette & 1, 2, 3 tab switching)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+K / Cmd+K
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Quick tab switching with 1, 2, 3
+      const activeEl = document.activeElement;
+      const isInputActive =
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.tagName === "SELECT" ||
+          (activeEl as HTMLElement).isContentEditable);
+
+      if (!isInputActive && !isCommandPaletteOpen) {
+        if (e.key === "1") {
+          e.preventDefault();
+          setActiveTab("digital");
+          showDashboard();
+        } else if (e.key === "2") {
+          e.preventDefault();
+          setActiveTab("operations");
+          showDashboard();
+        } else if (e.key === "3") {
+          e.preventDefault();
+          setActiveTab("safety");
+          showDashboard();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCommandPaletteOpen]);
+
   const showDashboard = () => {
     setActivePage("dashboard");
     window.history.pushState(null, "", `${window.location.pathname}${window.location.search}`);
@@ -68,7 +112,21 @@ export function App() {
   return (
     <LocaleContext.Provider value={language}>
     <div className={`flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""} ${isDigitalDashboard ? "lg:h-screen lg:overflow-hidden min-h-screen overflow-x-hidden" : "min-h-screen overflow-x-hidden"}`} dir={language === "ar" ? "rtl" : "ltr"}>
-      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} activePage={activePage} setActiveTab={setActiveTab} onShowDashboard={showDashboard} onShowResources={showResources} />
+      <Header
+        language={language}
+        setLanguage={setLanguage}
+        theme={theme}
+        setTheme={setTheme}
+        highContrast={highContrast}
+        setHighContrast={setHighContrast}
+        times={times}
+        activeTab={activeTab}
+        activePage={activePage}
+        setActiveTab={setActiveTab}
+        onShowDashboard={showDashboard}
+        onShowResources={showResources}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+      />
       <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pt-16 pb-3 lg:pb-4">
         <h1 className="sr-only">{c.brand} - {c.airport}</h1>
         {activePage === "resources" ? (
@@ -82,13 +140,36 @@ export function App() {
         ) : (
         <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : 'Safety & Compliance'} className="flex flex-col flex-1 min-h-0 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
           <ErrorBoundary>
-            {activeTab === "digital" && <DigitalTwinView theme={theme} />}
+            {activeTab === "digital" && <DigitalTwinView theme={theme} selectedSceneId={selectedSceneId} />}
             {activeTab === "operations" && <OperationsView />}
             {activeTab === "safety" && <SafetyView />}
           </ErrorBoundary>
         </div>
         )}
       </main>
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          showDashboard();
+        }}
+        onSelectScene={(sceneId) => {
+          setSelectedSceneId(sceneId);
+        }}
+        language={language}
+        setLanguage={setLanguage}
+        theme={theme}
+        setTheme={setTheme}
+        highContrast={highContrast}
+        setHighContrast={setHighContrast}
+        onShowResources={showResources}
+      />
+
+      {/* Real-time Managers Toast Feed */}
+      <ToastContainer />
       {!isDigitalDashboard && (
         <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
           {c.footer}

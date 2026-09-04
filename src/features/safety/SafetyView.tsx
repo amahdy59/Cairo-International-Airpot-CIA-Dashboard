@@ -1,8 +1,10 @@
-import { Users, AlertTriangle, UserCheck, Plane, Clock3, Wrench } from 'lucide-react';
-import { toneCssVar } from '../../utils/helpers';
+import { useState } from 'react';
+import { Users, AlertTriangle, UserCheck, Plane, Clock3, Wrench, CheckCircle2, Zap } from 'lucide-react';
+import { toneCssVar, localize } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { safetyChecks, maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
+import { notifyManager } from '../../utils/toast';
 
 function SafetyView() {
   return (
@@ -30,7 +32,18 @@ function SafetyView() {
 }
 
 function PriorityActionsPanel() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
+  const [authorizedActions, setAuthorizedActions] = useState<Record<string, boolean>>({});
+
+  const handleAuthorize = (title: string, outcome: string) => {
+    setAuthorizedActions((prev) => ({ ...prev, [title]: true }));
+    notifyManager(
+      language === 'ar' ? 'تم اعتماد التوجيه التشغيلي بنجاح' : 'Operational Directive Authorized',
+      `${tr(title)}: ${tr(outcome)}`,
+      'ok'
+    );
+  };
+
   const actions = [
     {
       icon: Users,
@@ -66,6 +79,7 @@ function PriorityActionsPanel() {
       controlTone: "info" as Tone,
     },
   ];
+
   return (
     <SectionPanel
       title={tr("Decision recommendations")}
@@ -75,10 +89,12 @@ function PriorityActionsPanel() {
         {actions.map((action) => {
           const ActionIcon = action.icon;
           const ControlIcon = action.controlIcon;
+          const isAuthorized = !!authorizedActions[action.title];
+
           return (
-            <article key={action.title} className="panel-inner overflow-hidden flex flex-col">
+            <article key={action.title} className="panel-inner overflow-hidden flex flex-col justify-between">
               {/* Recommendation section */}
-              <div className="flex flex-col items-center text-center gap-2.5 p-4 pb-3.5">
+              <div className="flex flex-col items-center text-center gap-2.5 p-4 pb-3">
                 <div
                   className="grid h-11 w-11 place-items-center rounded-xl border border-border/60 bg-background/65"
                   style={{ boxShadow: `0 0 20px color-mix(in srgb, ${toneCssVar(action.badgeTone)} 20%, transparent)` }}
@@ -91,6 +107,26 @@ function PriorityActionsPanel() {
                 </div>
                 <StatusPill tone={action.badgeTone}>{tr(action.badge)}</StatusPill>
               </div>
+
+              {/* Action authorization trigger */}
+              <div className="px-4 pb-3">
+                {isAuthorized ? (
+                  <div className="flex items-center justify-center gap-1.5 rounded-lg border border-status-ok/40 bg-status-ok/10 py-1.5 text-xs font-semibold text-status-ok">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>{localize({ en: "Directive Authorized", ar: "تم اعتماد التوجيه" }, language)}</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleAuthorize(action.title, action.outcome)}
+                    className="flex w-full min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary hover:text-primary-foreground active:scale-98 cursor-pointer"
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    <span>{localize({ en: "Authorize Directive", ar: "اعتماد التوجيه" }, language)}</span>
+                  </button>
+                )}
+              </div>
+
               {/* Control context section */}
               <div className="mt-auto border-t border-border/50 bg-secondary/20 p-3 flex flex-col gap-2">
                 <div className="flex items-start gap-2">

@@ -1,17 +1,37 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
+import { notifyManager } from '../../utils/toast';
 
 type Translatable = string | { en: string; ar: string };
 
-function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
+function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark"; selectedSceneId?: string }) {
   const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
+  const [dispatchedHotspots, setDispatchedHotspots] = useState<Record<string, 'idle' | 'dispatching' | 'dispatched'>>({});
+
+  useEffect(() => {
+    if (selectedSceneId) {
+      setActiveSceneId(selectedSceneId);
+    }
+  }, [selectedSceneId]);
+
+  const handleDispatch = (hotspotId: string, title: string, actionText: string) => {
+    setDispatchedHotspots((prev) => ({ ...prev, [hotspotId]: 'dispatching' }));
+    setTimeout(() => {
+      setDispatchedHotspots((prev) => ({ ...prev, [hotspotId]: 'dispatched' }));
+      notifyManager(
+        language === 'ar' ? 'تم إرسال فريق التدخل الميداني' : 'Ground Response Team Dispatched',
+        language === 'ar' ? `جاري تنفيذ: ${actionText} (${title}) • زمن الوصول: 4 د` : `Executing: ${actionText} (${title}) • ETA: 4m`,
+        'ok'
+      );
+    }, 750);
+  };
 
   useEffect(() => {
     if (theme) {
@@ -441,6 +461,21 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                   </button>
                 </div>
 
+                {/* Spatial Breadcrumb */}
+                <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-muted-foreground font-mono flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => selectHotspotAndScene(null)}
+                    className="hover:text-primary transition underline-offset-2 hover:underline cursor-pointer"
+                  >
+                    CAI
+                  </button>
+                  <ChevronRight className="h-3 w-3 rtl:rotate-180 text-muted-foreground/60 shrink-0" />
+                  <span className="truncate max-w-[120px] text-muted-foreground">{tr(activeScene.title)}</span>
+                  <ChevronRight className="h-3 w-3 rtl:rotate-180 text-muted-foreground/60 shrink-0" />
+                  <span className="text-foreground font-semibold truncate max-w-[150px]">{tr(selectedHotspot.title)}</span>
+                </nav>
+
                 {/* Hotspot Title & Status/Time */}
                 <div className="space-y-2">
                   <h3 className="text-[18px] lg:text-[20px] font-bold tracking-tight text-foreground leading-tight">
@@ -497,20 +532,53 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
 
                 {/* Action Recommendation Callout */}
                 {selectedHotspot.action && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
-                      <Zap className="h-4.5 w-4.5" />
+                  <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-start gap-2.5">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
+                        <Zap className="h-4.5 w-4.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className={language === "ar"
+                          ? "block text-xs sm:text-sm text-primary font-bold"
+                          : "block font-mono text-xs sm:text-sm uppercase tracking-widest text-primary font-bold"
+                        }>
+                          {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
+                        </span>
+                        <p className="mt-1 text-sm sm:text-base text-foreground font-semibold leading-relaxed">
+                          {tr(selectedHotspot.action)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <span className={language === "ar"
-                        ? "block text-xs sm:text-sm text-primary font-bold"
-                        : "block font-mono text-xs sm:text-sm uppercase tracking-widest text-primary font-bold"
-                      }>
-                        {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
+
+                    <div className="pt-2 border-t border-primary/20 flex items-center justify-between gap-2 flex-wrap">
+                      {dispatchedHotspots[selectedHotspot.id] === 'dispatched' ? (
+                        <div className="flex items-center gap-1.5 rounded-lg border border-status-ok/40 bg-status-ok/10 px-3 py-1.5 text-xs font-semibold text-status-ok">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>{language === 'ar' ? 'فريق الدعم في الميدان • زمن الوصول 4 د' : 'Team En Route • ETA 4m'}</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={dispatchedHotspots[selectedHotspot.id] === 'dispatching'}
+                          onClick={() => handleDispatch(selectedHotspot.id, tr(selectedHotspot.title), tr(selectedHotspot.action!))}
+                          className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground transition hover:opacity-90 active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
+                        >
+                          {dispatchedHotspots[selectedHotspot.id] === 'dispatching' ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <span>{language === 'ar' ? 'جاري الإرسال...' : 'Dispatching...'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Zap className="h-3.5 w-3.5" />
+                              <span>{language === 'ar' ? 'إرسال فريق التدخل الميداني' : 'Dispatch Ground Response'}</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                      <span className="text-[11px] font-mono text-muted-foreground">
+                        {language === 'ar' ? 'أولوية تشغيلية قصوى' : 'High Priority Directive'}
                       </span>
-                      <p className="mt-1 text-sm sm:text-base text-foreground font-semibold leading-relaxed">
-                        {tr(selectedHotspot.action)}
-                      </p>
                     </div>
                   </div>
                 )}
@@ -701,6 +769,39 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
   );
 }
 
+function CctvLiveTimecode() {
+  const [timecode, setTimecode] = useState(() => {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Cairo",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).format(new Date());
+  });
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setTimecode(
+        new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Africa/Cairo",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }).format(new Date())
+      );
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="absolute top-2 end-2 bg-black/75 text-white font-mono text-[9px] px-2 py-0.5 rounded backdrop-blur-sm tracking-wider">
+      CAI {timecode} | 25 FPS
+    </div>
+  );
+}
+
 function renderCctvEvidence(
   hotspotId: string,
   language: "en" | "ar",
@@ -721,6 +822,7 @@ function renderCctvEvidence(
           <span className="h-1 w-1 rounded-full bg-white"></span>
           {tr("LIVE")}
         </div>
+        <CctvLiveTimecode />
         <div className="absolute bottom-2 start-2 bg-black/70 text-white font-mono text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
           {feed.label}
         </div>

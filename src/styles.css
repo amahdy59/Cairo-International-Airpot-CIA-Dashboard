@@ -656,3 +656,60 @@ html.light body {
     box-shadow: none;
   }
 }
+
+/* Print-optimized shift handover report formatting */
+@media print {
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  header,
+  footer,
+  aside,
+  button,
+  [role="dialog"],
+  [role="region"][aria-label="Notifications"],
+  .fixed,
+  .backdrop-blur-3xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-xl {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .panel,
+  .panel-inner {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 6px 10px;
+    color: #000000 !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+  }
+}

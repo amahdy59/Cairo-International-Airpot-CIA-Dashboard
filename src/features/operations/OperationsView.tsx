@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen } from 'lucide-react';
+import { memo, useState, useMemo } from 'react';
+import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen, Search, X } from 'lucide-react';
 import { localize, toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { influxForecastRows, gateWaitRows, departures, arrivals, queueRows, FlightRow, Tone } from '../../data';
@@ -207,9 +207,86 @@ function OperationsView() {
 }
 
 function FlightBoard({ title, direction, rows }: { title: string; direction: "to" | "from"; rows: FlightRow[] }) {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "ok" | "warn">("all");
+
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      const matchesSearch =
+        !search.trim() ||
+        row.flight.toLowerCase().includes(search.toLowerCase().trim()) ||
+        tr(row.city).toLowerCase().includes(search.toLowerCase().trim());
+
+      if (!matchesSearch) return false;
+
+      if (filter === "all") return true;
+      if (filter === "ok") return row.tone === "ok";
+      if (filter === "warn") return row.tone === "warn" || row.tone === "crit";
+      return true;
+    });
+  }, [rows, search, filter, tr]);
+
   return (
-    <SectionPanel title={title} action={<div className="flex flex-wrap gap-2"><StatusPill tone="info">{tr("Next 60 min")}</StatusPill></div>}>
+    <SectionPanel
+      title={title}
+      action={
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-mono text-muted-foreground me-1">
+            {localize({ en: `${filteredRows.length} of ${rows.length}`, ar: `${filteredRows.length} من ${rows.length}` }, language)}
+          </span>
+          <StatusPill tone="info">{tr("Next 60 min")}</StatusPill>
+        </div>
+      }
+    >
+      {/* Search & Status Filters */}
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={localize({ en: "Filter flights or cities...", ar: "بحث عن رحلة أو وجهة..." }, language)}
+            className="w-full rounded-lg border border-border/80 bg-secondary/30 ps-8 pe-7 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute end-2 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+              aria-label={localize({ en: "Clear search", ar: "مسح البحث" }, language)}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label={localize({ en: "Status filter", ar: "تصفية حسب الحالة" }, language)}>
+          {[
+            { id: "all", label: { en: "All", ar: "الكل" } },
+            { id: "ok", label: { en: "On Time", ar: "في الموعد" } },
+            { id: "warn", label: { en: "Delayed", ar: "متأخرة" } },
+          ].map((chip) => {
+            const isActive = filter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                onClick={() => setFilter(chip.id as typeof filter)}
+                className={`rounded-md px-2.5 py-1 text-[11px] transition cursor-pointer ${
+                  isActive
+                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                    : "bg-secondary/40 text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+                }`}
+              >
+                {localize(chip.label, language)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="-mx-1 overflow-x-auto">
         <table className="w-full min-w-[580px] text-sm">
           <caption className="sr-only">{title}</caption>
@@ -223,15 +300,32 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.flight} className="border-t border-border/60">
-                <td className="px-1 py-3 font-mono font-semibold">{row.flight}</td>
-                <td className="px-1 py-3">{tr(row.city)}</td>
-                <td className="px-1 py-3 font-mono">{row.time}</td>
-                <td className="px-1 py-3 font-mono text-muted-foreground">{row.gate}</td>
-                <td className="px-1 py-3"><StatusPill tone={row.tone}>{tr(row.status)}</StatusPill></td>
+            {filteredRows.length > 0 ? (
+              filteredRows.map((row) => (
+                <tr key={row.flight} className="border-t border-border/60 hover:bg-secondary/20 transition-colors">
+                  <td className="px-1 py-3 font-mono font-semibold text-foreground">{row.flight}</td>
+                  <td className="px-1 py-3">{tr(row.city)}</td>
+                  <td className="px-1 py-3 font-mono">{row.time}</td>
+                  <td className="px-1 py-3 font-mono text-muted-foreground">{row.gate}</td>
+                  <td className="px-1 py-3"><StatusPill tone={row.tone}>{tr(row.status)}</StatusPill></td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-6 text-center text-xs text-muted-foreground">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span>{localize({ en: "No flights matching criteria.", ar: "لا توجد رحلات مطابقة." }, language)}</span>
+                    <button
+                      type="button"
+                      onClick={() => { setSearch(""); setFilter("all"); }}
+                      className="text-primary hover:underline font-medium cursor-pointer"
+                    >
+                      {localize({ en: "Reset filters", ar: "إعادة تعيين الفلاتر" }, language)}
+                    </button>
+                  </div>
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
