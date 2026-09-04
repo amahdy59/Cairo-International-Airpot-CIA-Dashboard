@@ -242,27 +242,32 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
       {/* Search & Status Filters */}
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <label htmlFor={`flight-search-${direction}`} className="sr-only">
+            {localize({ en: "Filter flights or cities", ar: "تصفية الرحلات أو المدن" }, language)}
+          </label>
+          <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" aria-hidden="true" />
           <input
+            id={`flight-search-${direction}`}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={localize({ en: "Filter flights or cities...", ar: "بحث عن رحلة أو وجهة..." }, language)}
-            className="w-full rounded-lg border border-border/80 bg-secondary/30 ps-8 pe-7 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+            aria-label={localize({ en: "Filter flights or cities", ar: "تصفية الرحلات أو المدن" }, language)}
+            className="w-full rounded-lg border border-border/80 bg-secondary/30 ps-8 pe-8 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/40 transition"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute end-2 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="absolute end-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer rounded-md"
               aria-label={localize({ en: "Clear search", ar: "مسح البحث" }, language)}
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1" role="group" aria-label={localize({ en: "Status filter", ar: "تصفية حسب الحالة" }, language)}>
+        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={localize({ en: "Status filter", ar: "تصفية حسب الحالة" }, language)}>
           {[
             { id: "all", label: { en: "All", ar: "الكل" } },
             { id: "ok", label: { en: "On Time", ar: "في الموعد" } },
@@ -273,8 +278,9 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
               <button
                 key={chip.id}
                 type="button"
+                aria-pressed={isActive}
                 onClick={() => setFilter(chip.id as typeof filter)}
-                className={`rounded-md px-2.5 py-1 text-[11px] transition cursor-pointer ${
+                className={`min-h-[44px] inline-flex items-center rounded-lg px-3 py-1.5 text-xs transition-all duration-200 active:scale-95 cursor-pointer ${
                   isActive
                     ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                     : "bg-secondary/40 text-muted-foreground hover:bg-secondary/70 hover:text-foreground"

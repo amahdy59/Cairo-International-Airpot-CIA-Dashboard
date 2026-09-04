@@ -393,7 +393,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                   <button
                     type="button"
                     onClick={() => scrollMap("up")}
-                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-all duration-200 active:scale-95 cursor-pointer"
                     aria-label={localize({ en: "Scroll up", ar: "التمرير لأعلى" }, language)}
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -404,18 +404,18 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                   <button
                     type="button"
                     onClick={() => scrollMap("left")}
-                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-all duration-200 active:scale-95 cursor-pointer"
                     aria-label={localize({ en: "Scroll left", ar: "التمرير لليسار" }, language)}
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                   <div className="flex items-center justify-center text-muted-foreground/35">
-                    <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                    <div className="h-2 w-2 rounded-full bg-current" />
                   </div>
                   <button
                     type="button"
                     onClick={() => scrollMap("right")}
-                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-all duration-200 active:scale-95 cursor-pointer"
                     aria-label={localize({ en: "Scroll right", ar: "التمرير لليمين" }, language)}
                   >
                     <ArrowRight className="h-4 w-4" />
@@ -426,7 +426,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                   <button
                     type="button"
                     onClick={() => scrollMap("down")}
-                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-all duration-200 active:scale-95 cursor-pointer"
                     aria-label={localize({ en: "Scroll down", ar: "التمرير لأسفل" }, language)}
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -476,7 +476,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                   <button
                     type="button"
                     onClick={() => selectHotspotAndScene(null)}
-                    className="hover:text-primary transition underline-offset-2 hover:underline cursor-pointer"
+                    className="hover:text-primary transition underline-offset-2 hover:underline cursor-pointer min-h-[44px] inline-flex items-center px-1"
                   >
                     CAI
                   </button>
@@ -828,7 +828,7 @@ function renderCctvEvidence(
           alt={localize({ en: `CCTV feed: ${feed.label}`, ar: `تغذية كاميرا: ${feed.label}` }, language)} 
           className="w-full h-full object-cover" 
         />
-        <div className="absolute top-2 start-2 bg-status-crit text-white font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider animate-pulse flex items-center gap-1">
+        <div className="absolute top-2 start-2 bg-status-crit text-white font-mono rtl:font-sans text-[9px] px-1.5 py-0.5 rounded uppercase rtl:normal-case font-bold tracking-wider rtl:tracking-normal animate-pulse flex items-center gap-1">
           <span className="h-1 w-1 rounded-full bg-white"></span>
           {tr("LIVE")}
         </div>
@@ -852,7 +852,7 @@ function renderCctvEvidence(
                 key={f.label}
                 type="button"
                 onClick={() => setActiveCctvFeed({ src: f.src, label: f.label })}
-                className={`text-[11px] px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                className={`min-h-[44px] inline-flex items-center text-xs px-3 py-2 rounded-lg border transition-all duration-200 active:scale-95 cursor-pointer ${
                   isActive 
                     ? "border-primary bg-primary/10 text-foreground font-bold shadow-sm" 
                     : "border-border/60 bg-secondary/20 text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground"
@@ -886,7 +886,7 @@ function renderEvidenceContent(
       return (
         <div className="rounded-xl border border-border bg-background/50 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider text-start">
+            <h4 className="text-xs font-bold text-foreground uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-start">
               {localize({ en: "Turnaround Milestones Chart", ar: "مخطط مراحل الخدمة الأرضية" }, language)}
             </h4>
             <span className="text-[10px] font-mono text-status-warn font-semibold animate-pulse">
@@ -924,7 +924,7 @@ function renderEvidenceContent(
       return (
         <div className="rounded-xl border border-border bg-background/50 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider text-start">
+            <h4 className="text-xs font-bold text-foreground uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-start">
               {localize({ en: "Average Wait Time Trend", ar: "مخطط متوسط أوقات الانتظار" }, language)}
             </h4>
             <span className="text-[10px] font-mono text-status-ok font-semibold">
@@ -959,7 +959,7 @@ function renderEvidenceContent(
       return (
         <div className="rounded-xl border border-border bg-background/50 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider text-start">
+            <h4 className="text-xs font-bold text-foreground uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-start">
               {localize({ en: "Inbound Aircraft Track Map", ar: "مسار الطائرة القادمة" }, language)}
             </h4>
             <span className="text-[10px] font-mono text-status-crit font-semibold animate-pulse">
@@ -998,7 +998,7 @@ function renderEvidenceContent(
       return (
         <div className="rounded-xl border border-border bg-background/50 p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider text-start">
+            <h4 className="text-xs font-bold text-foreground uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-start">
               {localize({ en: "Catering Dispatch Log Table", ar: "سجل تموين الرحلات" }, language)}
             </h4>
             <span className="text-[10px] font-mono text-status-ok font-semibold">

@@ -103,8 +103,8 @@ export function StatusPill({
   }[tone];
 
   return (
-    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono rtl:font-sans text-xs font-semibold uppercase rtl:normal-case tracking-wider rtl:tracking-normal ${toneClass}`}>
-      {icon}
+    <span className={`inline-flex min-w-max whitespace-nowrap items-center gap-1.5 rounded-md border px-2.5 py-0.5 font-mono rtl:font-sans text-xs font-semibold uppercase rtl:normal-case tracking-wider rtl:tracking-normal ${toneClass} ${className}`}>
+      {icon ?? <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0 opacity-80" aria-hidden="true" />}
       {children}
     </span>
   );

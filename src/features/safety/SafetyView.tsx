@@ -111,7 +111,7 @@ function PriorityActionsPanel() {
               {/* Action authorization trigger */}
               <div className="px-4 pb-3">
                 {isAuthorized ? (
-                  <div className="flex items-center justify-center gap-1.5 rounded-lg border border-status-ok/40 bg-status-ok/10 py-1.5 text-xs font-semibold text-status-ok">
+                  <div className="flex w-full min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-status-ok/40 bg-status-ok/10 px-3 py-2 text-xs font-semibold text-status-ok shadow-xs">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     <span>{localize({ en: "Directive Authorized", ar: "تم اعتماد التوجيه" }, language)}</span>
                   </div>

@@ -637,8 +637,9 @@ html.light body {
 
   .skeleton-line,
   .flow-line,
-  .cctv-scanline {
-    animation: none;
+  .cctv-scanline,
+  .radar-ring {
+    animation: none !important;
   }
 }
 

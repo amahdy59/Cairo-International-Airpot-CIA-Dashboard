@@ -88,7 +88,7 @@ export function Header({
   };
   return (
     <header className="fixed top-0 left-0 right-0 shrink-0 w-full z-50 border-b border-white/20 bg-background/40 backdrop-blur-3xl backdrop-saturate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-background/20 dark:border-white/10 dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] supports-[backdrop-filter]:bg-background/30">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-xl font-bold text-sm">
         {tr("Skip to content")}
       </a>
       <div className="relative mx-auto flex min-h-16 max-w-[1480px] items-center justify-between gap-2 sm:gap-4 px-3 py-2 sm:px-5 lg:px-6">

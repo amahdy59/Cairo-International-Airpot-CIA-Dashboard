@@ -282,6 +282,7 @@ export function CommandPalette({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={language === 'ar' ? 'ابحث عن قسم، رحلة، أو منطقة (مثال: MS777, Apron)...' : 'Type a command, flight, or scene (e.g. MS777, Apron)...'}
+            aria-label={language === 'ar' ? 'البحث في لوحة الأوامر' : 'Search commands, flights, or scenes'}
             className="flex-1 bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground outline-none font-medium"
             aria-autocomplete="list"
           />
@@ -289,7 +290,7 @@ export function CommandPalette({
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
               aria-label={language === 'ar' ? 'مسح البحث' : 'Clear search'}
             >
               <X className="h-4 w-4" />
@@ -321,7 +322,7 @@ export function CommandPalette({
                   aria-selected={isSelected}
                   onMouseEnter={() => setSelectedIndex(index)}
                   onClick={() => item.action()}
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 cursor-pointer transition-colors ${
+                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 min-h-[44px] cursor-pointer transition-colors ${
                     isSelected
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'hover:bg-secondary/40 text-foreground'

@@ -62,10 +62,10 @@ export function ToastContainer() {
             <button
               type="button"
               onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition cursor-pointer"
+              className="grid h-11 w-11 min-h-[44px] min-w-[44px] -my-2 -me-2 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition cursor-pointer"
               aria-label="Dismiss notification"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         );

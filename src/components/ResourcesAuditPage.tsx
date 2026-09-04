@@ -284,7 +284,7 @@ function ScrollableImageContainer({ src, alt, title, helperText }: ScrollableIma
         />
       </div>
       <span className="text-[10px] text-muted-foreground/60 px-1 text-center md:text-start flex items-center gap-1">
-        <span>🖱️</span>
+        <span aria-hidden="true">🖱️</span>
         <span>{helperText}</span>
       </span>
     </div>
