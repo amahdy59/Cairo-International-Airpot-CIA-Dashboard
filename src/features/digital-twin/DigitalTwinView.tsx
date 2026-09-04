@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, Video, BarChart3, FileText, Map as MapIcon } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
+
+type Translatable = string | { en: string; ar: string };
 
 function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
   const { language, tr } = useLocale();
@@ -263,7 +265,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                     selectHotspotAndScene(null);
                   }}
                   aria-current={active ? "page" : undefined}
-                  className={`inline-flex h-8 sm:h-9 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border px-2.5 sm:px-3.5 text-xs lg:text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  className={`inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl border px-3 sm:px-4 text-xs lg:text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                     active ? "border-primary/50 bg-primary/[0.16] text-foreground shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "border-transparent text-muted-foreground hover:border-border hover:bg-background/65 hover:text-foreground"
                   }`}
                 >
@@ -295,10 +297,11 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
+                style={{ touchAction: "pan-x pan-y", overscrollBehavior: "contain" }}
                 className="w-full h-full overflow-auto no-scrollbar cursor-grab active:cursor-grabbing select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
               >
                 <div className="min-h-[120%] sm:min-h-[115%] md:min-h-[110%] min-w-[145%] sm:min-w-[130%] md:min-w-[125%] relative">
-                  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="img" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
+                  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" role="group" aria-label={localize({ en: `${activeScene.title} operational image map`, ar: `خريطة الصورة التشغيلية لـ ${tr(activeScene.title)}` }, language)}>
                     {/* Light Scene Image */}
                     <image 
                       onLoad={() => setIsImageLoaded(true)} 
@@ -339,7 +342,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
               <button
                 type="button"
                 onClick={() => setImageMode(imageMode === "dark" ? "light" : "dark")}
-                className="absolute top-3 end-3 z-10 flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors"
+                className="absolute top-3 end-3 z-10 flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-border bg-background/80 hover:bg-background backdrop-blur-md shadow-md text-foreground transition-colors"
                 title={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
                 aria-label={localize({ en: imageMode === "dark" ? "Light image" : "Dark image", ar: imageMode === "dark" ? "صورة فاتحة" : "صورة داكنة" }, language)}
               >
@@ -360,7 +363,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                   <button
                     type="button"
                     onClick={() => scrollMap("up")}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
                     aria-label={localize({ en: "Scroll up", ar: "التمرير لأعلى" }, language)}
                   >
                     <ArrowUp className="h-4 w-4" />
@@ -371,7 +374,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                   <button
                     type="button"
                     onClick={() => scrollMap("left")}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
                     aria-label={localize({ en: "Scroll left", ar: "التمرير لليسار" }, language)}
                   >
                     <ArrowLeft className="h-4 w-4" />
@@ -382,7 +385,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                   <button
                     type="button"
                     onClick={() => scrollMap("right")}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
                     aria-label={localize({ en: "Scroll right", ar: "التمرير لليمين" }, language)}
                   >
                     <ArrowRight className="h-4 w-4" />
@@ -393,7 +396,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                   <button
                     type="button"
                     onClick={() => scrollMap("down")}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
+                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-lg border border-border/60 bg-background/50 hover:bg-background text-foreground transition-colors cursor-pointer"
                     aria-label={localize({ en: "Scroll down", ar: "التمرير لأسفل" }, language)}
                   >
                     <ArrowDown className="h-4 w-4" />
@@ -421,7 +424,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                     onClick={() => {
                       selectHotspotAndScene(null);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/50 px-3 py-1.5 text-sm font-semibold text-foreground transition hover:bg-background/80 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-border bg-background/50 px-3.5 py-2 text-sm font-semibold text-foreground transition hover:bg-background/80 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer"
                   >
                     <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
                     {tr("Back to overview")}
@@ -431,7 +434,7 @@ function DigitalTwinView({ theme }: { theme?: "light" | "dark" }) {
                     onClick={() => {
                       selectHotspotAndScene(null);
                     }}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
+                    className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl p-1.5 text-muted-foreground hover:bg-background/80 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors"
                     aria-label={tr("Close")}
                   >
                     <X className="h-4.5 w-4.5" />
@@ -701,7 +704,7 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
 function renderCctvEvidence(
   hotspotId: string,
   language: "en" | "ar",
-  tr: (val: any) => string,
+  tr: (val: Translatable) => string,
   activeCctvFeed: { src: string; label: string } | null,
   setActiveCctvFeed: (feed: { src: string; label: string } | null) => void
 ) {
@@ -756,7 +759,7 @@ function renderCctvEvidence(
 function renderEvidenceContent(
   hotspotId: string, 
   language: "en" | "ar", 
-  tr: (val: any) => string,
+  tr: (val: Translatable) => string,
   activeCctvFeed: { src: string; label: string } | null,
   setActiveCctvFeed: (feed: { src: string; label: string } | null) => void
 ) {

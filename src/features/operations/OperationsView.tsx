@@ -5,10 +5,18 @@ import { useLocale } from '../../context/locale';
 import { influxForecastRows, gateWaitRows, departures, arrivals, queueRows, FlightRow, Tone } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
 
-function Legend({ color, label }: { color: string; label: string }) {
+function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2">
-      <span className={`h-2 w-2 rounded-full ${color}`} />
+    <span className="inline-flex items-center gap-2 font-medium">
+      {dashed ? (
+        <span className="flex items-center gap-0.5" aria-hidden="true">
+          <span className={`h-0.5 w-1.5 rounded-full ${color}`} />
+          <span className={`h-0.5 w-1.5 rounded-full ${color}`} />
+          <span className={`h-0.5 w-1.5 rounded-full ${color}`} />
+        </span>
+      ) : (
+        <span className={`h-1 w-4 rounded-full ${color}`} aria-hidden="true" />
+      )}
       {label}
     </span>
   );
@@ -41,7 +49,7 @@ function PassengerInfluxForecast() {
       <ForecastLineChart />
       <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
         <Legend color="bg-cyan" label={localize({ en: "Current trajectory", ar: "المسار الحالي" }, language)} />
-        <Legend color="bg-status-warn" label={localize({ en: "Forecast", ar: "التوقع" }, language)} />
+        <Legend color="bg-status-warn" dashed label={localize({ en: "Forecast", ar: "التوقع" }, language)} />
       </div>
     </SectionPanel>
   );

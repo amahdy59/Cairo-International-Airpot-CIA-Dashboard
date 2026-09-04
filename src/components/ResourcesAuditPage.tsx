@@ -572,7 +572,10 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
                 {/* Left phase icon with outer border (smaller on mobile) */}
                 <div className="flex flex-col items-center shrink-0">
                   <button 
+                    type="button"
                     onClick={() => togglePhase(phase.id)}
+                    aria-label={localize({ en: `Toggle ${localize(phase.title, "en")}`, ar: `تبديل ${localize(phase.title, "ar")}` }, language)}
+                    aria-expanded={isExpanded}
                     className={`relative z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border flex items-center justify-center transition cursor-pointer ${
                       isExpanded ? "border-primary bg-primary/10 text-primary" : "border-border/80 bg-card text-muted-foreground"
                     }`}

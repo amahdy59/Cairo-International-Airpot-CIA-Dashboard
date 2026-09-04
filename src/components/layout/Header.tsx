@@ -4,6 +4,7 @@ import {
   ArrowUp,
   Clock3,
   Contrast,
+  FileText,
   Languages,
   Moon,
   Plane,
@@ -13,7 +14,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { ManagerTab, Language, ThemeMode, copy } from "../../data";
+import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
 import { localize } from "../../utils/helpers";
 
@@ -50,8 +51,10 @@ export function Header({
   setHighContrast,
   times,
   activeTab,
+  activePage,
   setActiveTab,
   onShowDashboard,
+  onShowResources,
 }: {
   language: Language;
   setLanguage: (language: Language) => void;
@@ -61,13 +64,17 @@ export function Header({
   setHighContrast: (value: boolean) => void;
   times: { cairo: string; utc: string };
   activeTab: ManagerTab;
+  activePage: PageView;
   setActiveTab: (tab: ManagerTab) => void;
   onShowDashboard: () => void;
+  onShowResources: () => void;
 }) {
   const c = copy[language];
   const { tr } = useLocale();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ThemeIcon = theme === "dark" ? Sun : Moon;
+  const isResourcesPage = activePage === "resources";
+  const resourcesLabel = language === "ar" ? "توثيق المشروع" : "Documentation";
 
   const handleMenuSelect = (action: () => void) => {
     setIsMenuOpen(false);
@@ -94,10 +101,10 @@ export function Header({
 
         {/* Navigation Tabs - Visible on all screens, centered absolutely on medium-and-above screens */}
         <nav className="order-2 flex flex-1 justify-center md:order-none md:absolute md:left-1/2 md:-translate-x-1/2 md:top-1/2 md:-translate-y-1/2 md:z-10 md:w-auto" aria-label={tr("Manager dashboard sections")}>
-          <div role="tablist" aria-orientation="horizontal" className="flex h-10 items-center justify-center gap-1 rounded-lg border border-white/10 bg-background/30 p-0.5 backdrop-blur-md dark:bg-secondary/30"
+          <div role="tablist" aria-orientation="horizontal" className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-background/30 p-1 backdrop-blur-md dark:bg-secondary/30"
             onKeyDown={(e) => {
-              const tabs = ["digital", "operations", "safety"] as const;
-              const currentIndex = tabs.indexOf(activeTab as any);
+              const tabs: ManagerTab[] = ["digital", "operations", "safety"];
+              const currentIndex = tabs.indexOf(activeTab);
               let nextIndex = currentIndex;
               
               if (e.key === "ArrowRight") {
@@ -116,7 +123,7 @@ export function Header({
               
               if (nextIndex !== currentIndex && nextIndex !== -1) {
                 const nextTab = tabs[nextIndex];
-                setActiveTab(nextTab as any);
+                setActiveTab(nextTab);
                 onShowDashboard();
                 setIsMenuOpen(false);
                 setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
@@ -129,15 +136,16 @@ export function Header({
               { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck }
             ].map((tab) => {
               const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
+              const isCurrentDashboardTab = activeTab === tab.id;
+              const isActive = !isResourcesPage && isCurrentDashboardTab;
               return (
                 <button
                   key={tab.id}
                   id={`tab-${tab.id}`}
                   role="tab"
-                  tabIndex={isActive ? 0 : -1}
+                  tabIndex={isCurrentDashboardTab ? 0 : -1}
                   aria-selected={isActive}
-                  aria-controls="main-content"
+                  aria-controls={isResourcesPage ? undefined : "main-content"}
                   onClick={() => {
                     setActiveTab(tab.id);
                     onShowDashboard();
@@ -145,7 +153,7 @@ export function Header({
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   title={tab.label}
-                  className={`group relative flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-32 lg:min-w-36 nav-tab-btn ${
+                  className={`group relative flex h-9 sm:h-9 min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-300 ease-out focus-visible:z-10 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-32 lg:min-w-36 nav-tab-btn ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-[0_8px_22px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
                       : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
@@ -160,25 +168,42 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2 order-3 sm:order-none">
-          <div className="hidden h-10 items-center gap-2 rounded-lg border border-border bg-secondary/50 px-3 lg:flex" title={tr("Current Cairo and UTC Time")}>
+          <button
+            type="button"
+            onClick={() => {
+              onShowResources();
+              setIsMenuOpen(false);
+            }}
+            className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors ${
+              isResourcesPage
+                ? "border-primary/45 bg-primary/10 text-primary"
+                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+            }`}
+            aria-label={resourcesLabel}
+            aria-current={isResourcesPage ? "page" : undefined}
+            title={resourcesLabel}
+          >
+            <FileText aria-hidden="true" className="h-4 w-4" />
+          </button>
+          <div className="hidden h-11 items-center gap-2 rounded-xl border border-border bg-secondary/50 px-3.5 lg:flex" title={tr("Current Cairo and UTC Time")}>
             <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
             <TimeChip label={tr("Cairo")} value={times.cairo} />
             <span className="h-5 w-px bg-border" />
             <TimeChip label={tr("UTC")} value={times.utc} />
           </div>
-          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
+          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden lg:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
             <Contrast aria-hidden="true" className="h-4 w-4" />
           </button>
-          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
+          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden lg:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
             <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden lg:grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden lg:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
             <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
           </button>
           <button
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="relative grid h-10 w-10 place-items-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary lg:hidden transition-colors overflow-hidden"
+            className="relative grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary lg:hidden transition-colors overflow-hidden"
             aria-expanded={isMenuOpen}
             aria-label={tr("Toggle navigation menu")}
             title={tr("Toggle navigation menu")}

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import ResourcesAuditPage from "./components/ResourcesAuditPage";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
+const ResourcesAuditPage = lazy(() => import("./components/ResourcesAuditPage"));
 import { LocaleContext } from "./context/locale";
 
 import { ManagerTab, PageView, ThemeMode, Language, copy } from './data';
@@ -25,6 +25,7 @@ export function App() {
   const [highContrast, setHighContrast] = useState(false);
   const times = useHeaderClock();
   const c = copy[language];
+  const isDigitalDashboard = activeTab === "digital" && activePage !== "resources";
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -66,14 +67,16 @@ export function App() {
 
   return (
     <LocaleContext.Provider value={language}>
-    <div className={`flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""} ${activeTab === "digital" && activePage !== "resources" ? "h-screen overflow-hidden" : "min-h-screen overflow-x-hidden"}`} dir={language === "ar" ? "rtl" : "ltr"}>
-      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard} />
+    <div className={`flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""} ${isDigitalDashboard ? "lg:h-screen lg:overflow-hidden min-h-screen overflow-x-hidden" : "min-h-screen overflow-x-hidden"}`} dir={language === "ar" ? "rtl" : "ltr"}>
+      <Header language={language} setLanguage={setLanguage} theme={theme} setTheme={setTheme} highContrast={highContrast} setHighContrast={setHighContrast} times={times} activeTab={activeTab} activePage={activePage} setActiveTab={setActiveTab} onShowDashboard={showDashboard} onShowResources={showResources} />
       <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pt-16 pb-3 lg:pb-4">
-        <h1 className="sr-only">{c.brand} — {c.airport}</h1>
+        <h1 className="sr-only">{c.brand} - {c.airport}</h1>
         {activePage === "resources" ? (
           <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
             <ErrorBoundary>
-              <ResourcesAuditPage theme={theme} />
+              <Suspense fallback={<div className="panel p-8 text-center text-sm font-mono text-muted-foreground">{language === "ar" ? "جاري تحميل التوثيق..." : "Loading documentation..."}</div>}>
+                <ResourcesAuditPage theme={theme} />
+              </Suspense>
             </ErrorBoundary>
           </div>
         ) : (
@@ -86,7 +89,7 @@ export function App() {
         </div>
         )}
       </main>
-      {activeTab !== "digital" && (
+      {!isDigitalDashboard && (
         <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
           {c.footer}
           <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
@@ -101,7 +104,7 @@ export function App() {
           )}
         </footer>
       )}
-      <BackToTopButton />
+      {!isDigitalDashboard && <BackToTopButton />}
     </div>
     </LocaleContext.Provider>
   );
