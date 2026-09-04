@@ -794,7 +794,7 @@ export default function ResourcesAuditPage({ theme = "dark" }: { theme?: "dark" 
             </div>
             
             {/* Contrast swatches */}
-            <div className="grid grid-cols-4 gap-2.5 pt-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 pt-1.5">
               {[
                 { name: { en: "Cyan", ar: "سماوي" }, hex: "#00F0FF", ratio: "4.8:1", bg: "bg-cyan" },
                 { name: { en: "Green", ar: "أخضر" }, hex: "#10B981", ratio: "5.2:1", bg: "bg-status-ok" },

@@ -282,7 +282,7 @@ export function Header({
       <div
         className={`lg:hidden overflow-hidden transition-all pointer-events-auto ${
           isMenuOpen
-            ? "max-h-[350px] opacity-100 border-t border-white/20 visible duration-300 ease-out"
+            ? "max-h-[500px] opacity-100 border-t border-white/20 visible duration-300 ease-out"
             : "max-h-0 opacity-0 border-t-0 invisible pointer-events-none duration-300 ease-in"
         }`}
       >
@@ -300,6 +300,20 @@ export function Header({
 
             {/* Menu options with full text */}
             <div className="grid gap-2">
+              {/* Resources & Case Study Link */}
+              <button
+                type="button"
+                onClick={() => handleMenuSelect(onShowResources)}
+                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
+                  isResourcesPage
+                    ? "border-primary/50 bg-primary/15 text-primary"
+                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
+                }`}
+              >
+                <FileText className="h-4 w-4 text-primary" />
+                <span>{resourcesLabel}</span>
+              </button>
+
               {onOpenCommandPalette && (
                 <button
                   type="button"
