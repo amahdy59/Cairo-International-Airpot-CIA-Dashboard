@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { CheckCircle2, Zap, Download, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Zap, Download, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toneCssVar, localize } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
+import { useSimulation } from '../../context/simulation';
 import { useSafetyCompliance } from '../../hooks/useSafetyCompliance';
 import { exportToCsv } from '../../utils/exportCsv';
-import { safetyChecks, maintenanceRows, aircraftRiskRows, Tone } from '../../data';
+import { maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
 import { IncidentPlaybookModal } from './IncidentPlaybookModal';
 
@@ -186,11 +187,13 @@ function SafetyAlertAge() {
 
 function SafetyChecks() {
   const { tr } = useLocale();
+  const { reactiveSafetyChecks } = useSimulation();
+
   return (
     <SectionPanel title={tr("Safety checks")} className="h-full flex flex-col overflow-hidden">
       <div className="grid gap-3 flex-1 content-start overflow-y-auto pe-1 pb-1">
-        {safetyChecks.map((item) => {
-          const Icon = item.icon;
+        {reactiveSafetyChecks.map((item) => {
+          const Icon = item.icon || ShieldCheck;
           return (
             <article key={item.title} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="flex min-w-0 items-center gap-4">

@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { soundEffects } from "../services/soundEffects";
 import { notifyManager } from "../utils/toast";
+import { useSimulation } from "../context/simulation";
 
 export interface AcdmTurnaround {
   id: string;
@@ -106,9 +107,97 @@ export const INITIAL_ACDM_TURNAROUNDS: AcdmTurnaround[] = [
   },
 ];
 
+export function getScenarioTurnarounds(scenarioId: string): AcdmTurnaround[] {
+  if (scenarioId === "sandstorm") {
+    return [
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[0],
+        delayMinutes: 35,
+        tobt: "16:25",
+        tsat: "16:35",
+        ttot: "16:48",
+        status: "delayed",
+        criticalMilestone: "M05: TSAT deferred by ATC - Cat II separation hold (+35m)",
+      },
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[1],
+        delayMinutes: 48,
+        tobt: "16:48",
+        tsat: "16:58",
+        ttot: "17:15",
+        status: "delayed",
+        criticalMilestone: "M04: Fuelling paused due to high winds (38kt gust)",
+      },
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[2],
+        delayMinutes: 25,
+        tobt: "16:55",
+        tsat: "17:05",
+        ttot: "17:20",
+        status: "delayed",
+        criticalMilestone: "M05: Runway 05C sweeper sweep holding pushback",
+      },
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[3],
+        delayMinutes: 30,
+        tobt: "15:40",
+        tsat: "15:48",
+        ttot: "16:02",
+        status: "delayed",
+        criticalMilestone: "M05: Cat II stopbar holding queue",
+      },
+    ];
+  }
+
+  if (scenarioId === "baggage-failure") {
+    return [
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[0],
+        delayMinutes: 40,
+        tobt: "16:30",
+        tsat: "16:40",
+        ttot: "16:55",
+        status: "delayed",
+        criticalMilestone: "M03: T3 sorter failure. Manual container loading in progress (+40m)",
+      },
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[1],
+        delayMinutes: 50,
+        tobt: "16:50",
+        tsat: "17:00",
+        ttot: "17:18",
+        status: "delayed",
+        criticalMilestone: "M03: ULD transfer delayed by conveyor stoppage",
+      },
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[2],
+        delayMinutes: 0,
+        status: "handling",
+        criticalMilestone: "M02: Catering & Cabin servicing initiated.",
+      },
+      {
+        ...INITIAL_ACDM_TURNAROUNDS[3],
+        delayMinutes: 35,
+        tobt: "15:45",
+        tsat: "15:52",
+        ttot: "16:05",
+        status: "delayed",
+        criticalMilestone: "M03: Manual baggage tug transfer at T3",
+      },
+    ];
+  }
+
+  return INITIAL_ACDM_TURNAROUNDS;
+}
+
 export function useAcdmEngine() {
-  const [turnarounds, setTurnarounds] = useState<AcdmTurnaround[]>(INITIAL_ACDM_TURNAROUNDS);
+  const { scenarioId } = useSimulation();
+  const [turnarounds, setTurnarounds] = useState<AcdmTurnaround[]>(() => getScenarioTurnarounds(scenarioId));
   const [filter, setFilter] = useState<"all" | "delayed" | "handling" | "ready">("all");
+
+  useEffect(() => {
+    setTurnarounds(getScenarioTurnarounds(scenarioId));
+  }, [scenarioId]);
 
   const updateTobt = (id: string, newTobt: string, reason: string) => {
     soundEffects.playClick();

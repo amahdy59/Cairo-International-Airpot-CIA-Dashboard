@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
-import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, IncomingFlight, Tone } from '../../data';
+import { useSimulation } from '../../context/simulation';
+import { AirportScene, HotspotStatus, MapHotspot, scenes, IncomingFlight, Tone } from '../../data';
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 import { notifyManager } from '../../utils/toast';
@@ -749,6 +750,8 @@ function IncomingFlightsPanel({
 
 function ZoneStatusPanel() {
   const { language } = useLocale();
+  const { reactiveZoneStatuses } = useSimulation();
+
   return (
     <section className="panel-inner p-3 lg:p-3.5" aria-label={localize({ en: "Terminal zone status", ar: "حالة مناطق المباني" }, language)}>
       <p className={language === "ar"
@@ -756,14 +759,14 @@ function ZoneStatusPanel() {
         : "mb-2.5 font-mono text-sm sm:text-base uppercase tracking-[0.15em] text-primary font-bold"
       }>{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
       <div className="grid gap-1.5">
-        {zoneStatusRows.map((zone) => (
+        {reactiveZoneStatuses.map((zone) => (
           <div key={zone.zone} className="flex items-center justify-between gap-2.5 text-sm py-1.5 border-b border-border/20 last:border-b-0">
             <span className="font-bold text-foreground shrink-0">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}</span>
             <span className="text-muted-foreground text-xs truncate flex-1 min-w-0 text-start px-1.5">{localize(zone.detail, language)}</span>
             <span className={`text-xs sm:text-sm font-bold uppercase rtl:normal-case shrink-0 ${
               zone.tone === 'ok' ? 'text-status-ok' :
               zone.tone === 'warn' ? 'text-status-warn' :
-              zone.tone === 'crit' ? 'text-status-crit' : 'text-muted-foreground'
+              zone.tone === 'crit' || zone.tone === 'high' ? 'text-status-crit' : 'text-muted-foreground'
             }`}>
               {localize(zone.status, language)}
             </span>

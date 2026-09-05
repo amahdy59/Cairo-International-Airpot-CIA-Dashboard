@@ -4,7 +4,7 @@ import { localize, toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
 import { exportToCsv } from '../../utils/exportCsv';
-import { influxForecastRows, gateWaitRows, departures, arrivals, queueRows, FlightRow, Tone, shiftWaves } from '../../data';
+import { FlightRow, Tone, shiftWaves, InfluxForecastPoint, TerminalId } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
 import { AcdmMilestones } from './AcdmMilestones';
 
@@ -42,14 +42,21 @@ function DigitalOperationalGrid() {
 
 function PassengerInfluxForecast() {
   const { language } = useLocale();
+  const { reactiveInfluxForecast, activeTerminal } = useSimulation();
+
   return (
     <SectionPanel
       title={localize({ en: "Passenger influx forecast", ar: "توقع تدفق الركاب" }, language)}
+      action={
+        activeTerminal !== "ALL" ? (
+          <StatusPill tone="info">{activeTerminal}</StatusPill>
+        ) : undefined
+      }
     >
       <p className="mb-4 text-sm text-muted-foreground">
         {localize({ en: "Forecasted trend of passenger flow over the next 4 hours.", ar: "الاتجاه المتوقع لتدفق الركاب خلال الـ 4 ساعات القادمة." }, language)}
       </p>
-      <ForecastLineChart />
+      <ForecastLineChart data={reactiveInfluxForecast} />
       <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
         <Legend color="bg-cyan" label={localize({ en: "Current trajectory", ar: "المسار الحالي" }, language)} />
         <Legend color="bg-status-warn" dashed label={localize({ en: "Forecast", ar: "التوقع" }, language)} />
@@ -58,16 +65,16 @@ function PassengerInfluxForecast() {
   );
 }
 
-const ForecastLineChart = memo(function ForecastLineChart() {
-  const values = influxForecastRows.flatMap((row) => [row.current, row.forecast]);
-  const min = Math.min(...values) - 100;
+const ForecastLineChart = memo(function ForecastLineChart({ data }: { data: InfluxForecastPoint[] }) {
+  const values = data.flatMap((row) => [row.current, row.forecast]);
+  const min = Math.max(0, Math.min(...values) - 100);
   const max = Math.max(...values) + 100;
   const span = max - min || 1;
   const width = 420;
   const height = 150;
   
   const getPoint = (value: number, index: number): [number, number] => {
-    const x = 18 + (index / (influxForecastRows.length - 1)) * (width - 36);
+    const x = 18 + (index / (data.length - 1)) * (width - 36);
     const y = height - 18 - ((value - min) / span) * (height - 38);
     return [x, y];
   };
@@ -84,8 +91,8 @@ const ForecastLineChart = memo(function ForecastLineChart() {
     return d;
   };
 
-  const currentCoords = influxForecastRows.map((row, index) => getPoint(row.current, index));
-  const forecastCoords = influxForecastRows.map((row, index) => getPoint(row.forecast, index));
+  const currentCoords = data.map((row, index) => getPoint(row.current, index));
+  const forecastCoords = data.map((row, index) => getPoint(row.forecast, index));
   
   const currentPath = createSmoothPath(currentCoords);
   const forecastPath = createSmoothPath(forecastCoords);
@@ -95,7 +102,7 @@ const ForecastLineChart = memo(function ForecastLineChart() {
     : "";
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full overflow-visible" role="img" aria-label={`Passenger influx forecast: current trajectory peaks at ${Math.max(...influxForecastRows.map(r => r.current)).toLocaleString()} passengers at +2h, with forecasted peak of ${Math.max(...influxForecastRows.map(r => r.forecast)).toLocaleString()} passengers. Forecast shows an elevated demand window before tapering at +4h.`}>
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full overflow-visible" role="img" aria-label={`Passenger influx forecast: current trajectory peaks at ${Math.max(...data.map(r => r.current)).toLocaleString()} passengers, with forecasted peak of ${Math.max(...data.map(r => r.forecast)).toLocaleString()} passengers.`}>
       <defs>
         <linearGradient id="forecast-cyan-grad" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="var(--cyan)" stopOpacity="0.35" />
@@ -120,7 +127,7 @@ const ForecastLineChart = memo(function ForecastLineChart() {
       ))}
       
       {/* X Axis Labels */}
-      {influxForecastRows.map((row, index) => (
+      {data.map((row, index) => (
         <text key={row.time} x={currentCoords[index][0]} y={height - 2} textAnchor="middle" fill="var(--muted-foreground)" fontSize="12" className="font-mono">
           {row.time}
         </text>
@@ -131,19 +138,29 @@ const ForecastLineChart = memo(function ForecastLineChart() {
 
 function GateWaitChart() {
   const { language } = useLocale();
+  const { reactiveGateWaits, activeTerminal } = useSimulation();
+
+  const maxWait = Math.max(30, ...reactiveGateWaits.map((g) => g.wait));
+
   return (
     <SectionPanel
       title={localize({ en: "Average wait time per gate", ar: "متوسط الانتظار لكل بوابة" }, language)}
-      action={<StatusPill tone="warn">{localize({ en: "F11 needs action", ar: "F11 يحتاج إجراء" }, language)}</StatusPill>}
+      action={
+        <StatusPill tone={reactiveGateWaits.some((g) => g.tone === "crit" || g.tone === "high") ? "crit" : "warn"}>
+          {activeTerminal !== "ALL"
+            ? `${activeTerminal} (${reactiveGateWaits.length} ${localize({ en: "gates", ar: "بوابة" }, language)})`
+            : localize({ en: "Monitored gates", ar: "البوابات المراقبة" }, language)}
+        </StatusPill>
+      }
     >
       <p className="mb-4 text-sm text-muted-foreground">
         {localize({ en: "Current wait times across active gates.", ar: "أوقات الانتظار الحالية عبر البوابات النشطة." }, language)}
       </p>
       <div className="grid gap-3">
-        {gateWaitRows.map((row) => (
-          <div key={row.gate} className="grid grid-cols-[48px_minmax(0,1fr)_58px] items-center gap-3">
+        {reactiveGateWaits.map((row) => (
+          <div key={row.gate} className="grid grid-cols-[56px_minmax(0,1fr)_58px] items-center gap-3">
             <span className="font-mono text-sm font-semibold">{row.gate}</span>
-            <ProgressBar value={row.wait} max={30} color={toneCssVar(row.tone)} />
+            <ProgressBar value={row.wait} max={maxWait} color={toneCssVar(row.tone)} />
             <span className="justify-self-end font-mono text-sm text-muted-foreground">{row.wait}m</span>
           </div>
         ))}
@@ -222,52 +239,105 @@ function ShiftWaveSelector() {
   );
 }
 
+function TerminalFilterSelector() {
+  const { language } = useLocale();
+  const { activeTerminal, setActiveTerminal } = useSimulation();
+
+  const terminals: Array<{ id: "ALL" | TerminalId; label: { en: string; ar: string } }> = [
+    { id: "ALL", label: { en: "All Terminals", ar: "جميع المباني" } },
+    { id: "T1", label: { en: "Terminal 1", ar: "مبنى ١" } },
+    { id: "T2", label: { en: "Terminal 2", ar: "مبنى ٢" } },
+    { id: "T3", label: { en: "Terminal 3", ar: "مبنى ٣" } },
+  ];
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label={localize({ en: "Terminal Filter", ar: "تصفية مبنى الركاب" }, language)}
+      className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl border border-border/80 bg-secondary/20"
+    >
+      <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground me-1">
+        <DoorOpen className="h-3.5 w-3.5 text-primary" />
+        <span className="hidden sm:inline">{localize({ en: "Terminal:", ar: "المبنى:" }, language)}</span>
+      </div>
+      {terminals.map((t) => {
+        const isSelected = activeTerminal === t.id;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            onClick={() => setActiveTerminal(t.id)}
+            className={`min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 active:scale-95 cursor-pointer ${
+              isSelected
+                ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                : "bg-background/60 text-muted-foreground hover:bg-background hover:text-foreground"
+            }`}
+          >
+            <span>{localize(t.label, language)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function OperationsView() {
   const { tr, language } = useLocale();
-  const { activeShiftWave, activeScenario, isDrillActive } = useSimulation();
+  const {
+    activeShiftWave,
+    activeTerminal,
+    activeScenario,
+    isDrillActive,
+    reactiveDepartures,
+    reactiveArrivals,
+  } = useSimulation();
 
-  // Metrics dynamic to activeShiftWave
+  // Metrics dynamic to activeShiftWave & activeTerminal
   const shiftMetrics = useMemo(() => {
+    const scale = activeTerminal === "T3" ? 0.48 : activeTerminal === "T2" ? 0.34 : activeTerminal === "T1" ? 0.18 : 1.0;
+
     switch (activeShiftWave) {
       case "morning":
         return {
-          passengers: "28,640",
-          paxHint: localize({ en: "Wave benchmark 32k", ar: "مستهدف النوبة ٣٢ ألف" }, language),
+          passengers: Math.round(28640 * scale).toLocaleString(),
+          paxHint: localize({ en: `Wave benchmark ${Math.round(32 * scale)}k`, ar: `مستهدف النوبة ${Math.round(32 * scale)} ألف` }, language),
           paxDelta: localize({ en: "+2.4% vs plan", ar: "+٢.٤٪ عن الخطة" }, language),
-          movements: "148",
-          moveUnit: "/ 195",
-          moveHint: localize({ en: "140 average", ar: "المتوسط ١٤٠" }, language),
+          movements: Math.round(148 * scale).toString(),
+          moveUnit: `/ ${Math.round(195 * scale)}`,
+          moveHint: localize({ en: `${Math.round(140 * scale)} average`, ar: `المتوسط ${Math.round(140 * scale)}` }, language),
         };
       case "midday":
         return {
-          passengers: "37,120",
-          paxHint: localize({ en: "Wave benchmark 38k", ar: "مستهدف النوبة ٣٨ ألف" }, language),
+          passengers: Math.round(37120 * scale).toLocaleString(),
+          paxHint: localize({ en: `Wave benchmark ${Math.round(38 * scale)}k`, ar: `مستهدف النوبة ${Math.round(38 * scale)} ألف` }, language),
           paxDelta: localize({ en: "+5.1% vs plan", ar: "+٥.١٪ عن الخطة" }, language),
-          movements: "194",
-          moveUnit: "/ 240",
-          moveHint: localize({ en: "180 average", ar: "المتوسط ١٨٠" }, language),
+          movements: Math.round(194 * scale).toString(),
+          moveUnit: `/ ${Math.round(240 * scale)}`,
+          moveHint: localize({ en: `${Math.round(180 * scale)} average`, ar: `المتوسط ${Math.round(180 * scale)}` }, language),
         };
       case "night":
         return {
-          passengers: "13,950",
-          paxHint: localize({ en: "Wave benchmark 15k", ar: "مستهدف النوبة ١٥ ألف" }, language),
+          passengers: Math.round(13950 * scale).toLocaleString(),
+          paxHint: localize({ en: `Wave benchmark ${Math.round(15 * scale)}k`, ar: `مستهدف النوبة ${Math.round(15 * scale)} ألف` }, language),
           paxDelta: localize({ en: "-1.2% vs plan", ar: "-١.٢٪ عن الخطة" }, language),
-          movements: "78",
-          moveUnit: "/ 105",
-          moveHint: localize({ en: "75 average", ar: "المتوسط ٧٥" }, language),
+          movements: Math.round(78 * scale).toString(),
+          moveUnit: `/ ${Math.round(105 * scale)}`,
+          moveHint: localize({ en: `${Math.round(75 * scale)} average`, ar: `المتوسط ${Math.round(75 * scale)}` }, language),
         };
       case "all":
       default:
         return {
-          passengers: "58,420",
-          paxHint: tr("Daily benchmark 85k"),
+          passengers: Math.round(58420 * scale).toLocaleString(),
+          paxHint: localize({ en: `Daily benchmark ${Math.round(85 * scale)}k`, ar: `المستهدف اليومي ${Math.round(85 * scale)} ألف` }, language),
           paxDelta: tr("+4.1% vs yesterday"),
-          movements: "412",
-          moveUnit: "/ 540",
-          moveHint: tr("390 average"),
+          movements: Math.round(412 * scale).toString(),
+          moveUnit: `/ ${Math.round(540 * scale)}`,
+          moveHint: localize({ en: `${Math.round(390 * scale)} average`, ar: `المتوسط ${Math.round(390 * scale)}` }, language),
         };
     }
-  }, [activeShiftWave, language, tr]);
+  }, [activeShiftWave, activeTerminal, language, tr]);
 
   // Drill overrides for Taxi and Alerts
   const taxiOutValue = activeScenario.kpiOverrides?.avgTaxiOut?.replace(" min", "") || "14";
@@ -280,8 +350,11 @@ function OperationsView() {
 
   return (
     <div className="grid gap-3 lg:gap-4 mt-3 lg:mt-4">
-      {/* Shift Wave Time-Slice Selector */}
-      <ShiftWaveSelector />
+      {/* Shift Wave & Terminal Selectors */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+        <ShiftWaveSelector />
+        <TerminalFilterSelector />
+      </div>
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
         <MetricCard
@@ -297,7 +370,8 @@ function OperationsView() {
           value={shiftMetrics.movements}
           unit={shiftMetrics.moveUnit}
           hint={shiftMetrics.moveHint}
-          delta={tr("On schedule")}
+          delta={isDrillActive ? localize({ en: "LVO Hold", ar: "تعليق LVO" }, language) : tr("On schedule")}
+          deltaTone={isDrillActive ? "crit" : "ok"}
           icon={Activity}
           accent="cyan"
         />
@@ -333,8 +407,8 @@ function OperationsView() {
 
       {/* Tables: Detailed lists */}
       <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
-        <FlightBoard title={tr("Departures")} direction="to" rows={departures} />
-        <FlightBoard title={tr("Arrivals")} direction="from" rows={arrivals} />
+        <FlightBoard title={tr("Departures")} direction="to" rows={reactiveDepartures} />
+        <FlightBoard title={tr("Arrivals")} direction="from" rows={reactiveArrivals} />
       </div>
 
       <DigitalOperationalGrid />
@@ -508,12 +582,18 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
 
 function PassengerFlowChart() {
   const { tr, language } = useLocale();
+  const { reactiveFlowData } = useSimulation();
+
   return (
     <SectionPanel title={tr("Passenger flow")}>
-      <h3 className="text-base font-semibold">{tr("Passenger flow rises into the midday wave")}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{localize({ en: "Hourly progression of passenger throughput across all terminals.", ar: "التطور الساعي لتدفق الركاب عبر جميع المباني." }, language)}</p>
+      <h3 className="text-base font-semibold">{localize(reactiveFlowData.headline, language)}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{localize(reactiveFlowData.subtitle, language)}</p>
       <div className="mt-4">
-        <Sparkline data={[28, 34, 42, 48, 58, 51, 61, 70, 66, 72, 69, 76]} height={122} aria-label="Line chart showing passenger throughput rising from 06:00 to a midday peak, then tapering toward 17:00" />
+        <Sparkline
+          data={reactiveFlowData.sparkline}
+          height={122}
+          aria-label={localize(reactiveFlowData.headline, language)}
+        />
         <div className="mt-1 flex justify-between font-mono text-xs text-muted-foreground">
           <span>06:00</span>
           <span>{tr("Passenger throughput index")}</span>
@@ -521,28 +601,40 @@ function PassengerFlowChart() {
         </div>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <FlowZone label={tr("Check-in")} percent={62} tone="ok" />
-        <FlowZone label={tr("Security")} percent={84} tone="warn" />
-        <FlowZone label={tr("Passport")} percent={71} tone="ok" />
+        <FlowZone label={tr("Check-in")} percent={reactiveFlowData.checkIn.percent} tone={reactiveFlowData.checkIn.tone} />
+        <FlowZone label={tr("Security")} percent={reactiveFlowData.security.percent} tone={reactiveFlowData.security.tone} />
+        <FlowZone label={tr("Passport")} percent={reactiveFlowData.passport.percent} tone={reactiveFlowData.passport.tone} />
       </div>
     </SectionPanel>
   );
 }
 
-function FlowZone({ label, percent, tone }: { label: string; percent: number; tone: "ok" | "warn" }) {
+function FlowZone({ label, percent, tone }: { label: string; percent: number; tone: "ok" | "warn" | "crit" }) {
+  const color = tone === "crit" ? "var(--status-crit)" : tone === "warn" ? "var(--status-warn)" : "var(--status-ok)";
+
   return (
     <article className="panel-inner p-3 text-center">
       <p className="font-mono text-xs text-muted-foreground font-medium">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{percent}%</p>
-      <ProgressBar value={percent} color={tone === "warn" ? "var(--status-warn)" : "var(--status-ok)"} className="mt-3" />
+      <ProgressBar value={percent} color={color} className="mt-3" />
     </article>
   );
 }
 
 function QueuePressureChart() {
   const { tr, language } = useLocale();
+  const { reactiveQueueRows, activeTerminal } = useSimulation();
+
   return (
-    <SectionPanel title={tr("Queue pressure by terminal")} action={<StatusPill tone="info">{tr("Stacked bar")}</StatusPill>}>
+    <SectionPanel
+      title={tr("Queue pressure by terminal")}
+      action={
+        <div className="flex items-center gap-1.5">
+          {activeTerminal !== "ALL" && <StatusPill tone="info">{activeTerminal}</StatusPill>}
+          <StatusPill tone="info">{tr("Stacked bar")}</StatusPill>
+        </div>
+      }
+    >
       <p className="mb-4 text-sm text-muted-foreground">{localize({ en: "Breakdown of passenger congestion by processing stage.", ar: "تفصيل ازدحام الركاب حسب مرحلة المعالجة." }, language)}</p>
       
       {/* Screen reader accessible data table */}
@@ -552,7 +644,7 @@ function QueuePressureChart() {
           <tr><th>Terminal</th><th>Check-in</th><th>Passport</th><th>Security</th><th>Total</th></tr>
         </thead>
         <tbody>
-          {queueRows.map((row) => (
+          {reactiveQueueRows.map((row) => (
             <tr key={`sr-${row.terminal}`}>
               <td>{row.terminal}</td><td>{row.checkIn}%</td><td>{row.passport}%</td><td>{row.security}%</td><td>{row.total}%</td>
             </tr>
@@ -561,7 +653,7 @@ function QueuePressureChart() {
       </table>
 
       <div className="space-y-4" aria-hidden="true">
-        {queueRows.map((row) => (
+        {reactiveQueueRows.map((row) => (
           <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_42px] items-center gap-3">
             <span className="font-mono font-semibold">{row.terminal}</span>
             <div className="flex h-4 overflow-hidden rounded-full bg-secondary">

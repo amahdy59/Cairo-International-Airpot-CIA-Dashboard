@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   staffMembers,
   staffingShiftWaves,
@@ -14,6 +14,7 @@ import { soundEffects } from "../services/soundEffects";
 import { notifyManager } from "../utils/toast";
 import { exportToCsv } from "../utils/exportCsv";
 import { localize } from "../utils/helpers";
+import { useSimulation } from "../context/simulation";
 
 export interface StaffingFilterState {
   activeWaveId: StaffingShiftWaveId;
@@ -24,8 +25,16 @@ export interface StaffingFilterState {
 }
 
 export function useStaffingRoster(language: Language = "en") {
+  const {
+    activeShiftWave,
+    setActiveShiftWave,
+    isDrillActive,
+    activeScenario,
+    recommendedSurgeUnitIds,
+  } = useSimulation();
+
   const [filters, setFilters] = useState<StaffingFilterState>({
-    activeWaveId: "midday", // Default to Cairo midday peak turnaround
+    activeWaveId: (activeShiftWave !== "all" ? activeShiftWave : "midday") as StaffingShiftWaveId,
     searchQuery: "",
     selectedZone: "ALL",
     selectedRole: "ALL",
@@ -35,11 +44,22 @@ export function useStaffingRoster(language: Language = "en") {
   const [roster, setRoster] = useState<StaffMember[]>(staffMembers);
   const [dispatchedUnits, setDispatchedUnits] = useState<Set<string>>(new Set());
 
+  // Synchronize when activeShiftWave changes from elsewhere
+  useEffect(() => {
+    if (activeShiftWave !== "all") {
+      setFilters((prev) => (prev.activeWaveId === activeShiftWave ? prev : { ...prev, activeWaveId: activeShiftWave as StaffingShiftWaveId }));
+    }
+  }, [activeShiftWave]);
+
   // Setters for filters
-  const setActiveWave = useCallback((waveId: StaffingShiftWaveId) => {
-    soundEffects.playClick();
-    setFilters((prev) => ({ ...prev, activeWaveId: waveId }));
-  }, []);
+  const setActiveWave = useCallback(
+    (waveId: StaffingShiftWaveId) => {
+      soundEffects.playClick();
+      setFilters((prev) => ({ ...prev, activeWaveId: waveId }));
+      setActiveShiftWave(waveId);
+    },
+    [setActiveShiftWave]
+  );
 
   const setSearchQuery = useCallback((query: string) => {
     setFilters((prev) => ({ ...prev, searchQuery: query }));
@@ -143,13 +163,14 @@ export function useStaffingRoster(language: Language = "en") {
     });
   }, [roster, filters]);
 
-  // Surge Crew Units with live dispatched status
+  // Surge Crew Units with live dispatched status and scenario recommendations
   const surgeUnits = useMemo<SurgeCrewUnit[]>(() => {
     return surgeCrewUnits.map((u) => ({
       ...u,
       status: dispatchedUnits.has(u.id) ? "dispatched" : "ready",
+      isRecommended: recommendedSurgeUnitIds.includes(u.id),
     }));
-  }, [dispatchedUnits]);
+  }, [dispatchedUnits, recommendedSurgeUnitIds]);
 
   // Dispatch tactical surge unit
   const dispatchSurgeUnit = useCallback(
@@ -301,5 +322,8 @@ export function useStaffingRoster(language: Language = "en") {
     recallSurgeUnit,
     toggleStaffStatus,
     exportRoster,
+    isDrillActive,
+    activeScenario,
+    recommendedSurgeUnitIds,
   };
 }

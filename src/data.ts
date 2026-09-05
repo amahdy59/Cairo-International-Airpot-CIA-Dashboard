@@ -10,6 +10,8 @@ export type Language = "en" | "ar";
 export type ThemeMode = "dark" | "light";
 export type LocalizedText = { en: string; ar: string };
 
+export type TerminalId = "T1" | "T2" | "T3";
+
 export type FlightRow = {
   flight: string;
   city: string;
@@ -17,6 +19,7 @@ export type FlightRow = {
   gate: string;
   status: string;
   tone: Tone;
+  terminal?: TerminalId;
 };
 
 export type IncomingFlight = {
@@ -112,6 +115,7 @@ export type SurgeCrewUnit = {
   status: 'ready' | 'dispatched' | 'resting';
   leadCallsign: string;
   description: LocalizedText;
+  isRecommended?: boolean;
 };
 
 // ----------------------------------------------------
@@ -515,21 +519,71 @@ export const sampleIncomingFlights: IncomingFlight[] = [
   { airline: "Saudia", flight: "SV301", eta: "14:55", gate: "T1 / A04", status: "On time", tone: "ok", origin: "Jeddah (JED)" },
 ];
 
-export const zoneStatusRows = [
+export interface InfluxForecastPoint {
+  time: string;
+  current: number;
+  forecast: number;
+}
+
+export interface FlowZoneMetric {
+  percent: number;
+  tone: "ok" | "warn" | "crit";
+}
+
+export interface ScenarioFlowData {
+  sparkline: number[];
+  headline: LocalizedText;
+  subtitle: LocalizedText;
+  checkIn: FlowZoneMetric;
+  security: FlowZoneMetric;
+  passport: FlowZoneMetric;
+}
+
+export interface QueuePressureRow {
+  terminal: string;
+  checkIn: number;
+  passport: number;
+  security: number;
+  total: number;
+}
+
+export interface GateWaitRow {
+  gate: string;
+  wait: number;
+  tone: Tone;
+  terminal: TerminalId;
+}
+
+export interface SafetyCheckRow {
+  icon?: typeof Flame;
+  title: string;
+  detail: string;
+  badge: string;
+  tone: Tone;
+}
+
+export interface ZoneStatusItem {
+  zone: string;
+  status: LocalizedText;
+  detail: LocalizedText;
+  tone: Tone;
+}
+
+export const zoneStatusRows: ZoneStatusItem[] = [
   { zone: "Terminal 1", status: { en: "Smooth", ar: "سلس" }, detail: { en: "Maintain current baseline staffing.", ar: "حافظ على مستويات التوظيف الحالية." }, tone: "ok" as Tone },
   { zone: "Terminal 2", status: { en: "Moderate", ar: "متوسط" }, detail: { en: "Open 2 secondary lanes immediately.", ar: "افتح مسارين إضافيين فوراً." }, tone: "warn" as Tone },
   { zone: "Terminal 3", status: { en: "Busy", ar: "مزدحم" }, detail: { en: "Pre-stage floaters at passport control.", ar: "قم بتوجيه الدعم إلى مراقبة الجوازات." }, tone: "high" as Tone },
 ];
 
-export const gateWaitRows = [
-  { gate: "F06", wait: 12, tone: "ok" as Tone },
-  { gate: "B03", wait: 16, tone: "info" as Tone },
-  { gate: "B12", wait: 24, tone: "warn" as Tone },
-  { gate: "A04", wait: 9, tone: "ok" as Tone },
-  { gate: "F11", wait: 28, tone: "high" as Tone },
+export const gateWaitRows: GateWaitRow[] = [
+  { gate: "F06", wait: 12, tone: "ok", terminal: "T3" },
+  { gate: "B03", wait: 16, tone: "info", terminal: "T2" },
+  { gate: "B12", wait: 24, tone: "warn", terminal: "T2" },
+  { gate: "A04", wait: 9, tone: "ok", terminal: "T1" },
+  { gate: "F11", wait: 28, tone: "high", terminal: "T3" },
 ];
 
-export const influxForecastRows = [
+export const influxForecastRows: InfluxForecastPoint[] = [
   { time: "Now", current: 960, forecast: 980 },
   { time: "+1h", current: 1200, forecast: 1320 },
   { time: "+2h", current: 1380, forecast: 1540 },
@@ -538,20 +592,20 @@ export const influxForecastRows = [
 ];
 
 export const departures: FlightRow[] = [
-  { flight: "MS777", city: "London (LHR)", time: "14:45", gate: "D3", status: "Boarding", tone: "info" },
-  { flight: "SV302", city: "Riyadh (RUH)", time: "15:30", gate: "A15", status: "Scheduled", tone: "ok" },
-  { flight: "AF551", city: "Paris (CDG)", time: "15:55", gate: "S1", status: "Gate Open", tone: "ok" },
-  { flight: "MS717", city: "Luxor (LXR)", time: "16:20", gate: "F9", status: "Delayed +10m", tone: "warn" },
+  { flight: "MS777", city: "London (LHR)", time: "14:45", gate: "D3", status: "Boarding", tone: "info", terminal: "T3" },
+  { flight: "SV302", city: "Riyadh (RUH)", time: "15:30", gate: "A15", status: "Scheduled", tone: "ok", terminal: "T1" },
+  { flight: "AF551", city: "Paris (CDG)", time: "15:55", gate: "S1", status: "Gate Open", tone: "ok", terminal: "T2" },
+  { flight: "MS717", city: "Luxor (LXR)", time: "16:20", gate: "F9", status: "Delayed +10m", tone: "warn", terminal: "T3" },
 ];
 
 export const arrivals: FlightRow[] = [
-  { flight: "MS738", city: "Frankfurt (FRA)", time: "15:00", gate: "C3", status: "On Time", tone: "ok" },
-  { flight: "TK694", city: "Istanbul (IST)", time: "16:15", gate: "A2", status: "Estimated", tone: "ok" },
-  { flight: "EK927", city: "Dubai (DXB)", time: "13:45", gate: "B12", status: "Landed", tone: "ok" },
-  { flight: "MS841", city: "Jeddah (JED)", time: "12:30", gate: "D9", status: "Landed", tone: "ok" },
+  { flight: "MS738", city: "Frankfurt (FRA)", time: "15:00", gate: "C3", status: "On Time", tone: "ok", terminal: "T3" },
+  { flight: "TK694", city: "Istanbul (IST)", time: "16:15", gate: "A2", status: "Estimated", tone: "ok", terminal: "T1" },
+  { flight: "EK927", city: "Dubai (DXB)", time: "13:45", gate: "B12", status: "Landed", tone: "ok", terminal: "T2" },
+  { flight: "MS841", city: "Jeddah (JED)", time: "12:30", gate: "D9", status: "Landed", tone: "ok", terminal: "T3" },
 ];
 
-export const queueRows = [
+export const queueRows: QueuePressureRow[] = [
   { terminal: "T1", checkIn: 30, passport: 25, security: 25, total: 68 },
   { terminal: "T2", checkIn: 34, passport: 30, security: 31, total: 89 },
   { terminal: "T3", checkIn: 38, passport: 25, security: 27, total: 84 },
@@ -573,7 +627,16 @@ export const maintenanceRows = [
   { reg: "SU-GBP", type: "A320", task: "Cabin pressurisation test", date: "10 May 2026", duration: "6h", status: "Awaiting parts", tone: "warn" as Tone },
 ];
 
-export const aircraftRiskRows = [
+export interface AircraftRiskRow {
+  reg: string;
+  type: string;
+  events: number;
+  mtbf: string;
+  issue: string;
+  risk: number;
+}
+
+export const aircraftRiskRows: AircraftRiskRow[] = [
   { reg: "SU-GBP", type: "A320", events: 7, mtbf: "142h", issue: "Pressurisation, APU starts", risk: 78 },
   { reg: "SU-GDC", type: "B737-800", events: 6, mtbf: "168h", issue: "Brake wear, nose gear", risk: 65 },
   { reg: "SU-GCH", type: "A330-200", events: 5, mtbf: "210h", issue: "Galley power, IFE", risk: 54 },
@@ -699,6 +762,17 @@ export interface DrillScenario {
     deltaTone?: Tone;
   };
   injectedDirectives: InjectedDirective[];
+  influxForecast?: InfluxForecastPoint[];
+  flowData?: ScenarioFlowData;
+  queueRows?: QueuePressureRow[];
+  gateWaits?: GateWaitRow[];
+  departures?: FlightRow[];
+  arrivals?: FlightRow[];
+  zoneStatusRows?: ZoneStatusItem[];
+  safetyChecks?: SafetyCheckRow[];
+  aircraftRiskRows?: AircraftRiskRow[];
+  recommendedSurgeUnitIds?: string[];
+  acdmDelayOffsetMinutes?: number;
 }
 
 export const drillScenarios: DrillScenario[] = [
@@ -709,6 +783,59 @@ export const drillScenarios: DrillScenario[] = [
     tone: "ok",
     summary: { en: "Standard airfield and terminal flow under nominal weather conditions.", ar: "انسيابية حركة الساحات والمباني وفق المعدلات القياسية والطقس المستقر." },
     injectedDirectives: [],
+    influxForecast: [
+      { time: "Now", current: 960, forecast: 980 },
+      { time: "+1h", current: 1200, forecast: 1320 },
+      { time: "+2h", current: 1380, forecast: 1540 },
+      { time: "+3h", current: 1180, forecast: 1460 },
+      { time: "+4h", current: 980, forecast: 1120 },
+    ],
+    flowData: {
+      sparkline: [28, 34, 42, 48, 58, 51, 61, 70, 66, 72, 69, 76],
+      headline: { en: "Passenger flow rises into the midday wave", ar: "ارتفاع تدفق الركاب نحو ذروة الظهيرة" },
+      subtitle: { en: "Hourly progression of passenger throughput across all terminals.", ar: "التطور الساعي لتدفق الركاب عبر جميع المباني." },
+      checkIn: { percent: 62, tone: "ok" },
+      security: { percent: 84, tone: "warn" },
+      passport: { percent: 71, tone: "ok" },
+    },
+    queueRows: [
+      { terminal: "T1", checkIn: 30, passport: 25, security: 25, total: 68 },
+      { terminal: "T2", checkIn: 34, passport: 30, security: 31, total: 89 },
+      { terminal: "T3", checkIn: 38, passport: 25, security: 27, total: 84 },
+    ],
+    gateWaits: [
+      { gate: "F06", wait: 12, tone: "ok", terminal: "T3" },
+      { gate: "B03", wait: 16, tone: "info", terminal: "T2" },
+      { gate: "B12", wait: 24, tone: "warn", terminal: "T2" },
+      { gate: "A04", wait: 9, tone: "ok", terminal: "T1" },
+      { gate: "F11", wait: 28, tone: "high", terminal: "T3" },
+    ],
+    departures: [
+      { flight: "MS777", city: "London (LHR)", time: "14:45", gate: "D3", status: "Boarding", tone: "info", terminal: "T3" },
+      { flight: "SV302", city: "Riyadh (RUH)", time: "15:30", gate: "A15", status: "Scheduled", tone: "ok", terminal: "T1" },
+      { flight: "AF551", city: "Paris (CDG)", time: "15:55", gate: "S1", status: "Gate Open", tone: "ok", terminal: "T2" },
+      { flight: "MS717", city: "Luxor (LXR)", time: "16:20", gate: "F9", status: "Delayed +10m", tone: "warn", terminal: "T3" },
+    ],
+    arrivals: [
+      { flight: "MS738", city: "Frankfurt (FRA)", time: "15:00", gate: "C3", status: "On Time", tone: "ok", terminal: "T3" },
+      { flight: "TK694", city: "Istanbul (IST)", time: "16:15", gate: "A2", status: "Estimated", tone: "ok", terminal: "T1" },
+      { flight: "EK927", city: "Dubai (DXB)", time: "13:45", gate: "B12", status: "Landed", tone: "ok", terminal: "T2" },
+      { flight: "MS841", city: "Jeddah (JED)", time: "12:30", gate: "D9", status: "Landed", tone: "ok", terminal: "T3" },
+    ],
+    zoneStatusRows: [
+      { zone: "Terminal 1", status: { en: "Smooth", ar: "سلس" }, detail: { en: "Maintain current baseline staffing.", ar: "حافظ على مستويات التوظيف الحالية." }, tone: "ok" },
+      { zone: "Terminal 2", status: { en: "Moderate", ar: "متوسط" }, detail: { en: "Open 2 secondary lanes immediately.", ar: "افتح مسارين إضافيين فوراً." }, tone: "warn" },
+      { zone: "Terminal 3", status: { en: "Busy", ar: "مزدحم" }, detail: { en: "Pre-stage floaters at passport control.", ar: "قم بتوجيه الدعم إلى مراقبة الجوازات." }, tone: "high" },
+    ],
+    safetyChecks: [
+      { icon: Flame, title: "Fire suppression - T1/T2/T3", detail: "Maintain 4h inspection cycle", badge: "Operational", tone: "ok" },
+      { icon: Wrench, title: "Runway water response", detail: "Schedule drill within 24h", badge: "Standby", tone: "info" },
+      { icon: Activity, title: "ATC backup comms", detail: "Maintain 15m polling", badge: "Operational", tone: "ok" },
+      { icon: ShieldCheck, title: "Apron worker PPE compliance", detail: "Increase audits in sector B", badge: "98% compliant", tone: "ok" },
+      { icon: ShieldCheck, title: "Security checkpoint scanners", detail: "Expedite tech to T2-B", badge: "1 offline (T2-B)", tone: "warn" },
+    ],
+    recommendedSurgeUnitIds: [],
+    acdmDelayOffsetMinutes: 0,
   },
   {
     id: "sandstorm",
@@ -754,6 +881,59 @@ export const drillScenarios: DrillScenario[] = [
         controlTone: "info",
       },
     ],
+    influxForecast: [
+      { time: "Now", current: 520, forecast: 480 },
+      { time: "+1h", current: 440, forecast: 650 },
+      { time: "+2h", current: 590, forecast: 1680 },
+      { time: "+3h", current: 820, forecast: 1890 },
+      { time: "+4h", current: 1150, forecast: 1720 },
+    ],
+    flowData: {
+      sparkline: [30, 36, 42, 28, 22, 19, 24, 32, 45, 58, 68, 82],
+      headline: { en: "LVO Cat II ground holding: Terminal congestion shifted to airside gates", ar: "تطبيق إجراءات الرؤية المنخفضة: انتقال الازدحام لبوابات ساحة الطيران" },
+      subtitle: { en: "Inbound rate throttled to 8NM radar spacing; terminal boarding gates holding passengers.", ar: "خفض معدل الهبوط بفواصل ٨ ميل بحري؛ بوابات السفر تحتجز ركاب الرحلات المتأخرة." },
+      checkIn: { percent: 45, tone: "ok" },
+      security: { percent: 92, tone: "crit" },
+      passport: { percent: 88, tone: "crit" },
+    },
+    queueRows: [
+      { terminal: "T1", checkIn: 42, passport: 35, security: 48, total: 85 },
+      { terminal: "T2", checkIn: 55, passport: 48, security: 62, total: 94 },
+      { terminal: "T3", checkIn: 68, passport: 58, security: 74, total: 98 },
+    ],
+    gateWaits: [
+      { gate: "F06", wait: 28, tone: "warn", terminal: "T3" },
+      { gate: "B03", wait: 35, tone: "crit", terminal: "T2" },
+      { gate: "B12", wait: 42, tone: "crit", terminal: "T2" },
+      { gate: "A04", wait: 25, tone: "warn", terminal: "T1" },
+      { gate: "F11", wait: 45, tone: "crit", terminal: "T3" },
+    ],
+    departures: [
+      { flight: "MS777", city: "London (LHR)", time: "14:45", gate: "D3", status: "Weather Hold +45m", tone: "crit", terminal: "T3" },
+      { flight: "SV302", city: "Riyadh (RUH)", time: "15:30", gate: "A15", status: "LVO Hold +35m", tone: "crit", terminal: "T1" },
+      { flight: "AF551", city: "Paris (CDG)", time: "15:55", gate: "S1", status: "Delayed +25m", tone: "warn", terminal: "T2" },
+      { flight: "MS717", city: "Luxor (LXR)", time: "16:20", gate: "F9", status: "Holding on Taxiway L", tone: "crit", terminal: "T3" },
+    ],
+    arrivals: [
+      { flight: "MS738", city: "Frankfurt (FRA)", time: "15:00", gate: "C3", status: "Holding over CVO +30m", tone: "warn", terminal: "T3" },
+      { flight: "TK694", city: "Istanbul (IST)", time: "16:15", gate: "A2", status: "Diverted to HBE", tone: "crit", terminal: "T1" },
+      { flight: "EK927", city: "Dubai (DXB)", time: "13:45", gate: "B12", status: "Landed (Cat II)", tone: "ok", terminal: "T2" },
+      { flight: "MS841", city: "Jeddah (JED)", time: "12:30", gate: "D9", status: "Approach Del +20m", tone: "warn", terminal: "T3" },
+    ],
+    zoneStatusRows: [
+      { zone: "Terminal 1", status: { en: "LVO Protected", ar: "رؤية منخفضة نشطة" }, detail: { en: "Low visibility holding points active. Apron speed limited to 15km/h.", ar: "نقاط انتظار الرؤية المنخفضة مفعلة. سرعة الساحة محددة بـ ١٥ كم/س." }, tone: "crit" },
+      { zone: "Terminal 2", status: { en: "LVO Protected", ar: "رؤية منخفضة نشطة" }, detail: { en: "Cat II stopbars illuminated. Airfield sweeper crew operating.", ar: "أشرطة التوقف الفئة الثانية مضاءة. فرق كنس المدارج تعمل حالياً." }, tone: "crit" },
+      { zone: "Terminal 3", status: { en: "LVO Protected", ar: "رؤية منخفضة نشطة" }, detail: { en: "Follow-me escort mandatory for widebody stands 305-308.", ar: "سيارات الإرشاد (Follow-me) إلزامية للمواقف ٣٠٥-٣٠٨." }, tone: "crit" },
+    ],
+    safetyChecks: [
+      { icon: ShieldCheck, title: "Cat II Stopbars & Guard Lights Integrity", detail: "Continuous 15m airfield verification", badge: "Critical LVO", tone: "crit" },
+      { icon: Wrench, title: "Runway 05C Friction Coefficient (Mu-Meter)", detail: "Friction reading 0.52 (Acceptable)", badge: "Active Sweep", tone: "warn" },
+      { icon: Activity, title: "Airfield Wind Shear Advisory (LLWAS)", detail: "Gusting 38kt reported on 05L final", badge: "Advisory", tone: "warn" },
+      { icon: ShieldCheck, title: "Apron Worker Sandstorm PPE Compliance", detail: "High-vis goggles and dust protection verified", badge: "Audited", tone: "ok" },
+      { icon: Flame, title: "ARFF Crash Response Standby Status", detail: "3 vehicles positioned at Midfield Station 2", badge: "Cat 9 Ready", tone: "ok" },
+    ],
+    recommendedSurgeUnitIds: ["SURGE-BRAVO"],
+    acdmDelayOffsetMinutes: 35,
   },
   {
     id: "baggage-failure",
@@ -777,6 +957,59 @@ export const drillScenarios: DrillScenario[] = [
         controlTone: "info",
       },
     ],
+    influxForecast: [
+      { time: "Now", current: 1150, forecast: 1280 },
+      { time: "+1h", current: 1480, forecast: 1650 },
+      { time: "+2h", current: 1720, forecast: 1890 },
+      { time: "+3h", current: 1540, forecast: 1680 },
+      { time: "+4h", current: 1220, forecast: 1350 },
+    ],
+    flowData: {
+      sparkline: [32, 45, 58, 75, 88, 96, 99, 94, 86, 78, 70, 62],
+      headline: { en: "Terminal 3 check-in gridlock: Sorter loop B mechanical failure", ar: "اختناق صالات مبنى ٣: عطل ميكانيكي بحلقة فرز الحقائب ب" },
+      subtitle: { en: "Departing luggage holding at check-in conveyors; manual tug make-up activated.", ar: "تكدس حقائب المغادرة عند السيور؛ تفعيل النقل اليدوي لساحات الفرز." },
+      checkIn: { percent: 98, tone: "crit" },
+      security: { percent: 54, tone: "ok" },
+      passport: { percent: 62, tone: "ok" },
+    },
+    queueRows: [
+      { terminal: "T1", checkIn: 28, passport: 22, security: 24, total: 64 },
+      { terminal: "T2", checkIn: 32, passport: 28, security: 30, total: 82 },
+      { terminal: "T3", checkIn: 98, passport: 38, security: 45, total: 99 },
+    ],
+    gateWaits: [
+      { gate: "F06", wait: 38, tone: "crit", terminal: "T3" },
+      { gate: "B03", wait: 14, tone: "ok", terminal: "T2" },
+      { gate: "B12", wait: 20, tone: "warn", terminal: "T2" },
+      { gate: "A04", wait: 8, tone: "ok", terminal: "T1" },
+      { gate: "F11", wait: 48, tone: "crit", terminal: "T3" },
+    ],
+    departures: [
+      { flight: "MS777", city: "London (LHR)", time: "14:45", gate: "D3", status: "Baggage Hold +40m", tone: "crit", terminal: "T3" },
+      { flight: "SV302", city: "Riyadh (RUH)", time: "15:30", gate: "A15", status: "Scheduled", tone: "ok", terminal: "T1" },
+      { flight: "AF551", city: "Paris (CDG)", time: "15:55", gate: "S1", status: "Gate Open", tone: "ok", terminal: "T2" },
+      { flight: "MS717", city: "Luxor (LXR)", time: "16:20", gate: "F9", status: "Manual Sort +30m", tone: "crit", terminal: "T3" },
+    ],
+    arrivals: [
+      { flight: "MS738", city: "Frankfurt (FRA)", time: "15:00", gate: "C3", status: "Baggage Delay +25m", tone: "warn", terminal: "T3" },
+      { flight: "TK694", city: "Istanbul (IST)", time: "16:15", gate: "A2", status: "Estimated", tone: "ok", terminal: "T1" },
+      { flight: "EK927", city: "Dubai (DXB)", time: "13:45", gate: "B12", status: "Landed", tone: "ok", terminal: "T2" },
+      { flight: "MS841", city: "Jeddah (JED)", time: "12:30", gate: "D9", status: "Baggage Unload Hold", tone: "warn", terminal: "T3" },
+    ],
+    zoneStatusRows: [
+      { zone: "Terminal 1", status: { en: "Nominal", ar: "طبيعي" }, detail: { en: "Terminal 1 operations running smoothly.", ar: "عمليات مبنى ١ تسير بانتظام." }, tone: "ok" },
+      { zone: "Terminal 2", status: { en: "Normal", ar: "اعتيادي" }, detail: { en: "Ready to accept transfer baggage overflow if routed.", ar: "جاهزية لاستقبال حقائب الترانزيت المحولة عند الحاجة." }, tone: "info" },
+      { zone: "Terminal 3", status: { en: "Sorter Halt", ar: "توقف السيور" }, detail: { en: "Loop B sorter halted. Deploy manual baggage surge squad immediately.", ar: "توقف حلقة الفرز ب. نشر فريق التدخل اليدوي للحقائب فوراً." }, tone: "crit" },
+    ],
+    safetyChecks: [
+      { icon: Flame, title: "T3 Sorter Motor Thermal & Fire Detection", detail: "Motor 4B tripped on overload (74°C); deluge active", badge: "Hardware Alert", tone: "crit" },
+      { icon: Wrench, title: "Manual Baggage Make-up Ramp Safety", detail: "Guiding marshals posted along baggage tug corridor", badge: "Active SOP", tone: "warn" },
+      { icon: Activity, title: "BHS SCADA Telemetry Monitoring", detail: "Loop A & C running at 110% diversion load", badge: "Telemetry", tone: "warn" },
+      { icon: ShieldCheck, title: "Ramp Porter Lifting Safety Compliance", detail: "Safety coordinators assisting manual bag transfer", badge: "Supervised", tone: "ok" },
+      { icon: ShieldCheck, title: "Check-in Baggage Tag RFID Scanner Sync", detail: "Manual scanning active on lines 12-24", badge: "Backup Sync", tone: "info" },
+    ],
+    recommendedSurgeUnitIds: ["SURGE-DELTA"],
+    acdmDelayOffsetMinutes: 40,
   },
 ];
 

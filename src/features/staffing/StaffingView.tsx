@@ -42,6 +42,8 @@ export default function StaffingView() {
     recallSurgeUnit,
     toggleStaffStatus,
     exportRoster,
+    isDrillActive,
+    activeScenario,
   } = useStaffingRoster(language);
 
   const isAr = language === "ar";
@@ -185,6 +187,25 @@ export default function StaffingView() {
           </span>
         }
       >
+        {isDrillActive && (
+          <div
+            role="alert"
+            className="mb-3.5 flex items-start gap-3 rounded-xl border border-status-crit/40 bg-status-crit/10 p-3.5 text-status-crit"
+          >
+            <ShieldAlert className="h-5 w-5 shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="text-xs sm:text-sm">
+              <strong className="font-bold">
+                {isAr ? `تنبيه خطة الطوارئ للمحاكاة: ${localize(activeScenario.title, "ar")}` : `Drill Contingency Protocol: ${localize(activeScenario.title, "en")}`}
+              </strong>
+              <p className="mt-0.5 text-foreground/80">
+                {isAr
+                  ? `توصي بروتوكولات إدارة الأزمات بنشر السرايا التكتيكية الموصى بها لمواجهة تداعيات المحاكاة وتفادي تراكم التأخيرات.`
+                  : `AOCC contingency protocols advise priority dispatch of recommended tactical surge crews to mitigate incident delays.`}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {surgeUnits.map((unit) => {
             const isDispatched = unit.status === "dispatched";
@@ -193,16 +214,25 @@ export default function StaffingView() {
               <article
                 key={unit.id}
                 className={`panel p-4 flex flex-col justify-between rounded-xl border transition-all duration-300 ${
-                  isDispatched
-                    ? "border-primary/60 bg-primary/10 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
-                    : "border-border/60 bg-card hover:border-border"
+                  unit.isRecommended
+                    ? "ring-2 ring-status-crit/60 border-status-crit/40 bg-status-crit/5"
+                    : isDispatched
+                      ? "border-primary/60 bg-primary/10 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                      : "border-border/60 bg-card hover:border-border"
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <StatusPill tone={isDispatched ? "info" : "ok"}>
-                      {isDispatched ? tr("Dispatched") : isAr ? "جاهز للانتشار" : "Ready"}
-                    </StatusPill>
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <StatusPill tone={isDispatched ? "info" : "ok"}>
+                        {isDispatched ? tr("Dispatched") : isAr ? "جاهز للانتشار" : "Ready"}
+                      </StatusPill>
+                      {unit.isRecommended && (
+                        <StatusPill tone="crit">
+                          {isAr ? "أولوية المحاكاة" : "Drill Priority"}
+                        </StatusPill>
+                      )}
+                    </div>
                     <span className="text-xs font-mono text-muted-foreground">
                       ETA {unit.dispatchEtaMin}m
                     </span>
