@@ -132,7 +132,7 @@ export function App() {
             onShowResources={showResources}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           />
-          <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1480px] min-w-0 px-2 sm:px-4 lg:px-6 pt-28 sm:pt-32 xl:pt-20 pb-3 lg:pb-4">
+          <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1720px] min-w-0 px-2 sm:px-4 lg:px-8 pt-28 sm:pt-32 xl:pt-20 pb-3 lg:pb-4">
             {activePage !== "resources" && <h1 className="sr-only">{c.brand} - {c.airport}</h1>}
             {activePage !== "resources" && <SimulationBanner />}
             {activePage === "resources" ? (

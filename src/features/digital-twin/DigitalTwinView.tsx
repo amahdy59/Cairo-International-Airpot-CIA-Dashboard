@@ -12,6 +12,7 @@ type Translatable = string | { en: string; ar: string };
 function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark"; selectedSceneId?: string }) {
   const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
+  const activeScene = useMemo(() => scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0], [activeSceneId]);
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [dispatchedHotspots, setDispatchedHotspots] = useState<Record<string, 'idle' | 'dispatching' | 'dispatched'>>({});
 
@@ -182,7 +183,6 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
     }
   }, [activeSceneId, imageMode, activeScene.darkImage, activeScene.image]);
 
-  const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
   const jumpScenes = ["terminal-1", "terminal-2", "terminal-3", "services", "landside"]
     .map((id) => scenes.find((scene) => scene.id === id))
     .filter((scene): scene is AirportScene => Boolean(scene));

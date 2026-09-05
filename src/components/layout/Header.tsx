@@ -95,86 +95,90 @@ export function Header({
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-xl font-bold text-sm">
         {tr("Skip to content")}
       </a>
-      <div className="relative mx-auto flex min-h-16 max-w-[1480px] items-center justify-between gap-2 sm:gap-4 px-3 py-2 sm:px-5 lg:px-6">
-        <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); setIsMenuOpen(false); }} className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 rounded-md active:scale-98 transition-transform" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
-            <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
-          </span>
-          <span className="hidden min-w-0 sm:block sm:max-w-[180px] md:max-w-[220px] xl:max-w-none">
-            <span className="block truncate font-mono rtl:font-sans text-[10px] sm:text-xs uppercase rtl:normal-case tracking-[0.16em] rtl:tracking-normal text-primary">{c.airport}</span>
-            <span className="block truncate text-xs sm:text-sm font-bold">{c.brand}</span>
-          </span>
-        </a>
+      <div className="relative mx-auto flex min-h-16 max-w-[1720px] w-full items-center justify-between gap-3 sm:gap-4 px-3 py-2 sm:px-5 lg:px-8">
+        {/* Left Side: Brand Logo + Desktop Navigation Tabs */}
+        <div className="flex items-center gap-3 lg:gap-6 min-w-0 shrink-0">
+          <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); setIsMenuOpen(false); }} className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 rounded-md active:scale-98 transition-transform" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
+              <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
+            </span>
+            <span className="hidden min-w-0 sm:block sm:max-w-[180px] md:max-w-[220px]">
+              <span className="block truncate font-mono rtl:font-sans text-[10px] sm:text-xs uppercase rtl:normal-case tracking-[0.16em] rtl:tracking-normal text-primary">{c.airport}</span>
+              <span className="block truncate text-xs sm:text-sm font-bold">{c.brand}</span>
+            </span>
+          </a>
 
-        {/* Navigation Tabs - Desktop (flexed on xl+ for zero-collision layout) */}
-        <nav className="hidden xl:flex flex-1 justify-center min-w-0 px-2 lg:px-4" aria-label={tr("Manager dashboard sections")}>
-          <div role="tablist" aria-orientation="horizontal" className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-background/30 p-1 backdrop-blur-md dark:bg-secondary/30"
-            onKeyDown={(e) => {
-              const tabs: ManagerTab[] = ["digital", "operations", "safety"];
-              const currentIndex = tabs.indexOf(activeTab);
-              let nextIndex = currentIndex;
-              
-              if (e.key === "ArrowRight") {
-                nextIndex = (currentIndex + 1) % tabs.length;
-                e.preventDefault();
-              } else if (e.key === "ArrowLeft") {
-                nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-                e.preventDefault();
-              } else if (e.key === "Home") {
-                nextIndex = 0;
-                e.preventDefault();
-              } else if (e.key === "End") {
-                nextIndex = tabs.length - 1;
-                e.preventDefault();
-              }
-              
-              if (nextIndex !== currentIndex && nextIndex !== -1) {
-                const nextTab = tabs[nextIndex];
-                setActiveTab(nextTab);
-                onShowDashboard();
-                setIsMenuOpen(false);
-                setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
-              }
-            }}
-          >
-            {[
-              { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
-              { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
-              { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isCurrentDashboardTab = activeTab === tab.id;
-              const isActive = !isResourcesPage && isCurrentDashboardTab;
-              return (
-                <button
-                  key={tab.id}
-                  id={`tab-${tab.id}`}
-                  role="tab"
-                  tabIndex={isCurrentDashboardTab ? 0 : -1}
-                  aria-selected={isActive}
-                  aria-controls={isResourcesPage ? undefined : "main-content"}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    onShowDashboard();
-                    setIsMenuOpen(false);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  title={tab.label}
-                  className={`group relative flex h-9 sm:h-9 min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-200 ease-out focus-visible:z-10 active:scale-95 sm:gap-2 sm:px-3.5 sm:text-sm sm:min-w-28 md:min-w-30 lg:min-w-36 nav-tab-btn ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
-                      : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
-                  }`}
-                >
-                  <Icon aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 sm:h-4 sm:w-4 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
-                  <span className="truncate nav-tab-text">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+          {/* Navigation Tabs - Desktop (anchored next to brand with guaranteed spacing) */}
+          <nav className="hidden xl:flex items-center min-w-0" aria-label={tr("Manager dashboard sections")}>
+            <div role="tablist" aria-orientation="horizontal" className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-background/30 p-1 backdrop-blur-md dark:bg-secondary/30"
+              onKeyDown={(e) => {
+                const tabs: ManagerTab[] = ["digital", "operations", "safety"];
+                const currentIndex = tabs.indexOf(activeTab);
+                let nextIndex = currentIndex;
+                
+                if (e.key === "ArrowRight") {
+                  nextIndex = (currentIndex + 1) % tabs.length;
+                  e.preventDefault();
+                } else if (e.key === "ArrowLeft") {
+                  nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                  e.preventDefault();
+                } else if (e.key === "Home") {
+                  nextIndex = 0;
+                  e.preventDefault();
+                } else if (e.key === "End") {
+                  nextIndex = tabs.length - 1;
+                  e.preventDefault();
+                }
+                
+                if (nextIndex !== currentIndex && nextIndex !== -1) {
+                  const nextTab = tabs[nextIndex];
+                  setActiveTab(nextTab);
+                  onShowDashboard();
+                  setIsMenuOpen(false);
+                  setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
+                }
+              }}
+            >
+              {[
+                { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
+                { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
+                { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck }
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isCurrentDashboardTab = activeTab === tab.id;
+                const isActive = !isResourcesPage && isCurrentDashboardTab;
+                return (
+                  <button
+                    key={tab.id}
+                    id={`tab-${tab.id}`}
+                    role="tab"
+                    tabIndex={isCurrentDashboardTab ? 0 : -1}
+                    aria-selected={isActive}
+                    aria-controls={isResourcesPage ? undefined : "main-content"}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      onShowDashboard();
+                      setIsMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    title={tab.label}
+                    className={`group relative flex h-9 min-h-[36px] items-center justify-center gap-2 rounded-lg px-3 lg:px-4 text-xs lg:text-sm font-semibold whitespace-nowrap transition-all duration-200 ease-out focus-visible:z-10 active:scale-95 nav-tab-btn ${
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
+                        : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
+                    }`}
+                  >
+                    <Icon aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
+                    <span className="truncate nav-tab-text">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Right Side: Airfield METAR & Action Tools */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ms-auto">
           <div className="hidden sm:block">
             <MetarWidget />
           </div>
