@@ -21,7 +21,7 @@ export function MetricCard({
   deltaTone?: "ok" | "warn" | "crit" | "info";
   icon?: LucideIcon;
   hint?: string;
-  accent?: "cyan" | "magenta" | "warn" | "ok";
+  accent?: "cyan" | "magenta" | "warn" | "ok" | "crit";
 }) {
   const toneClass = {
     ok: "text-status-ok",
@@ -35,6 +35,7 @@ export function MetricCard({
     magenta: "from-magenta to-magenta/0",
     warn: "from-status-warn to-status-warn/0",
     ok: "from-status-ok to-status-ok/0",
+    crit: "from-status-crit to-status-crit/0",
   }[accent];
 
   const accentHex = {
@@ -42,6 +43,7 @@ export function MetricCard({
     magenta: "var(--magenta)",
     warn: "var(--status-warn)",
     ok: "var(--status-ok)",
+    crit: "var(--status-crit)",
   }[accent];
 
   const isPositive = deltaTone === "ok" && delta != null && !delta.trim().startsWith("-");

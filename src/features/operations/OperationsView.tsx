@@ -315,7 +315,7 @@ function OperationsView() {
           value={alertsValue}
           hint={alertsHint}
           delta={tr("Needs review")}
-          deltaTone={alertsTone}
+          deltaTone={alertsTone === "high" ? "warn" : alertsTone === "neutral" ? "info" : alertsTone}
           icon={AlertTriangle}
           accent={alertsTone === "crit" ? "crit" : "warn"}
         />

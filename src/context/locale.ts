@@ -6,7 +6,11 @@ export const LocaleContext = createContext<Language>("en");
 
 export function useLocale() {
   const language = useContext(LocaleContext);
-  const tr = (key: string): string =>
-    language === "ar" && arText[key] ? arText[key] : key;
+  const tr = (val: string | { en: string; ar: string }): string => {
+    if (typeof val === "object" && val !== null) {
+      return val[language] ?? val.en ?? "";
+    }
+    return language === "ar" && arText[val] ? arText[val] : val;
+  };
   return { language, tr };
 }

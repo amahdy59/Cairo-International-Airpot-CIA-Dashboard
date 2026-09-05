@@ -94,7 +94,7 @@ export function SimulationBanner() {
                     role="option"
                     aria-selected={sc.id === scenarioId}
                     onClick={() => {
-                      if (sc.id !== "nominal") {
+                      if (sc.id !== "baseline") {
                         soundEffects.playAlert();
                       } else {
                         soundEffects.playClick();

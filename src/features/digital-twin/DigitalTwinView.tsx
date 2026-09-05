@@ -18,8 +18,8 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
   const [dispatchedHotspots, setDispatchedHotspots] = useState<Record<string, 'idle' | 'dispatching' | 'dispatched'>>({});
 
   useEffect(() => {
-    if (selectedSceneId) {
-      setActiveSceneId(selectedSceneId);
+    if (selectedSceneId && scenes.some((s) => s.id === selectedSceneId)) {
+      setActiveSceneId(selectedSceneId as AirportScene["id"]);
     }
   }, [selectedSceneId]);
 
@@ -160,16 +160,20 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
     };
 
     if (typeof window !== "undefined") {
-      if ("requestIdleCallback" in window) {
-        const id = (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(preload, { timeout: 3000 });
+      const win = window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        cancelIdleCallback?: (id: number) => void;
+      };
+      if (typeof win.requestIdleCallback === "function") {
+        const id = win.requestIdleCallback(preload, { timeout: 3000 });
         return () => {
-          if ("cancelIdleCallback" in window) {
-            (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(id);
+          if (typeof win.cancelIdleCallback === "function") {
+            win.cancelIdleCallback(id);
           }
         };
       } else {
-        const id = window.setTimeout(preload, 1500);
-        return () => window.clearTimeout(id);
+        const id = setTimeout(preload, 1500);
+        return () => clearTimeout(id);
       }
     }
   }, [activeSceneId]);
@@ -807,7 +811,7 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
           </span>
         </div>
         <div className="flex flex-col p-3 pt-0 w-0 min-w-full whitespace-normal">
-          <p className="text-xs text-muted-foreground line-clamp-2">{tr(hotspot.impact)}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">{hotspot.impact ? tr(hotspot.impact) : ""}</p>
           <div className={`mt-2 ${
             language === "ar"
               ? "text-[12px] text-primary/80 font-sans"

@@ -6,6 +6,7 @@ export interface CsvExportOptions {
   rows: (string | number)[][];
   successMessage?: { en: string; ar: string };
   language?: "en" | "ar";
+  sheetTitle?: string;
 }
 
 /**

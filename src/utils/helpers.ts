@@ -14,8 +14,10 @@ export function formatCairoTime(value?: string) {
 }
 
 /** Return the localized string for a given language key. */
-export function localize(value: LocalizedText, language: Language) {
-  return value[language];
+export function localize(value: LocalizedText | string | undefined | null, language: Language): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value[language] ?? value.en ?? "";
 }
 
 /** Localize a flight_status string to a user-friendly label. */

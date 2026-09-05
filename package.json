@@ -7,7 +7,12 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "review": "node scripts/ci-review.mjs",
+    "audit:all": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
@@ -30,6 +35,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^5.0.0"
   }
 }
