@@ -1,5 +1,5 @@
-import { useEffect, useState, lazy } from "react";
-const ResourcesAuditPage = lazy(() => import("./components/ResourcesAuditPage"));
+import { useEffect, useState } from "react";
+import ResourcesAuditPage from "./components/ResourcesAuditPage";
 import { CommandPalette } from "./components/CommandPalette";
 import { LocaleContext } from "./context/locale";
 import { useHeaderClock } from "./hooks/useHeaderClock";
@@ -20,7 +20,10 @@ function getInitialPageView(): PageView {
   if (typeof window === "undefined") {
     return "dashboard";
   }
-  return window.location.hash === "#resources" ? "resources" : "dashboard";
+  const hash = window.location.hash.toLowerCase();
+  return hash === "#resources" || hash === "#docs" || hash === "#documentation" || hash === "#spec"
+    ? "resources"
+    : "dashboard";
 }
 
 export function App() {
@@ -50,7 +53,11 @@ export function App() {
   useEffect(() => {
     const onHashChange = () => setActivePage(getInitialPageView());
     window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    window.addEventListener("popstate", onHashChange);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener("popstate", onHashChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -109,7 +116,7 @@ export function App() {
 
   const showResources = () => {
     setActivePage("resources");
-    window.history.pushState(null, "", "#resources");
+    window.history.pushState(null, "", "#docs");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -138,9 +145,7 @@ export function App() {
             {activePage === "resources" ? (
               <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
                 <ErrorBoundary>
-                  <Suspense fallback={<div className="panel p-8 text-center text-sm font-mono text-muted-foreground">{language === "ar" ? "جاري تحميل التوثيق..." : "Loading documentation..."}</div>}>
-                    <ResourcesAuditPage theme={theme} />
-                  </Suspense>
+                  <ResourcesAuditPage theme={theme} onReturnToDashboard={showDashboard} />
                 </ErrorBoundary>
               </div>
             ) : (

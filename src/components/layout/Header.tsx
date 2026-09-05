@@ -15,10 +15,13 @@ import {
   X,
   Search,
   Tv,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
 import { useSimulation } from "../../context/simulation";
+import { useAirfieldRadio } from "../../hooks/useAirfieldRadio";
 import { localize } from "../../utils/helpers";
 import { MetarWidget } from "../common/MetarWidget";
 
@@ -78,10 +81,11 @@ export function Header({
   const c = copy[language];
   const { tr } = useLocale();
   const { toggleKiosk, isKioskActive } = useSimulation();
+  const { isMuted, toggleMute, isTransmitting } = useAirfieldRadio();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   const isResourcesPage = activePage === "resources";
-  const resourcesLabel = language === "ar" ? "توثيق المشروع" : "Documentation";
+  const resourcesLabel = language === "ar" ? "توثيق ومواصفات المشروع" : "Documentation & Specs";
 
   const handleMenuSelect = (action: () => void) => {
     setIsMenuOpen(false);
@@ -173,6 +177,28 @@ export function Header({
                   </button>
                 );
               })}
+
+              {/* Prominent Documentation & Specs Tab */}
+              <button
+                id="tab-docs"
+                role="tab"
+                tabIndex={isResourcesPage ? 0 : -1}
+                aria-selected={isResourcesPage}
+                onClick={() => {
+                  onShowResources();
+                  setIsMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                title={resourcesLabel}
+                className={`group relative flex h-9 min-h-[36px] items-center justify-center gap-2 rounded-lg px-3 lg:px-4 text-xs lg:text-sm font-semibold whitespace-nowrap transition-all duration-200 ease-out focus-visible:z-10 active:scale-95 nav-tab-btn ${
+                  isResourcesPage
+                    ? "bg-primary text-primary-foreground shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
+                    : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
+                }`}
+              >
+                <FileText aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isResourcesPage ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
+                <span className="truncate nav-tab-text">{resourcesLabel}</span>
+              </button>
             </div>
           </nav>
         </div>
@@ -182,6 +208,47 @@ export function Header({
           <div className="hidden sm:block">
             <MetarWidget />
           </div>
+
+          {/* Cairo Tower ATC & Airfield Radio Speaker Button */}
+          <button
+            type="button"
+            onClick={toggleMute}
+            className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
+              !isMuted
+                ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
+                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+            }`}
+            aria-label={
+              isMuted
+                ? language === "ar"
+                  ? "تشغيل إذاعة برج مراقبة القاهرة (118.1 MHz)"
+                  : "Unmute Cairo Tower ATC Radio (118.1 MHz)"
+                : language === "ar"
+                  ? "كتم إذاعة برج مراقبة القاهرة (118.1 MHz)"
+                  : "Mute Cairo Tower ATC Radio (118.1 MHz)"
+            }
+            title={
+              isMuted
+                ? language === "ar"
+                  ? "تشغيل صوت إذاعة وبرج القاهرة (118.1 MHz)"
+                  : "Unmute Cairo Tower ATC Radio (118.1 MHz)"
+                : language === "ar"
+                  ? "كتم صوت إذاعة وبرج القاهرة (118.1 MHz)"
+                  : "Mute Cairo Tower ATC Radio (118.1 MHz)"
+            }
+          >
+            {!isMuted ? (
+              <div className="relative">
+                <Volume2 aria-hidden="true" className="h-4 w-4 text-primary" />
+                {isTransmitting && (
+                  <span className="absolute -top-1 -end-1 h-2 w-2 rounded-full bg-status-ok animate-ping" />
+                )}
+              </div>
+            ) : (
+              <VolumeX aria-hidden="true" className="h-4 w-4" />
+            )}
+          </button>
+
           <button
             type="button"
             onClick={toggleKiosk}
@@ -288,7 +355,7 @@ export function Header({
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 title={tab.label}
-                className={`flex-1 flex h-9 min-h-[36px] items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-2 text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
+                className={`flex-1 flex h-9 min-h-[36px] items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-1.5 sm:px-2 text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "bg-transparent text-muted-foreground hover:text-foreground"
@@ -299,6 +366,27 @@ export function Header({
               </button>
             );
           })}
+          {/* Documentation Mobile Tab */}
+          <button
+            id="tab-mob-docs"
+            role="tab"
+            tabIndex={isResourcesPage ? 0 : -1}
+            aria-selected={isResourcesPage}
+            onClick={() => {
+              onShowResources();
+              setIsMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            title={resourcesLabel}
+            className={`flex-1 flex h-9 min-h-[36px] items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-1.5 sm:px-2 text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
+              isResourcesPage
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <FileText aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">{resourcesLabel}</span>
+          </button>
         </div>
       </nav>
 
@@ -328,6 +416,24 @@ export function Header({
               <div className="sm:hidden flex justify-center py-1">
                 <MetarWidget />
               </div>
+
+              {/* Cairo Tower ATC & Airfield Radio Toggle in Drawer */}
+              <button
+                type="button"
+                onClick={() => handleMenuSelect(toggleMute)}
+                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
+                  !isMuted
+                    ? "border-primary/50 bg-primary/15 text-primary"
+                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
+                }`}
+              >
+                {!isMuted ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
+                <span>
+                  {language === "ar"
+                    ? !isMuted ? "كتم إذاعة وبرج مراقبة القاهرة (118.1 MHz)" : "تشغيل إذاعة وبرج مراقبة القاهرة (118.1 MHz)"
+                    : !isMuted ? "Mute Cairo Tower ATC Radio (118.1 MHz)" : "Unmute Cairo Tower ATC Radio (118.1 MHz)"}
+                </span>
+              </button>
 
               {/* Video Wall Mode Toggle */}
               <button
