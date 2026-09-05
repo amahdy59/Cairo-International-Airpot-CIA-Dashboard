@@ -426,6 +426,26 @@ export default function ResourcesAuditPage({
                   </p>
                 </div>
               </div>
+
+              <div className="p-3 rounded-xl border border-border/60 bg-secondary/15 flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                  <Users className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-foreground">
+                    {localize({ en: "Staffing & Surge Workforce", ar: "إدارة القوى العاملة والطوارئ" }, language)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                    {localize(
+                      {
+                        en: "Shift wave allocator (<85% surge alerts), ICAO Annex 14/17 compliance, and 1-click tactical crew dispatch.",
+                        ar: "توزيع ورديات العمل وتحذيرات السعة، متابعة شارات الإيكاو، وإعادة انتشار فوري لفرق الطوارئ بنقرة واحدة.",
+                      },
+                      language
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
           </section>
 

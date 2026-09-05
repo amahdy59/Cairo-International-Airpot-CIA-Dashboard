@@ -32,7 +32,7 @@ interface SimulationContextValue {
 const SimulationContext = createContext<SimulationContextValue | null>(null);
 
 const KIOSK_CYCLE_SECONDS = 25;
-const KIOSK_TABS: ManagerTab[] = ["digital", "operations", "safety"];
+const KIOSK_TABS: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
 
 interface SimulationProviderProps {
   children: React.ReactNode;

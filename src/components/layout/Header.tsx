@@ -19,6 +19,7 @@ import {
   VolumeX,
   Bell,
   BellOff,
+  Users,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
@@ -120,7 +121,7 @@ export function Header({
           <nav className="hidden xl:flex items-center min-w-0" aria-label={tr("Manager dashboard sections")}>
             <div role="tablist" aria-orientation="horizontal" className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-background/30 p-1 backdrop-blur-md dark:bg-secondary/30"
               onKeyDown={(e) => {
-                const tabs: ManagerTab[] = ["digital", "operations", "safety"];
+                const tabs: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
                 const currentIndex = tabs.indexOf(activeTab);
                 let nextIndex = currentIndex;
                 
@@ -150,7 +151,8 @@ export function Header({
               {[
                 { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
                 { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
-                { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck }
+                { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
+                { id: "staffing" as ManagerTab, label: c.staffing, icon: Users }
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isCurrentDashboardTab = activeTab === tab.id;
@@ -375,6 +377,7 @@ export function Header({
             { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
             { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
             { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
+            { id: "staffing" as ManagerTab, label: c.staffing, icon: Users },
           ].map((tab) => {
             const Icon = tab.icon;
             const isCurrentDashboardTab = activeTab === tab.id;

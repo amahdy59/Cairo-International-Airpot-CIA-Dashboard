@@ -14,7 +14,7 @@ const results = {
 // 1. Code Review
 console.log("\n[1/3] 🔍 Executing Code Review & Typecheck...");
 try {
-  execSync("npx tsc --noEmit", { stdio: "pipe" });
+  execSync("npx tsc --noEmit", { stdio: "pipe", shell: true });
   results.codeReview.details.push("✅ TypeScript Strict Mode: 0 errors");
 } catch (e) {
   results.codeReview.passed = false;
@@ -22,7 +22,7 @@ try {
 }
 
 try {
-  execSync("npx eslint .", { stdio: "pipe" });
+  execSync("npx eslint .", { stdio: "pipe", shell: true });
   results.codeReview.details.push("✅ ESLint Static Analysis: 0 errors, 0 warnings");
 } catch (e) {
   results.codeReview.passed = false;
@@ -30,17 +30,25 @@ try {
 }
 
 try {
-  execSync("npx vitest run src/tests/codeReview.test.ts", { stdio: "pipe" });
+  execSync("npx vitest run src/tests/codeReview.test.ts", { stdio: "pipe", shell: true });
   results.codeReview.details.push("✅ Telemetry & Data Integrity: 100% tests passed");
 } catch (e) {
   results.codeReview.passed = false;
   results.codeReview.details.push("❌ Data Integrity tests failed");
 }
 
+try {
+  execSync("npx vitest run src/tests/staffing.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ Workforce & Staffing Roster: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ Workforce & Staffing tests failed");
+}
+
 // 2. Responsiveness Review
 console.log("\n[2/3] 📱 Executing Responsiveness & Reflow Review...");
 try {
-  execSync("npx vitest run src/tests/responsiveness.test.ts", { stdio: "pipe" });
+  execSync("npx vitest run src/tests/responsiveness.test.ts", { stdio: "pipe", shell: true });
   results.responsivenessReview.details.push("✅ Multi-Breakpoint Reflow (320px - 3840px 4K): Passed");
   results.responsivenessReview.details.push("✅ CSS Logical Properties (RTL/LTR Bidi): Verified");
   results.responsivenessReview.details.push("✅ Zero Horizontal Overflow Constraints: Verified");
@@ -53,7 +61,7 @@ try {
 // 3. Accessibility Review (WCAG 2.2 AAA)
 console.log("\n[3/3] ♿ Executing WCAG 2.2 AAA Accessibility Review...");
 try {
-  execSync("npx vitest run src/tests/accessibility.test.ts", { stdio: "pipe" });
+  execSync("npx vitest run src/tests/accessibility.test.ts", { stdio: "pipe", shell: true });
   results.accessibilityReview.details.push("✅ Color Contrast (Cyan 8.2:1, Green 7.6:1, Amber 7.1:1, Red 7.4:1): Level AAA Passed");
   results.accessibilityReview.details.push("✅ Minimum 44×44px Touch Targets on all Interactive Elements: Passed");
   results.accessibilityReview.details.push("✅ Synchronized Audio Captions for ATC Radio (118.10 MHz & ATIS): Passed");

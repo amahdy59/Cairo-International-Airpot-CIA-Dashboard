@@ -9,6 +9,7 @@ import { ManagerTab, PageView, ThemeMode, Language, copy } from './data';
 import DigitalTwinView from './features/digital-twin/DigitalTwinView';
 import OperationsView from './features/operations/OperationsView';
 import SafetyView from './features/safety/SafetyView';
+import StaffingView from './features/staffing/StaffingView';
 import { Header, BackToTopButton } from './components/layout/Header';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { ToastContainer } from './components/common/Toast';
@@ -26,8 +27,17 @@ function getInitialPageView(): PageView {
     : "dashboard";
 }
 
+function getInitialTab(): ManagerTab {
+  if (typeof window === "undefined") return "digital";
+  const hash = window.location.hash.toLowerCase();
+  if (hash === "#staffing" || hash === "#hr" || hash === "#workforce") return "staffing";
+  if (hash === "#operations" || hash === "#ops") return "operations";
+  if (hash === "#safety") return "safety";
+  return "digital";
+}
+
 export function App() {
-  const [activeTab, setActiveTab] = useState<ManagerTab>("digital");
+  const [activeTab, setActiveTab] = useState<ManagerTab>(() => getInitialTab());
   const [activePage, setActivePage] = useState<PageView>(() => getInitialPageView());
   const [language, setLanguage] = useState<Language>("en");
   const [theme, setTheme] = useState<ThemeMode>("dark");
@@ -98,6 +108,10 @@ export function App() {
           e.preventDefault();
           setActiveTab("safety");
           showDashboard();
+        } else if (e.key === "4") {
+          e.preventDefault();
+          setActiveTab("staffing");
+          showDashboard();
         }
       }
     };
@@ -149,11 +163,12 @@ export function App() {
                 </ErrorBoundary>
               </div>
             ) : (
-            <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : 'Safety & Compliance'} className="flex flex-col flex-1 min-h-0 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
+            <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : activeTab === 'safety' ? 'Safety & Compliance' : 'Staffing & Workforce'} className="flex flex-col flex-1 min-h-0 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
               <ErrorBoundary>
                 {activeTab === "digital" && <DigitalTwinView theme={theme} selectedSceneId={selectedSceneId} />}
                 {activeTab === "operations" && <OperationsView />}
                 {activeTab === "safety" && <SafetyView />}
+                {activeTab === "staffing" && <StaffingView />}
               </ErrorBoundary>
             </div>
             )}

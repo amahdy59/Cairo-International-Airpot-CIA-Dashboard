@@ -3,7 +3,7 @@ import { Flame, Wrench, Activity, ShieldCheck } from "lucide-react";
 // ----------------------------------------------------
 // Type Definitions
 // ----------------------------------------------------
-export type ManagerTab = "digital" | "operations" | "safety";
+export type ManagerTab = "digital" | "operations" | "safety" | "staffing";
 export type PageView = "dashboard" | "resources";
 export type Tone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 export type Language = "en" | "ar";
@@ -54,6 +54,64 @@ export type AirportScene = {
   darkImage: string;
   objectPosition?: string;
   hotspots: MapHotspot[];
+};
+
+// Staffing & Workforce Domain Types
+export type StaffingShiftWaveId = 'morning' | 'midday' | 'night';
+
+export type StaffingShiftWave = {
+  id: StaffingShiftWaveId;
+  name: LocalizedText;
+  hours: string;
+  flightLoad: number;
+  requiredStaff: number;
+  allocatedStaff: number;
+  coverageRatio: number;
+  statusTone: Tone;
+  leadManager: LocalizedText;
+  leadCallsign: string;
+};
+
+export type AirsideZoneId = 'T1' | 'T2' | 'T3' | 'RAMP' | 'SECURITY' | 'BAGGAGE' | 'ARFF';
+
+export type StaffRole =
+  | 'ramp_controller'
+  | 'airside_marshal'
+  | 'security_lead'
+  | 'baggage_ops'
+  | 'terminal_manager'
+  | 'arff_paramedic'
+  | 'customs_coord';
+
+export type StaffMember = {
+  id: string;
+  name: LocalizedText;
+  role: StaffRole;
+  roleTitle: LocalizedText;
+  zone: AirsideZoneId;
+  zoneLabel: LocalizedText;
+  shiftWave: StaffingShiftWaveId;
+  callsign: string;
+  radioChannel: string;
+  status: 'on_duty' | 'break' | 'dispatched' | 'standby';
+  icaoCertValidUntil: string;
+  badgeType: LocalizedText;
+  certStatus: 'valid' | 'expiring_soon' | 'expired';
+  daysToCertExpiry: number;
+  safetyDaysZeroIncidents: number;
+  phoneExt: string;
+};
+
+export type SurgeCrewUnit = {
+  id: string;
+  title: LocalizedText;
+  targetZone: AirsideZoneId;
+  targetZoneLabel: LocalizedText;
+  headcount: number;
+  dispatchEtaMin: number;
+  status: 'ready' | 'dispatched' | 'resting';
+  leadCallsign: string;
+  description: LocalizedText;
 };
 
 // ----------------------------------------------------
@@ -317,6 +375,40 @@ export const arText: Record<string, string> = {
   "14h": "14 ساعة",
   "4h": "4 ساعات",
   "6h": "6 ساعات",
+
+  // Staffing & HR Module
+  "Staffing & Workforce Management": "إدارة القوى العاملة ومناوبات المطار",
+  "Workforce & Staffing Hub": "مركز إدارة القوى العاملة والمناوبات",
+  "Shift Wave Allocator": "توزيع مناوبات الورديات التشغيلية",
+  "Dynamic Roster Grid": "جدول توزيع أطقم ساحة المطار",
+  "Emergency Surge Crew Dispatch": "إعادة الانتشار الفوري لفرق الطوارئ",
+  "ICAO Airside Safety & Permit Compliance Tracker": "متابعة تراخيص القيادة وسلامة مهابط الإيكاو",
+  "Total Staff on Duty": "إجمالي العاملين في الخدمة",
+  "Shift Wave Coverage": "نسبة تغطية المناوبة الحالية",
+  "ICAO Badge Compliance": "نسبة امتثال شارات الإيكاو",
+  "Surge Response ETA": "زمن استجابة فرق الطوارئ",
+  "Active Wave": "الوردية النشطة",
+  "Export Shift Roster (CSV)": "تصدير جدول المناوبة (CSV)",
+  "Search staff by name, callsign, or role...": "بحث بالاسم، رمز النداء، أو المسمى الوظيفي...",
+  "All Zones": "كافة المناطق",
+  "All Roles": "كافة التخصصات",
+  "All Shifts": "كافة الورديات",
+  "Dispatch Crew": "إرسال الطاقم فوراً",
+  "Dispatched": "تم الإرسال",
+  "Recall / Standby": "استدعاء / وضع الاستعداد",
+  "Valid": "ساري",
+  "Expiring Soon": "يقترب من الانتهاء",
+  "Expired": "منتهي",
+  "Days remaining": "أيام متبقية",
+  "On Duty": "في الخدمة",
+  "Break": "استراحة",
+  "Ramp Controller": "مراقب ساحة الطيران",
+  "Airside Marshal": "موجه طائرات بالمرسى",
+  "Security Screening Lead": "مشرف أمن وتفتيش",
+  "Baggage Operations Coordinator": "منسق حركة الأمتعة",
+  "Terminal Duty Manager": "مدير مناوب لصالة الركاب",
+  "ARFF Rescue Paramedic": "مسعف إنقاذ وإطفاء جوي",
+  "Customs & Immigration Liaison": "منسق جمارك وجوازات",
 };
 
 export const copy = {
@@ -329,6 +421,7 @@ export const copy = {
     digital: "Digital Twin",
     operations: "Operations",
     safety: "Safety",
+    staffing: "Staffing & HR",
     resources: "Project Documentation & Credits",
     footer: "Created as an independent UX project depicting Cairo International Airport. Not affiliated with Cairo Airport Company.",
     contrast: "Toggle high contrast",
@@ -344,6 +437,7 @@ export const copy = {
     digital: "التوأم الرقمي",
     operations: "التشغيل",
     safety: "السلامة",
+    staffing: "القوى العاملة والمناوبات",
     resources: "توثيق المشروع والمساهمين",
     footer: "تم إنشاؤه كمشروع تجربة مستخدم مستقل يعرض مطار القاهرة الدولي. غير تابع لشركة ميناء القاهرة الجوي.",
     contrast: "تبديل التباين العالي",
@@ -683,6 +777,314 @@ export const drillScenarios: DrillScenario[] = [
         controlTone: "info",
       },
     ],
+  },
+];
+
+// ----------------------------------------------------
+// Workforce & Staffing Datasets
+// ----------------------------------------------------
+export const staffingShiftWaves: StaffingShiftWave[] = [
+  {
+    id: "morning",
+    name: { en: "Morning Wave (Early Departures)", ar: "موجة الصباح الباكر (ذروة المغادرة)" },
+    hours: "06:00 - 14:00",
+    flightLoad: 58,
+    requiredStaff: 340,
+    allocatedStaff: 355,
+    coverageRatio: 1.04,
+    statusTone: "ok",
+    leadManager: { en: "Capt. Hazem Radwan", ar: "كابتن حازم رضوان" },
+    leadCallsign: "RAMP-DIR-1",
+  },
+  {
+    id: "midday",
+    name: { en: "Midday Surge (Peak Turnarounds)", ar: "ذروة الظهيرة (أعلى كثافة دوران)" },
+    hours: "14:00 - 22:00",
+    flightLoad: 86,
+    requiredStaff: 510,
+    allocatedStaff: 442,
+    coverageRatio: 0.87,
+    statusTone: "warn",
+    leadManager: { en: "Eng. Ahmed El-Saeed", ar: "م. أحمد السعيد" },
+    leadCallsign: "OPS-LEAD-3",
+  },
+  {
+    id: "night",
+    name: { en: "Night Operations (Cargo & Intercontinental)", ar: "عمليات الليل (الشحن والرحلات العابرة)" },
+    hours: "22:00 - 06:00",
+    flightLoad: 32,
+    requiredStaff: 230,
+    allocatedStaff: 245,
+    coverageRatio: 1.07,
+    statusTone: "ok",
+    leadManager: { en: "Tarek El-Shennawy", ar: "طارق الشناوي" },
+    leadCallsign: "NIGHT-SUPER-2",
+  },
+];
+
+export const surgeCrewUnits: SurgeCrewUnit[] = [
+  {
+    id: "SURGE-ALPHA",
+    title: { en: "T2 Security Fast-Response Detail", ar: "سرية تعزيز التفتيش الأمني بمبنى 2" },
+    targetZone: "SECURITY",
+    targetZoneLabel: { en: "Terminal 2 Central Screening", ar: "التفتيش المركزي بمبنى 2" },
+    headcount: 8,
+    dispatchEtaMin: 2,
+    status: "ready",
+    leadCallsign: "SEC-LEAD-2",
+    description: { en: "Quick-deploy checkpoint screeners to open secondary lanes during passenger queue spikes.", ar: "عناصر تفتيش سريعة لفتح مسارات فحص إضافية فور حدوث تكدس في طوابير المسافرين." },
+  },
+  {
+    id: "SURGE-BRAVO",
+    title: { en: "Airside Stand Turnaround Accelerators", ar: "فرقة تسريع دوران الطائرات بالمهابط" },
+    targetZone: "RAMP",
+    targetZoneLabel: { en: "Remote Apron Stands 20-38", ar: "المواقف البعيدة بالساحة 20-38" },
+    headcount: 12,
+    dispatchEtaMin: 4,
+    status: "ready",
+    leadCallsign: "APRON-RUNNER",
+    description: { en: "Mobile ground handling marshals to assist delayed narrow-body turnarounds.", ar: "موجهون وفنيو ساحة متنقلون لمساعدة رحلات الترانزيت المضغوطة لتفادي تأخر الإقلاع." },
+  },
+  {
+    id: "SURGE-CHARLIE",
+    title: { en: "T3 Baggage Sortation Jam Contingency Unit", ar: "فريق التدخل لطوارئ سيور أمتعة مبنى 3" },
+    targetZone: "BAGGAGE",
+    targetZoneLabel: { en: "T3 Subterranean Sortation Loop", ar: "قبو فرز أمتعة مبنى 3" },
+    headcount: 10,
+    dispatchEtaMin: 3,
+    status: "ready",
+    leadCallsign: "TUG-SUPV-4",
+    description: { en: "Manual tug handling operators trained in bypass routing if automated loops fail.", ar: "مشغلو جرارات وسحب يدوي مدربون على مسارات التحويل البديلة عند تعطل السيور الآلية." },
+  },
+  {
+    id: "SURGE-DELTA",
+    title: { en: "Falcon 7 ARFF Airside Rescue Rapid Detail", ar: "وحدة الإطفاء والإنقاذ الجوي - صقر 7" },
+    targetZone: "ARFF",
+    targetZoneLabel: { en: "Runway 05C Rapid Intervention", ar: "التدخل السريع بمدرج 05C" },
+    headcount: 6,
+    dispatchEtaMin: 1,
+    status: "ready",
+    leadCallsign: "RESCUE-7-CMD",
+    description: { en: "Category 9 crash-fire-rescue heavy tender crew on 60-second hot standby.", ar: "طاقم مركبات التدخل السريع لمكافحة حرائق الطائرات فئة 9 في حالة استعداد قصوى (60 ثانية)." },
+  },
+];
+
+export const staffMembers: StaffMember[] = [
+  {
+    id: "STF-101",
+    name: { en: "Eng. Ahmed El-Saeed", ar: "م. أحمد السعيد" },
+    role: "ramp_controller",
+    roleTitle: { en: "Airside Operations Duty Chief", ar: "كبير مديري عمليات ساحة الطيران" },
+    zone: "RAMP",
+    zoneLabel: { en: "Airside Apron Control", ar: "برج مراقبة ساحة الطائرات" },
+    shiftWave: "midday",
+    callsign: "RAMP-ALPHA-1",
+    radioChannel: "121.900 MHz",
+    status: "on_duty",
+    icaoCertValidUntil: "2027-02-28",
+    badgeType: { en: "ICAO Annex 14 Apron Controller Class 1", ar: "ترخيص إيكاو ملحق 14 لمراقبي الساحة - فئة 1" },
+    certStatus: "valid",
+    daysToCertExpiry: 541,
+    safetyDaysZeroIncidents: 620,
+    phoneExt: "+20 (2) 2265-4101",
+  },
+  {
+    id: "STF-102",
+    name: { en: "Capt. Hazem Radwan", ar: "كابتن حازم رضوان" },
+    role: "ramp_controller",
+    roleTitle: { en: "Senior Ramp Coordinator", ar: "منسق أول لعمليات المهابط" },
+    zone: "RAMP",
+    zoneLabel: { en: "North Apron Sector 1", ar: "القطاع الشمالي للمهابط 1" },
+    shiftWave: "morning",
+    callsign: "RAMP-DIR-1",
+    radioChannel: "121.900 MHz",
+    status: "on_duty",
+    icaoCertValidUntil: "2026-11-15",
+    badgeType: { en: "ICAO Annex 14 Airside Driving (Runway/Taxiway)", ar: "ترخيص قيادة بساحة الطيران والمدرج (إيكاو)" },
+    certStatus: "valid",
+    daysToCertExpiry: 71,
+    safetyDaysZeroIncidents: 410,
+    phoneExt: "+20 (2) 2265-4102",
+  },
+  {
+    id: "STF-103",
+    name: { en: "Mona Zahran", ar: "أ. منى زهران" },
+    role: "security_lead",
+    roleTitle: { en: "T2 Aviation Security Lead", ar: "مشرف التفتيش الأمني بمبنى 2" },
+    zone: "SECURITY",
+    zoneLabel: { en: "Terminal 2 Concourse B", ar: "صالة المغادرة ب بمبنى 2" },
+    shiftWave: "midday",
+    callsign: "SEC-LEAD-2",
+    radioChannel: "TETRA SEC-02",
+    status: "on_duty",
+    icaoCertValidUntil: "2026-09-22",
+    badgeType: { en: "ICAO Annex 17 Aviation Security Supervisor", ar: "ترخيص أمن الطيران المدني ملحق 17 - إشرافي" },
+    certStatus: "expiring_soon",
+    daysToCertExpiry: 17,
+    safetyDaysZeroIncidents: 890,
+    phoneExt: "+20 (2) 2265-4201",
+  },
+  {
+    id: "STF-104",
+    name: { en: "Mahmoud Soliman", ar: "محمود سليمان" },
+    role: "airside_marshal",
+    roleTitle: { en: "Lead Aircraft Marshaller", ar: "كبير موجهي الطائرات" },
+    zone: "RAMP",
+    zoneLabel: { en: "Remote Stands 31-40", ar: "المواقف البعيدة 31-40" },
+    shiftWave: "midday",
+    callsign: "MARSHAL-7",
+    radioChannel: "121.900 MHz",
+    status: "on_duty",
+    icaoCertValidUntil: "2026-10-05",
+    badgeType: { en: "ICAO Annex 14 Visual Docking & Marshalling", ar: "ترخيص إرشاد وتوجيه الطائرات البصري" },
+    certStatus: "expiring_soon",
+    daysToCertExpiry: 30,
+    safetyDaysZeroIncidents: 340,
+    phoneExt: "+20 (2) 2265-4115",
+  },
+  {
+    id: "STF-105",
+    name: { en: "Tarek El-Shennawy", ar: "طارق الشناوي" },
+    role: "terminal_manager",
+    roleTitle: { en: "Terminal 3 Duty Operations Manager", ar: "مدير مناوب مبنى الركاب 3" },
+    zone: "T3",
+    zoneLabel: { en: "Terminal 3 Hall 4 & Pier F", ar: "مبنى 3 - الصالة 4 ورصيف F" },
+    shiftWave: "midday",
+    callsign: "T3-DIRECTOR",
+    radioChannel: "TETRA OPS-01",
+    status: "on_duty",
+    icaoCertValidUntil: "2027-06-15",
+    badgeType: { en: "Crisis Management & Terminal Flow Control", ar: "إدارة الأزمات والتحكم بتدفق المسافرين" },
+    certStatus: "valid",
+    daysToCertExpiry: 648,
+    safetyDaysZeroIncidents: 730,
+    phoneExt: "+20 (2) 2265-4301",
+  },
+  {
+    id: "STF-106",
+    name: { en: "Yasser Abdel-Rahman", ar: "ياسر عبد الرحمن" },
+    role: "baggage_ops",
+    roleTitle: { en: "Baggage Handling Operations Lead", ar: "مسؤول عمليات ساحة الأمتعة المركزية" },
+    zone: "BAGGAGE",
+    zoneLabel: { en: "T3 Subterranean Matrix", ar: "قبو سيور الأمتعة بمبنى 3" },
+    shiftWave: "midday",
+    callsign: "TUG-SUPV-4",
+    radioChannel: "TETRA BAGG-3",
+    status: "on_duty",
+    icaoCertValidUntil: "2026-12-31",
+    badgeType: { en: "Airside Tug & Heavy Cargo Handling", ar: "ترخيص قيادة جرارات الأمتعة ومعدات الشحن" },
+    certStatus: "valid",
+    daysToCertExpiry: 117,
+    safetyDaysZeroIncidents: 490,
+    phoneExt: "+20 (2) 2265-4402",
+  },
+  {
+    id: "STF-107",
+    name: { en: "Major Sherif Fahmy", ar: "رائد شريف فهمي" },
+    role: "arff_paramedic",
+    roleTitle: { en: "ARFF Crash-Fire-Rescue Commander", ar: "قائد عمليات الإنقاذ والإطفاء الجوي" },
+    zone: "ARFF",
+    zoneLabel: { en: "Station 7 Falcon Base", ar: "محطة إطفاء 7 - قاعدة الصقر" },
+    shiftWave: "midday",
+    callsign: "RESCUE-7-CMD",
+    radioChannel: "121.600 MHz (ARFF)",
+    status: "on_duty",
+    icaoCertValidUntil: "2027-01-20",
+    badgeType: { en: "ICAO Doc 9137 Cat 9 Rescue Fire Fighter", ar: "ترخيص مكافحة حرائق الطائرات والإنقاذ فئة 9" },
+    certStatus: "valid",
+    daysToCertExpiry: 502,
+    safetyDaysZeroIncidents: 1250,
+    phoneExt: "+20 (2) 2265-4911",
+  },
+  {
+    id: "STF-108",
+    name: { en: "Heba El-Gammal", ar: "هبة الجمال" },
+    role: "customs_coord",
+    roleTitle: { en: "Passport & Border Control Liaison", ar: "منسق تدفق الجوازات والرقابة الحدودية" },
+    zone: "T2",
+    zoneLabel: { en: "T2 Arrival Immigration Hall", ar: "صالة وصول الجوازات بمبنى 2" },
+    shiftWave: "midday",
+    callsign: "IMMIG-COORD-1",
+    radioChannel: "TETRA IMM-01",
+    status: "on_duty",
+    icaoCertValidUntil: "2026-09-18",
+    badgeType: { en: "Automated Border Control & E-Gates Security", ar: "ترخيص تشغيل ومراقبة البوابات الإلكترونية" },
+    certStatus: "expiring_soon",
+    daysToCertExpiry: 13,
+    safetyDaysZeroIncidents: 560,
+    phoneExt: "+20 (2) 2265-4250",
+  },
+  {
+    id: "STF-109",
+    name: { en: "Ossama Nabil", ar: "أسامة نبيل" },
+    role: "terminal_manager",
+    roleTitle: { en: "Terminal 1 Operations Supervisor", ar: "مشرف عمليات مبنى الركاب 1" },
+    zone: "T1",
+    zoneLabel: { en: "Terminal 1 Hall 2 Departures", ar: "مبنى 1 - صالة سفر 2" },
+    shiftWave: "morning",
+    callsign: "T1-SUPER-1",
+    radioChannel: "TETRA OPS-02",
+    status: "break",
+    icaoCertValidUntil: "2027-04-10",
+    badgeType: { en: "Passenger Terminal Management IATA/ICAO", ar: "ترخيص إدارة وتدفق صالات الركاب IATA/ICAO" },
+    certStatus: "valid",
+    daysToCertExpiry: 582,
+    safetyDaysZeroIncidents: 480,
+    phoneExt: "+20 (2) 2265-4155",
+  },
+  {
+    id: "STF-110",
+    name: { en: "Nouran Mansour", ar: "نوران منصور" },
+    role: "security_lead",
+    roleTitle: { en: "Hold Baggage X-Ray Screening Inspector", ar: "مفتش أول أشعة كشف أمتعة الشحن" },
+    zone: "SECURITY",
+    zoneLabel: { en: "T3 In-line Security Basement", ar: "فحص الأمتعة الآلي بمبنى 3" },
+    shiftWave: "midday",
+    callsign: "SEC-XRAY-4",
+    radioChannel: "TETRA SEC-03",
+    status: "on_duty",
+    icaoCertValidUntil: "2027-03-14",
+    badgeType: { en: "ICAO Screener Certification TIP Level 3", ar: "ترخيص فحص الأمتعة بالأشعة المتقدمة - مستوى 3" },
+    certStatus: "valid",
+    daysToCertExpiry: 555,
+    safetyDaysZeroIncidents: 910,
+    phoneExt: "+20 (2) 2265-4388",
+  },
+  {
+    id: "STF-111",
+    name: { en: "Karim Wafiq", ar: "كريم وفيق" },
+    role: "airside_marshal",
+    roleTitle: { en: "Apron FOD & Safety Inspector", ar: "مفتش السلامة والأجسام الغريبة بالمهابط" },
+    zone: "RAMP",
+    zoneLabel: { en: "Taxiway Sierra & Juliet", ar: "ممرات التحرك سييرا وجولييت" },
+    shiftWave: "night",
+    callsign: "SAFETY-SWEEP-2",
+    radioChannel: "121.900 MHz",
+    status: "standby",
+    icaoCertValidUntil: "2026-08-30",
+    badgeType: { en: "ICAO Annex 14 FOD Prevention & Runway Safety", ar: "ترخيص إيكاو لمنع الأجسام الغريبة وتفتيش المدارج" },
+    certStatus: "expired",
+    daysToCertExpiry: -6,
+    safetyDaysZeroIncidents: 210,
+    phoneExt: "+20 (2) 2265-4180",
+  },
+  {
+    id: "STF-112",
+    name: { en: "Amr El-Gohary", ar: "عمرو الجوهري" },
+    role: "baggage_ops",
+    roleTitle: { en: "Ramp Cargo Loadmaster", ar: "ضابط حمولة وشحن الطائرات" },
+    zone: "RAMP",
+    zoneLabel: { en: "Wide-Body Stands 11-18", ar: "مواقف الطائرات العريضة 11-18" },
+    shiftWave: "midday",
+    callsign: "LOADMASTER-3",
+    radioChannel: "121.900 MHz",
+    status: "on_duty",
+    icaoCertValidUntil: "2026-10-25",
+    badgeType: { en: "IATA Dangerous Goods & Weight & Balance", ar: "ترخيص الأوزان والتوازن ونقل المواد الخطرة" },
+    certStatus: "valid",
+    daysToCertExpiry: 50,
+    safetyDaysZeroIncidents: 680,
+    phoneExt: "+20 (2) 2265-4192",
   },
 ];
 

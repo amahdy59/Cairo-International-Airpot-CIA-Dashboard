@@ -72,6 +72,7 @@ export function KioskBar({ activeTab }: KioskBarProps) {
     digital: { en: "Digital Twin Hub", ar: "مركز التوأم الرقمي" },
     operations: { en: "Airfield Operations", ar: "عمليات ساحة الطيران" },
     safety: { en: "Safety & Compliance", ar: "السلامة والامتثال" },
+    staffing: { en: "Staffing & HR Hub", ar: "مركز القوى العاملة والمناوبات" },
   };
 
   return (

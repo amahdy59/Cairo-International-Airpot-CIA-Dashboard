@@ -19,6 +19,7 @@ import {
   Clock3,
   Bell,
   Volume2,
+  Users,
 } from 'lucide-react';
 import { ManagerTab, Language, ThemeMode, departures, arrivals, scenes } from '../data';
 import { localize } from '../utils/helpers';
@@ -122,6 +123,19 @@ export function CommandPalette({
         shortcut: '3',
         action: () => {
           onSelectTab('safety');
+          onClose();
+        },
+      },
+      {
+        id: 'view-staffing',
+        category: 'views',
+        categoryLabel: { en: 'Views & Tabs', ar: 'الأقسام والتبويبات' },
+        title: language === 'ar' ? 'القوى العاملة والمناوبات (Staffing & HR)' : 'Workforce Staffing & Rosters',
+        subtitle: language === 'ar' ? 'توزيع الورديات، أطقم الساحة، وسرايا التدخل السريع' : 'Shift wave allocator, dynamic crew roster, surge crew dispatch',
+        icon: Users,
+        shortcut: '4',
+        action: () => {
+          onSelectTab('staffing');
           onClose();
         },
       },
