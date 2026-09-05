@@ -47,7 +47,6 @@ export function App() {
   const [selectedSceneId, setSelectedSceneId] = useState<string | undefined>(undefined);
   const times = useHeaderClock();
   const c = copy[language];
-  const isDigitalDashboard = activeTab === "digital" && activePage !== "resources";
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -138,7 +137,7 @@ export function App() {
   return (
     <LocaleContext.Provider value={language}>
       <SimulationProvider activeTab={activeTab} setActiveTab={setActiveTab} onShowDashboard={showDashboard}>
-        <div className={`flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""} ${isDigitalDashboard ? "lg:h-screen lg:overflow-hidden min-h-screen overflow-x-hidden" : "min-h-screen overflow-x-hidden"}`} dir={language === "ar" ? "rtl" : "ltr"}>
+        <div className={`flex flex-col min-h-screen overflow-x-hidden bg-background text-foreground antialiased selection:bg-primary/20 ${theme} ${highContrast ? "high-contrast" : ""}`} dir={language === "ar" ? "rtl" : "ltr"}>
           <Header
             language={language}
             setLanguage={setLanguage}
@@ -209,22 +208,20 @@ export function App() {
           {/* AOCC Video Wall Auto-Cycle Control Bar */}
           <KioskBar activeTab={activeTab} />
 
-          {!isDigitalDashboard && (
-            <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
-              {c.footer}
-              <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
-              {activePage === "resources" ? (
-                <a className="font-medium text-primary hover:underline" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
-                  {language === "en" ? "Go back to Dashboard" : "العودة إلى لوحة التحكم"}
-                </a>
-              ) : (
-                <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
-                  {c.resources}
-                </a>
-              )}
-            </footer>
-          )}
-          {!isDigitalDashboard && <BackToTopButton />}
+          <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+            {c.footer}
+            <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
+            {activePage === "resources" ? (
+              <a className="font-medium text-primary hover:underline" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
+                {language === "en" ? "Go back to Dashboard" : "العودة إلى لوحة التحكم"}
+              </a>
+            ) : (
+              <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
+                {c.resources}
+              </a>
+            )}
+          </footer>
+          <BackToTopButton />
         </div>
       </SimulationProvider>
     </LocaleContext.Provider>

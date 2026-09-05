@@ -277,7 +277,7 @@ export function Header({
                 playClick();
                 onOpenCommandPalette();
               }}
-              className="flex h-10 items-center gap-2 rounded-xl border border-border bg-secondary/35 px-2.5 sm:px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active-spring cursor-pointer"
+              className="flex h-11 min-h-[44px] items-center gap-2 rounded-xl border border-border bg-secondary/35 px-2.5 sm:px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active-spring cursor-pointer"
               aria-label={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
               title={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
             >
@@ -297,7 +297,7 @@ export function Header({
                 playClick();
                 setIsSettingsOpen(!isSettingsOpen);
               }}
-              className={`relative grid h-10 w-10 min-h-[40px] min-w-[40px] place-items-center rounded-xl border transition-all active-spring cursor-pointer ${
+              className={`relative grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-all active-spring cursor-pointer ${
                 isSettingsOpen || !isMuted
                   ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
                   : "border-border bg-secondary/35 text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -506,7 +506,7 @@ export function Header({
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="grid h-10 w-10 min-h-[40px] min-w-[40px] place-items-center rounded-xl border border-border bg-secondary/35 text-foreground hover:bg-secondary lg:hidden transition-colors cursor-pointer"
+            className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/35 text-foreground hover:bg-secondary lg:hidden transition-colors cursor-pointer"
             aria-expanded={isMobileMenuOpen}
             aria-label={tr("Toggle navigation menu")}
           >

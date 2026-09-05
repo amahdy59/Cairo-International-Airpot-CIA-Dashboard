@@ -154,7 +154,7 @@ export function ApronConflictDetector() {
           <button
             type="button"
             onClick={handleResolveConflict}
-            className="flex items-center gap-1.5 rounded-xl border border-status-crit/40 bg-status-crit/15 px-3 py-1.5 text-xs font-bold text-status-crit hover:bg-status-crit/25 transition-all active-spring cursor-pointer self-start sm:self-auto"
+            className="flex items-center gap-1.5 rounded-xl border border-status-crit/40 bg-status-crit/15 px-3.5 py-2 min-h-[44px] text-xs font-bold text-status-crit hover:bg-status-crit/25 transition-all active-spring cursor-pointer self-start sm:self-auto"
           >
             <ShieldAlert className="h-4 w-4 shrink-0" />
             <span>{language === "ar" ? "إعادة توجيه إلى الموقف R-14 (فض التعارض)" : "Auto-Resolve: Divert to Stand R-14"}</span>
