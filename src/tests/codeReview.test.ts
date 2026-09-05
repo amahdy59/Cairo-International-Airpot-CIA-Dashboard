@@ -81,4 +81,51 @@ describe("Code Review & Telemetry Data Integrity", () => {
     safeStorage.removeItem("test_key_ci");
     expect(safeStorage.getItem("test_key_ci")).toBeNull();
   });
+
+  it("validates A-CDM Turnaround Milestones data integrity and TOBT calculations", async () => {
+    const { INITIAL_ACDM_TURNAROUNDS } = await import("../hooks/useAcdmEngine");
+    expect(INITIAL_ACDM_TURNAROUNDS.length).toBeGreaterThanOrEqual(3);
+    INITIAL_ACDM_TURNAROUNDS.forEach((item) => {
+      expect(item.id).toMatch(/^ACDM-/);
+      expect(item.inboundFlight.trim().length).toBeGreaterThan(0);
+      expect(item.outboundFlight.trim().length).toBeGreaterThan(0);
+      expect(item.tobt).toMatch(/^[0-2][0-9]:[0-5][0-9]$/);
+      expect(item.tsat).toMatch(/^[0-2][0-9]:[0-5][0-9]$/);
+      expect(item.ttot).toMatch(/^[0-2][0-9]:[0-5][0-9]$/);
+      expect(item.turnaroundProgress).toBeGreaterThanOrEqual(0);
+      expect(item.turnaroundProgress).toBeLessThanOrEqual(100);
+      expect(["C", "D", "E", "F"]).toContain(item.acType);
+    });
+  });
+
+  it("validates Apron Stand & Wingspan Conflict separation standards", async () => {
+    const { INITIAL_STAND_ASSIGNMENTS } = await import("../features/digital-twin/ApronConflictDetector");
+    expect(INITIAL_STAND_ASSIGNMENTS.length).toBeGreaterThanOrEqual(4);
+    INITIAL_STAND_ASSIGNMENTS.forEach((stand) => {
+      expect(stand.standId).toMatch(/^S-/);
+      expect(stand.wingspanM).toBeGreaterThan(20);
+      expect(["C", "D", "E", "F"]).toContain(stand.icaoCode);
+      expect(["occupied", "standby", "conflict"]).toContain(stand.status);
+    });
+    // Validates at least one conflict is detected initially for verification
+    const hasConflict = INITIAL_STAND_ASSIGNMENTS.some((s) => s.status === "conflict");
+    expect(hasConflict).toBe(true);
+  });
+
+  it("validates ICAO Emergency Incident Playbooks and mandatory checklists", async () => {
+    const { PLAYBOOKS } = await import("../features/safety/IncidentPlaybookModal");
+    expect(PLAYBOOKS.length).toBeGreaterThanOrEqual(3);
+    PLAYBOOKS.forEach((pb) => {
+      expect(pb.id.trim().length).toBeGreaterThan(0);
+      expect(pb.title.trim().length).toBeGreaterThan(0);
+      expect(pb.arTitle.trim().length).toBeGreaterThan(0);
+      expect(pb.icaoRef).toMatch(/^(ICAO|ECAA)/);
+      expect(pb.steps.length).toBeGreaterThanOrEqual(3);
+      pb.steps.forEach((step) => {
+        expect(step.id).toBeDefined();
+        expect(step.label.trim().length).toBeGreaterThan(0);
+        expect(step.role.trim().length).toBeGreaterThan(0);
+      });
+    });
+  });
 });

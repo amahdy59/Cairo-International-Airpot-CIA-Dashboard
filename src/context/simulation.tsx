@@ -11,6 +11,8 @@ import {
 } from "../data";
 import { notifyManager } from "../utils/toast";
 
+export type KioskPreset = "all-cycle" | "flight-tactical" | "airside-ground" | "crisis-command";
+
 interface SimulationContextValue {
   scenarioId: ScenarioId;
   activeScenario: DrillScenario;
@@ -27,12 +29,19 @@ interface SimulationContextValue {
   setIsKioskPaused: React.Dispatch<React.SetStateAction<boolean>>;
   kioskSecondsRemaining: number;
   skipKioskNext: () => void;
+  kioskPreset: KioskPreset;
+  setKioskPreset: (preset: KioskPreset) => void;
 }
 
 const SimulationContext = createContext<SimulationContextValue | null>(null);
 
 const KIOSK_CYCLE_SECONDS = 25;
-const KIOSK_TABS: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
+const PRESET_TABS: Record<KioskPreset, ManagerTab[]> = {
+  "all-cycle": ["digital", "operations", "safety", "staffing"],
+  "flight-tactical": ["operations", "staffing"],
+  "airside-ground": ["digital", "safety"],
+  "crisis-command": ["safety", "staffing"],
+};
 
 interface SimulationProviderProps {
   children: React.ReactNode;
@@ -52,6 +61,7 @@ export function SimulationProvider({
   const [isKioskActive, setIsKioskActive] = useState<boolean>(false);
   const [isKioskPaused, setIsKioskPaused] = useState<boolean>(false);
   const [kioskSecondsRemaining, setKioskSecondsRemaining] = useState<number>(KIOSK_CYCLE_SECONDS);
+  const [kioskPreset, setKioskPreset] = useState<KioskPreset>("all-cycle");
 
   const activeScenario = useMemo(() => {
     return drillScenarios.find((s) => s.id === scenarioId) || drillScenarios[0];
@@ -105,7 +115,7 @@ export function SimulationProvider({
         onShowDashboard?.();
         notifyManager(
           "AOCC Video Wall Mode Active",
-          "Auto-cycling through Digital Twin, Operations, and Safety views (25s interval).",
+          "Auto-cycling through AOCC multi-display screens (25s interval).",
           "info"
         );
       } else {
@@ -120,11 +130,12 @@ export function SimulationProvider({
   }, [onShowDashboard]);
 
   const skipKioskNext = useCallback(() => {
-    const currentIndex = KIOSK_TABS.indexOf(activeTab);
-    const nextIndex = (currentIndex + 1) % KIOSK_TABS.length;
-    setActiveTab(KIOSK_TABS[nextIndex]);
+    const tabs = PRESET_TABS[kioskPreset];
+    const currentIndex = tabs.indexOf(activeTab);
+    const nextIndex = (currentIndex + 1) % tabs.length;
+    setActiveTab(tabs[nextIndex]);
     setKioskSecondsRemaining(KIOSK_CYCLE_SECONDS);
-  }, [activeTab, setActiveTab]);
+  }, [activeTab, setActiveTab, kioskPreset]);
 
   // Video Wall Auto-Cycle Timer
   useEffect(() => {
@@ -134,9 +145,10 @@ export function SimulationProvider({
       setKioskSecondsRemaining((prev) => {
         if (prev <= 1) {
           // Advance tab
-          const currentIndex = KIOSK_TABS.indexOf(activeTab);
-          const nextIndex = (currentIndex + 1) % KIOSK_TABS.length;
-          setActiveTab(KIOSK_TABS[nextIndex]);
+          const tabs = PRESET_TABS[kioskPreset];
+          const currentIndex = tabs.indexOf(activeTab);
+          const nextIndex = (currentIndex + 1) % tabs.length;
+          setActiveTab(tabs[nextIndex]);
           return KIOSK_CYCLE_SECONDS;
         }
         return prev - 1;
@@ -144,7 +156,7 @@ export function SimulationProvider({
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [isKioskActive, isKioskPaused, activeTab, setActiveTab]);
+  }, [isKioskActive, isKioskPaused, activeTab, setActiveTab, kioskPreset]);
 
   const value = useMemo<SimulationContextValue>(
     () => ({
@@ -163,6 +175,8 @@ export function SimulationProvider({
       setIsKioskPaused,
       kioskSecondsRemaining,
       skipKioskNext,
+      kioskPreset,
+      setKioskPreset,
     }),
     [
       scenarioId,
@@ -177,6 +191,7 @@ export function SimulationProvider({
       isKioskPaused,
       kioskSecondsRemaining,
       skipKioskNext,
+      kioskPreset,
     ]
   );
 

@@ -7,6 +7,7 @@ import { StatusPill, SectionPanel } from '../../components/command-center/Metric
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 import { notifyManager } from '../../utils/toast';
 import { soundEffects } from '../../services/soundEffects';
+import { ApronConflictDetector } from './ApronConflictDetector';
 
 type Translatable = string | { en: string; ar: string };
 
@@ -342,6 +343,9 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
           </div>
         </div>
       </nav>
+
+      {/* ICAO Annex 14 Apron Stand & Wingspan Clearance Monitor */}
+      <ApronConflictDetector />
 
       <SectionPanel className="flex flex-col flex-1 min-h-0 overflow-visible p-0!" title="">
         <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] flex-1 min-h-0 h-full">

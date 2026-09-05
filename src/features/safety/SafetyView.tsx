@@ -1,14 +1,48 @@
-import { CheckCircle2, Zap, Download } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, Zap, Download, ShieldAlert } from 'lucide-react';
 import { toneCssVar, localize } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSafetyCompliance } from '../../hooks/useSafetyCompliance';
 import { exportToCsv } from '../../utils/exportCsv';
 import { safetyChecks, maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
+import { IncidentPlaybookModal } from './IncidentPlaybookModal';
 
 function SafetyView() {
+  const [isPlaybookOpen, setIsPlaybookOpen] = useState(false);
+  const { language } = useLocale();
+
   return (
     <div className="flex flex-col gap-3 lg:gap-4 mt-3 lg:mt-4">
+      {/* ICAO Incident & Crisis Command Action Trigger */}
+      <div className="panel p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-status-crit/15 text-status-crit border border-status-crit/30">
+            <ShieldAlert className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-foreground">
+              {language === "ar" ? "بروتوكولات الطوارئ والأزمات الميدانية (ICAO SOP)" : "ICAO Emergency Contingency & Crisis Playbooks"}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {language === "ar"
+                ? "إجراءات القيادة الفورية لحالات الرؤية المتدنية LVP، طوارئ المدارج FOD، والهبوط الطبي الاضطراري"
+                : "Standard operating procedures for Low Visibility (LVP), Runway FOD closures, and priority diversions."}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsPlaybookOpen(true)}
+          className="flex items-center gap-1.5 rounded-xl border border-status-crit/40 bg-status-crit/15 px-3.5 py-2 text-xs font-bold text-status-crit hover:bg-status-crit/25 active-spring transition-all cursor-pointer self-start sm:self-auto"
+        >
+          <ShieldAlert className="h-4 w-4" />
+          <span>{language === "ar" ? "فتح كتيب الطوارئ (Playbooks)" : "Open Crisis Playbooks"}</span>
+        </button>
+      </div>
+
+      <IncidentPlaybookModal isOpen={isPlaybookOpen} onClose={() => setIsPlaybookOpen(false)} />
+
       {/* Top Section: 2x2 grid on desktop, single column on tablet/mobile */}
       <div className="grid gap-3 lg:gap-4 lg:grid-cols-2">
         <SafetyAlertAge />

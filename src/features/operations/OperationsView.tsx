@@ -6,6 +6,7 @@ import { useSimulation } from '../../context/simulation';
 import { exportToCsv } from '../../utils/exportCsv';
 import { influxForecastRows, gateWaitRows, departures, arrivals, queueRows, FlightRow, Tone, shiftWaves } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
+import { AcdmMilestones } from './AcdmMilestones';
 
 function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
   return (
@@ -320,6 +321,9 @@ function OperationsView() {
           accent={alertsTone === "crit" ? "crit" : "warn"}
         />
       </section>
+
+      {/* A-CDM Turnaround Milestone Engine */}
+      <AcdmMilestones />
 
       {/* Middle: Charts for visual absorption */}
       <div className="grid gap-3 lg:gap-4 md:grid-cols-2">

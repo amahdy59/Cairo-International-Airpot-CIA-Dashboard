@@ -13,7 +13,7 @@ import {
   Radio,
 } from "lucide-react";
 import { useLocale } from "../../context/locale";
-import { useSimulation } from "../../context/simulation";
+import { useSimulation, KioskPreset } from "../../context/simulation";
 import { useAirfieldRadio } from "../../hooks/useAirfieldRadio";
 import { RADIO_CHANNELS, RadioChannel } from "../../services/airfieldAudio";
 import { localize } from "../../utils/helpers";
@@ -32,6 +32,8 @@ export function KioskBar({ activeTab }: KioskBarProps) {
     setIsKioskPaused,
     kioskSecondsRemaining,
     skipKioskNext,
+    kioskPreset,
+    setKioskPreset,
   } = useSimulation();
 
   const {
@@ -159,6 +161,17 @@ export function KioskBar({ activeTab }: KioskBarProps) {
                 <span className="text-muted-foreground hidden md:inline">
                   • {localize({ en: "Auto-cycles every 25s", ar: "تبديل تلقائي كل ٢٥ث" }, language)}
                 </span>
+                <select
+                  value={kioskPreset}
+                  onChange={(e) => setKioskPreset(e.target.value as KioskPreset)}
+                  className="ms-1 h-7 rounded-lg border border-border/70 bg-secondary/50 px-1.5 text-[11px] font-semibold text-foreground focus:outline-none cursor-pointer"
+                  aria-label={language === "ar" ? "تحديد نمط شاشة العرض" : "Video Wall Preset"}
+                >
+                  <option value="all-cycle">{language === "ar" ? "دورة شاملة (4)" : "Full Cycle (4)"}</option>
+                  <option value="flight-tactical">{language === "ar" ? "العمليات والمناوبات" : "Tactical Ops"}</option>
+                  <option value="airside-ground">{language === "ar" ? "المدرجات والساحة" : "Airside Ground"}</option>
+                  <option value="crisis-command">{language === "ar" ? "غرفة الطوارئ" : "Crisis Command"}</option>
+                </select>
               </div>
             </div>
           </div>
