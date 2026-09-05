@@ -4,6 +4,7 @@ import { useLocale } from "../../context/locale";
 import { useSimulation } from "../../context/simulation";
 import { localize } from "../../utils/helpers";
 import { drillScenarios } from "../../data";
+import { soundEffects } from "../../services/soundEffects";
 
 export function SimulationBanner() {
   const { language } = useLocale();
@@ -68,7 +69,10 @@ export function SimulationBanner() {
           <div className="relative">
             <button
               type="button"
-              onClick={() => setIsOpen((prev) => !prev)}
+              onClick={() => {
+                soundEffects.playClick();
+                setIsOpen((prev) => !prev);
+              }}
               className="flex h-11 min-h-[44px] items-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground hover:bg-secondary active:scale-95 transition cursor-pointer"
               aria-haspopup="listbox"
               aria-expanded={isOpen}
@@ -90,6 +94,11 @@ export function SimulationBanner() {
                     role="option"
                     aria-selected={sc.id === scenarioId}
                     onClick={() => {
+                      if (sc.id !== "nominal") {
+                        soundEffects.playAlert();
+                      } else {
+                        soundEffects.playClick();
+                      }
                       setScenarioId(sc.id);
                       setIsOpen(false);
                     }}
@@ -119,7 +128,10 @@ export function SimulationBanner() {
           {isDrillActive && (
             <button
               type="button"
-              onClick={resetDrill}
+              onClick={() => {
+                soundEffects.playClick();
+                resetDrill();
+              }}
               className="flex h-11 min-h-[44px] items-center gap-1.5 rounded-xl border border-border bg-background px-3 text-xs font-semibold text-foreground hover:bg-secondary active:scale-95 transition cursor-pointer"
               aria-label={localize({ en: "Restore live baseline operations", ar: "استعادة العمليات المباشرة" }, language)}
               title={localize({ en: "Restore live baseline operations", ar: "استعادة العمليات المباشرة" }, language)}

@@ -6,6 +6,7 @@ import { AirportScene, HotspotStatus, MapHotspot, scenes, zoneStatusRows, Incomi
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 import { notifyManager } from '../../utils/toast';
+import { soundEffects } from '../../services/soundEffects';
 
 type Translatable = string | { en: string; ar: string };
 
@@ -23,8 +24,10 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
   }, [selectedSceneId]);
 
   const handleDispatch = (hotspotId: string, title: string, actionText: string) => {
+    soundEffects.playDispatch();
     setDispatchedHotspots((prev) => ({ ...prev, [hotspotId]: 'dispatching' }));
     setTimeout(() => {
+      soundEffects.playDispatch();
       setDispatchedHotspots((prev) => ({ ...prev, [hotspotId]: 'dispatched' }));
       notifyManager(
         language === 'ar' ? 'تم إرسال فريق التدخل الميداني' : 'Ground Response Team Dispatched',

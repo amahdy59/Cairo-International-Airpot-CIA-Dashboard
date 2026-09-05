@@ -17,11 +17,14 @@ import {
   Tv,
   Volume2,
   VolumeX,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
 import { useSimulation } from "../../context/simulation";
 import { useAirfieldRadio } from "../../hooks/useAirfieldRadio";
+import { useSoundEffects } from "../../hooks/useSoundEffects";
 import { localize } from "../../utils/helpers";
 import { MetarWidget } from "../common/MetarWidget";
 
@@ -82,6 +85,7 @@ export function Header({
   const { tr } = useLocale();
   const { toggleKiosk, isKioskActive } = useSimulation();
   const { isMuted, toggleMute, isTransmitting } = useAirfieldRadio();
+  const { isEnabled: sfxEnabled, toggleSoundEffects, playClick } = useSoundEffects();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   const isResourcesPage = activePage === "resources";
@@ -160,6 +164,7 @@ export function Header({
                     aria-selected={isActive}
                     aria-controls={isResourcesPage ? undefined : "main-content"}
                     onClick={() => {
+                      playClick();
                       setActiveTab(tab.id);
                       onShowDashboard();
                       setIsMenuOpen(false);
@@ -185,6 +190,7 @@ export function Header({
                 tabIndex={isResourcesPage ? 0 : -1}
                 aria-selected={isResourcesPage}
                 onClick={() => {
+                  playClick();
                   onShowResources();
                   setIsMenuOpen(false);
                   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -212,7 +218,10 @@ export function Header({
           {/* Cairo Tower ATC & Airfield Radio Speaker Button */}
           <button
             type="button"
-            onClick={toggleMute}
+            onClick={() => {
+              playClick();
+              toggleMute();
+            }}
             className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
               !isMuted
                 ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
@@ -249,9 +258,35 @@ export function Header({
             )}
           </button>
 
+          {/* Tactile Audio Feedback (SFX) Earcon Toggle */}
           <button
             type="button"
-            onClick={toggleKiosk}
+            onClick={toggleSoundEffects}
+            className={`hidden sm:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
+              sfxEnabled
+                ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
+                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+            }`}
+            aria-label={
+              sfxEnabled
+                ? language === "ar" ? "تعطيل مؤثرات النقر الصوتية" : "Disable Click Sound Effects"
+                : language === "ar" ? "تفعيل مؤثرات النقر الصوتية" : "Enable Click Sound Effects"
+            }
+            title={
+              sfxEnabled
+                ? language === "ar" ? "مؤثرات النقر الصوتية (مفعل)" : "Click Sound Effects (Active)"
+                : language === "ar" ? "مؤثرات النقر الصوتية (معطل)" : "Click Sound Effects (Muted)"
+            }
+          >
+            {sfxEnabled ? <Bell aria-hidden="true" className="h-4 w-4 text-primary" /> : <BellOff aria-hidden="true" className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              playClick();
+              toggleKiosk();
+            }}
             className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
               isKioskActive
                 ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
@@ -265,7 +300,10 @@ export function Header({
           {onOpenCommandPalette && (
             <button
               type="button"
-              onClick={onOpenCommandPalette}
+              onClick={() => {
+                playClick();
+                onOpenCommandPalette();
+              }}
               className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground transition-colors cursor-pointer"
               aria-label={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
               title={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
@@ -276,6 +314,7 @@ export function Header({
           <button
             type="button"
             onClick={() => {
+              playClick();
               onShowResources();
               setIsMenuOpen(false);
             }}
@@ -349,6 +388,7 @@ export function Header({
                 aria-selected={isActive}
                 aria-controls={isResourcesPage ? undefined : "main-content"}
                 onClick={() => {
+                  playClick();
                   setActiveTab(tab.id);
                   onShowDashboard();
                   setIsMenuOpen(false);
@@ -373,6 +413,7 @@ export function Header({
             tabIndex={isResourcesPage ? 0 : -1}
             aria-selected={isResourcesPage}
             onClick={() => {
+              playClick();
               onShowResources();
               setIsMenuOpen(false);
               window.scrollTo({ top: 0, behavior: "smooth" });
@@ -432,6 +473,24 @@ export function Header({
                   {language === "ar"
                     ? !isMuted ? "كتم إذاعة وبرج مراقبة القاهرة (118.1 MHz)" : "تشغيل إذاعة وبرج مراقبة القاهرة (118.1 MHz)"
                     : !isMuted ? "Mute Cairo Tower ATC Radio (118.1 MHz)" : "Unmute Cairo Tower ATC Radio (118.1 MHz)"}
+                </span>
+              </button>
+
+              {/* Tactile Click Sound Effects (SFX) Toggle in Drawer */}
+              <button
+                type="button"
+                onClick={() => handleMenuSelect(toggleSoundEffects)}
+                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
+                  sfxEnabled
+                    ? "border-primary/50 bg-primary/15 text-primary"
+                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
+                }`}
+              >
+                {sfxEnabled ? <Bell className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4 text-muted-foreground" />}
+                <span>
+                  {language === "ar"
+                    ? sfxEnabled ? "تعطيل مؤثرات النقر الصوتية (SFX)" : "تفعيل مؤثرات النقر الصوتية (SFX)"
+                    : sfxEnabled ? "Disable Click Sound Feedback (SFX)" : "Enable Click Sound Feedback (SFX)"}
                 </span>
               </button>
 

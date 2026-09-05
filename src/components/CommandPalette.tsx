@@ -17,10 +17,14 @@ import {
   ShieldAlert,
   RotateCcw,
   Clock3,
+  Bell,
+  Volume2,
 } from 'lucide-react';
 import { ManagerTab, Language, ThemeMode, departures, arrivals, scenes } from '../data';
 import { localize } from '../utils/helpers';
 import { useSimulation } from '../context/simulation';
+import { useSoundEffects } from '../hooks/useSoundEffects';
+import { useAirfieldRadio } from '../hooks/useAirfieldRadio';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -66,6 +70,8 @@ export function CommandPalette({
   const listRef = useRef<HTMLDivElement>(null);
 
   const { toggleKiosk, setScenarioId, resetDrill, setActiveShiftWave } = useSimulation();
+  const { isEnabled: sfxEnabled, toggleSoundEffects } = useSoundEffects();
+  const { isMuted: radioMuted, toggleMute: toggleRadio } = useAirfieldRadio();
 
   useEffect(() => {
     if (isOpen) {
@@ -323,11 +329,39 @@ export function CommandPalette({
           setLanguage(language === 'en' ? 'ar' : 'en');
           onClose();
         },
+      },
+      {
+        id: 'toggle-sfx',
+        category: 'settings',
+        categoryLabel: { en: 'Preferences', ar: 'الإعدادات والتفضيلات' },
+        title: sfxEnabled
+          ? (language === 'ar' ? 'تعطيل مؤثرات النقر الصوتية (SFX)' : 'Disable Click Sound Feedback (SFX)')
+          : (language === 'ar' ? 'تفعيل مؤثرات النقر الصوتية (SFX)' : 'Enable Click Sound Feedback (SFX)'),
+        subtitle: language === 'ar' ? 'أصوات نقر خفيفة ومؤثرات صوتية للأزرار' : 'Subtle tactile auditory feedback on clicks',
+        icon: Bell,
+        action: () => {
+          toggleSoundEffects();
+          onClose();
+        },
+      },
+      {
+        id: 'toggle-radio',
+        category: 'settings',
+        categoryLabel: { en: 'Preferences', ar: 'الإعدادات والتفضيلات' },
+        title: !radioMuted
+          ? (language === 'ar' ? 'كتم إذاعة وبرج مراقبة القاهرة (118.1 MHz)' : 'Mute Cairo Tower ATC Radio (118.1 MHz)')
+          : (language === 'ar' ? 'تشغيل إذاعة وبرج مراقبة القاهرة (118.1 MHz)' : 'Play Cairo Tower ATC Radio (118.1 MHz)'),
+        subtitle: language === 'ar' ? 'بث صوتي لنداءات مراقبة الطيران وإذاعة ATIS' : 'Aviation radio communications voice broadcast',
+        icon: Volume2,
+        action: () => {
+          toggleRadio();
+          onClose();
+        },
       }
     );
 
     return list;
-  }, [language, theme, highContrast, onSelectTab, onSelectScene, onShowResources, setHighContrast, setLanguage, setTheme, onClose, toggleKiosk, setScenarioId, resetDrill, setActiveShiftWave]);
+  }, [language, theme, highContrast, onSelectTab, onSelectScene, onShowResources, setHighContrast, setLanguage, setTheme, onClose, toggleKiosk, setScenarioId, resetDrill, setActiveShiftWave, sfxEnabled, toggleSoundEffects, radioMuted, toggleRadio]);
 
   const filteredItems = useMemo(() => {
     if (!query.trim()) return items;
