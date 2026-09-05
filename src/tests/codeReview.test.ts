@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { scenes, departures, arrivals, drillScenarios, arText } from "../data";
 import { localize, formatCairoTime } from "../utils/helpers";
+import { safeStorage } from "../utils/safeStorage";
 
 describe("Code Review & Telemetry Data Integrity", () => {
   it("validates that all scenes have valid coordinates, non-empty labels, and hotspots", () => {
@@ -72,5 +73,12 @@ describe("Code Review & Telemetry Data Integrity", () => {
     expect(localize({ en: "Cairo", ar: "القاهرة" }, "ar")).toBe("القاهرة");
     expect(localize(undefined, "en")).toBe("");
     expect(localize(null, "ar")).toBe("");
+  });
+
+  it("validates safeStorage reliability and in-memory resilience", () => {
+    safeStorage.setItem("test_key_ci", "operational_value");
+    expect(safeStorage.getItem("test_key_ci")).toBe("operational_value");
+    safeStorage.removeItem("test_key_ci");
+    expect(safeStorage.getItem("test_key_ci")).toBeNull();
   });
 });

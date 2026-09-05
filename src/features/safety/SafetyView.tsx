@@ -1,12 +1,10 @@
-import { useState } from 'react';
-import { Users, AlertTriangle, UserCheck, Plane, Clock3, Wrench, CheckCircle2, Zap, Download, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Zap, Download } from 'lucide-react';
 import { toneCssVar, localize } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
-import { useSimulation } from '../../context/simulation';
+import { useSafetyCompliance } from '../../hooks/useSafetyCompliance';
 import { exportToCsv } from '../../utils/exportCsv';
 import { safetyChecks, maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
-import { notifyManager } from '../../utils/toast';
 
 function SafetyView() {
   return (
@@ -35,73 +33,8 @@ function SafetyView() {
 
 function PriorityActionsPanel() {
   const { tr, language } = useLocale();
-  const { activeScenario, isDrillActive } = useSimulation();
-  const [authorizedActions, setAuthorizedActions] = useState<Record<string, boolean>>({});
-
-  const handleAuthorize = (title: string, outcome: string) => {
-    setAuthorizedActions((prev) => ({ ...prev, [title]: true }));
-    notifyManager(
-      language === 'ar' ? 'تم اعتماد التوجيه التشغيلي بنجاح' : 'Operational Directive Authorized',
-      `${tr(title)}: ${tr(outcome)}`,
-      'ok'
-    );
-  };
-
-  const baseActions = [
-    {
-      icon: Users,
-      title: "Rebalance security staff",
-      outcome: "-4 min expected wait",
-      badge: "Ops",
-      badgeTone: "info" as Tone,
-      controlIcon: AlertTriangle,
-      controlText: "3 findings open longer than 24h",
-      controlBadge: "Medium",
-      controlTone: "warn" as Tone,
-      isDrill: false,
-    },
-    {
-      icon: Plane,
-      title: "Fast-track F11 passengers",
-      outcome: "Protects departure time",
-      badge: "Gates",
-      badgeTone: "ok" as Tone,
-      controlIcon: UserCheck,
-      controlText: "Every safety item has an owner and due time",
-      controlBadge: "Assigned",
-      controlTone: "ok" as Tone,
-      isDrill: false,
-    },
-    {
-      icon: Wrench,
-      title: "Confirm SU-GBP parts",
-      outcome: "Reduces tomorrow risk",
-      badge: "Maintenance",
-      badgeTone: "warn" as Tone,
-      controlIcon: Clock3,
-      controlText: "Escalates if action has not started",
-      controlBadge: "Auto-escalation",
-      controlTone: "info" as Tone,
-      isDrill: false,
-    },
-  ];
-
-  const drillActions = isDrillActive
-    ? activeScenario.injectedDirectives.map((d) => ({
-        icon: ShieldAlert,
-        title: d.title,
-        outcome: d.outcome,
-        badge: d.badge,
-        badgeTone: d.badgeTone,
-        controlIcon: AlertTriangle,
-        controlText: d.controlText,
-        controlBadge: d.controlBadge,
-        controlTone: d.controlTone,
-        isDrill: true,
-      }))
-    : [];
-
-  const actions = [...drillActions, ...baseActions];
+  const { authorizedActions, handleAuthorize, allDirectives, isDrillActive } = useSafetyCompliance(language);
+  const actions = allDirectives;
 
   return (
     <SectionPanel

@@ -1,3 +1,5 @@
+import { safeStorage } from "../utils/safeStorage";
+
 // Operational Audio Feedback (Earcons) Service: Web Audio API Synthesized Clicks & Chimes
 // Lightweight, client-side, zero latency, zero external asset downloads.
 // Designed strictly for subtle tactile feedback without cognitive noise fatigue.
@@ -8,11 +10,9 @@ class SoundEffectsService {
   private listeners: Set<() => void> = new Set();
 
   constructor() {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("cai_sfx_enabled");
-      // Default to disabled to respect WCAG AAA quiet environment guidelines
-      this.isEnabled = stored === "true";
-    }
+    const stored = safeStorage.getItem("cai_sfx_enabled");
+    // Default to disabled to respect WCAG AAA quiet environment guidelines
+    this.isEnabled = stored === "true";
   }
 
   public subscribe(listener: () => void): () => void {
@@ -30,9 +30,7 @@ class SoundEffectsService {
 
   public setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    if (typeof window !== "undefined") {
-      localStorage.setItem("cai_sfx_enabled", enabled ? "true" : "false");
-    }
+    safeStorage.setItem("cai_sfx_enabled", enabled ? "true" : "false");
     if (enabled) {
       this.getAudioContext();
       this.playClick();
