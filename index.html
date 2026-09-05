@@ -9,9 +9,9 @@
       content="CAI Command Hub is a focused Cairo International Airport management dashboard for operations, safety, passenger flow, and maintenance decisions."
     />
     <title>CAI Command Hub | Managers</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -25,14 +25,24 @@
         JavaScript is required to run the CAI Command Hub dashboard. Please enable JavaScript in your browser settings.
       </p>
     </noscript>
-    <div id="root" aria-busy="true"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root"></div>
     <script>
-      if ('serviceWorker' in navigator && !window.location.hostname.includes('localhost')) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js').catch(() => {});
+      // Clear legacy broken service workers and caches on load
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(keys) {
+          for (var i = 0; i < keys.length; i++) {
+            caches.delete(keys[i]);
+          }
         });
       }
     </script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

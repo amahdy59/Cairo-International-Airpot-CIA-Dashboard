@@ -1,6 +1,6 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy } from "react";
 const ResourcesAuditPage = lazy(() => import("./components/ResourcesAuditPage"));
-const CommandPalette = lazy(() => import("./components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
+import { CommandPalette } from "./components/CommandPalette";
 import { LocaleContext } from "./context/locale";
 import { useHeaderClock } from "./hooks/useHeaderClock";
 
@@ -154,27 +154,25 @@ export function App() {
             )}
           </main>
 
-          {/* Global Command Palette (Lazy loaded) */}
-          <Suspense fallback={null}>
-            <CommandPalette
-              isOpen={isCommandPaletteOpen}
-              onClose={() => setIsCommandPaletteOpen(false)}
-              onSelectTab={(tab) => {
-                setActiveTab(tab);
-                showDashboard();
-              }}
-              onSelectScene={(sceneId) => {
-                setSelectedSceneId(sceneId);
-              }}
-              language={language}
-              setLanguage={setLanguage}
-              theme={theme}
-              setTheme={setTheme}
-              highContrast={highContrast}
-              setHighContrast={setHighContrast}
-              onShowResources={showResources}
-            />
-          </Suspense>
+          {/* Global Command Palette */}
+          <CommandPalette
+            isOpen={isCommandPaletteOpen}
+            onClose={() => setIsCommandPaletteOpen(false)}
+            onSelectTab={(tab) => {
+              setActiveTab(tab);
+              showDashboard();
+            }}
+            onSelectScene={(sceneId) => {
+              setSelectedSceneId(sceneId);
+            }}
+            language={language}
+            setLanguage={setLanguage}
+            theme={theme}
+            setTheme={setTheme}
+            highContrast={highContrast}
+            setHighContrast={setHighContrast}
+            onShowResources={showResources}
+          />
 
           {/* Real-time Managers Toast Feed */}
           <ToastContainer />

@@ -6,18 +6,5 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   base: process.env.VERCEL ? "/" : "/Cairo-International-Airpot-CIA-Dashboard/",
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
-            return "react-vendor";
-          }
-          if (id.includes("node_modules/lucide-react/")) {
-            return "ui-icons";
-          }
-        },
-      },
-    },
-  },
 });
+
