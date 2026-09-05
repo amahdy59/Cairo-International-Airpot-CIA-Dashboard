@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "review": "node scripts/ci-review.mjs",
-    "audit:all": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "audit:all": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "verify:live": "node scripts/verify-live-deployment.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",

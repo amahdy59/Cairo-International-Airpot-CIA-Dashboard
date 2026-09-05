@@ -65,8 +65,31 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Pages Site
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-live-deployment:
+    name: Automated Live Deployment Smoke & Health Check
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Live Deployment Autochecker
+        env:
+          DEPLOYMENT_URL: 'https://amahdy59.github.io/Cairo-International-Airpot-CIA-Dashboard/'
+          MAX_ATTEMPTS: 12
+          RETRY_DELAY_MS: 5000
+        run: node scripts/verify-live-deployment.mjs
