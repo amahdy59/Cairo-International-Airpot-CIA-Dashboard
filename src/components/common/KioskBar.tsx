@@ -51,7 +51,7 @@ export function KioskBar({ activeTab }: KioskBarProps) {
   return (
     <aside
       aria-label={localize({ en: "AOCC Video Wall Auto-Cycle Control Bar", ar: "شريط التحكم في دورة شاشة العمليات المشتركة" }, language)}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-1.5 rounded-2xl border border-primary/40 bg-background/95 p-2 px-4 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-2xl animate-in slide-in-from-bottom-6 duration-300"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex w-[calc(100%-1.5rem)] max-w-md sm:w-auto flex-col items-center gap-1.5 rounded-2xl border border-primary/40 bg-background/95 p-2 px-3 sm:px-4 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-2xl animate-in slide-in-from-bottom-6 duration-300"
     >
       {/* Progress Bar */}
       <div className="w-full h-1 bg-secondary rounded-full overflow-hidden">

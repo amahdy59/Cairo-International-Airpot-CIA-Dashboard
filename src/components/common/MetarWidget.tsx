@@ -119,7 +119,7 @@ export function MetarWidget() {
           ref={popoverRef}
           role="dialog"
           aria-label={localize({ en: "HECA Cairo Airfield METAR & Runways", ar: "تقرير METAR ومدرجات مطار القاهرة" }, language)}
-          className="absolute end-0 top-full z-50 mt-2 w-[340px] sm:w-[400px] rounded-2xl border border-border bg-background/95 p-4 shadow-2xl backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
+          className="absolute end-0 top-full z-50 mt-2 w-[340px] max-w-[calc(100vw-1.5rem)] sm:w-[400px] rounded-2xl border border-border bg-background/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
         >
           {/* Header */}
           <div className="flex items-start justify-between border-b border-border/60 pb-3">

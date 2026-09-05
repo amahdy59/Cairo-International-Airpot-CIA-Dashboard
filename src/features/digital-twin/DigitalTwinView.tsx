@@ -141,17 +141,34 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
   }, [selectedHotspotId]);
 
   useEffect(() => {
-    // Preload all scene images (light and dark) to browser cache for instant toggles/swaps
-    scenes.forEach((scene) => {
-      const imgLight = new Image();
-      imgLight.src = scene.image;
-      const imgDark = new Image();
-      imgDark.src = scene.darkImage;
-    });
-    // Preload CCTV image to resolve dynamic load latency
-    const cctvImg = new Image();
-    cctvImg.src = import.meta.env.BASE_URL + "manager-assets/cctv-live.webp";
-  }, []);
+    // Schedule background preloading of other scene images during browser idle time
+    const preload = () => {
+      scenes.forEach((scene) => {
+        if (scene.id !== activeSceneId) {
+          const imgLight = new Image();
+          imgLight.src = scene.image;
+          const imgDark = new Image();
+          imgDark.src = scene.darkImage;
+        }
+      });
+      const cctvImg = new Image();
+      cctvImg.src = import.meta.env.BASE_URL + "manager-assets/cctv-live.webp";
+    };
+
+    if (typeof window !== "undefined") {
+      if ("requestIdleCallback" in window) {
+        const id = (window as unknown as { requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(preload, { timeout: 3000 });
+        return () => {
+          if ("cancelIdleCallback" in window) {
+            (window as unknown as { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(id);
+          }
+        };
+      } else {
+        const id = window.setTimeout(preload, 1500);
+        return () => window.clearTimeout(id);
+      }
+    }
+  }, [activeSceneId]);
 
   useEffect(() => {
     setIsImageLoaded(false);

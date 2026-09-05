@@ -74,14 +74,14 @@ export function SimulationBanner() {
               aria-expanded={isOpen}
               aria-label={localize({ en: "Select Emergency Drill Scenario", ar: "اختيار سيناريو المحاكاة" }, language)}
             >
-              <span>{localize(activeScenario.title, language)}</span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              <span className="truncate max-w-[180px] sm:max-w-none">{localize(activeScenario.title, language)}</span>
+              <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             {isOpen && (
               <div
                 role="listbox"
-                className="absolute end-0 top-full z-50 mt-1 w-64 rounded-xl border border-border bg-background p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
+                className="absolute end-0 top-full z-50 mt-1 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-background p-1 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
               >
                 {drillScenarios.map((sc) => (
                   <button

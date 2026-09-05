@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 const ResourcesAuditPage = lazy(() => import("./components/ResourcesAuditPage"));
+const CommandPalette = lazy(() => import("./components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
 import { LocaleContext } from "./context/locale";
+import { useHeaderClock } from "./hooks/useHeaderClock";
 
 import { ManagerTab, PageView, ThemeMode, Language, copy } from './data';
 
@@ -9,7 +11,6 @@ import OperationsView from './features/operations/OperationsView';
 import SafetyView from './features/safety/SafetyView';
 import { Header, BackToTopButton } from './components/layout/Header';
 import { ErrorBoundary } from './components/layout/ErrorBoundary';
-import { CommandPalette } from './components/CommandPalette';
 import { ToastContainer } from './components/common/Toast';
 import { SimulationProvider } from './context/simulation';
 import { SimulationBanner } from './components/common/SimulationBanner';
@@ -153,25 +154,27 @@ export function App() {
             )}
           </main>
 
-          {/* Global Command Palette */}
-          <CommandPalette
-            isOpen={isCommandPaletteOpen}
-            onClose={() => setIsCommandPaletteOpen(false)}
-            onSelectTab={(tab) => {
-              setActiveTab(tab);
-              showDashboard();
-            }}
-            onSelectScene={(sceneId) => {
-              setSelectedSceneId(sceneId);
-            }}
-            language={language}
-            setLanguage={setLanguage}
-            theme={theme}
-            setTheme={setTheme}
-            highContrast={highContrast}
-            setHighContrast={setHighContrast}
-            onShowResources={showResources}
-          />
+          {/* Global Command Palette (Lazy loaded) */}
+          <Suspense fallback={null}>
+            <CommandPalette
+              isOpen={isCommandPaletteOpen}
+              onClose={() => setIsCommandPaletteOpen(false)}
+              onSelectTab={(tab) => {
+                setActiveTab(tab);
+                showDashboard();
+              }}
+              onSelectScene={(sceneId) => {
+                setSelectedSceneId(sceneId);
+              }}
+              language={language}
+              setLanguage={setLanguage}
+              theme={theme}
+              setTheme={setTheme}
+              highContrast={highContrast}
+              setHighContrast={setHighContrast}
+              onShowResources={showResources}
+            />
+          </Suspense>
 
           {/* Real-time Managers Toast Feed */}
           <ToastContainer />
@@ -198,32 +201,5 @@ export function App() {
         </div>
       </SimulationProvider>
     </LocaleContext.Provider>
-  );
-}
-
-
-
-function useHeaderClock() {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  return useMemo(
-    () => ({
-      cairo: new Intl.DateTimeFormat("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Africa/Cairo",
-      }).format(now),
-      utc: new Intl.DateTimeFormat("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "UTC",
-      }).format(now),
-    }),
-    [now],
   );
 }
