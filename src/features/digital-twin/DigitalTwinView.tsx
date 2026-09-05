@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, ChevronRight, CheckCircle2, Loader2, Rotate3d, Flame, Layers } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
@@ -9,6 +9,8 @@ import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 import { notifyManager } from '../../utils/toast';
 import { soundEffects } from '../../services/soundEffects';
 import { ApronConflictDetector } from './ApronConflictDetector';
+import { Airfield3DCanvas } from './Airfield3DCanvas';
+import { TerminalHeatmapOverlay } from '../../components/command-center/TerminalHeatmapOverlay';
 
 type Translatable = string | { en: string; ar: string };
 
@@ -17,6 +19,7 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const activeScene = useMemo(() => scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0], [activeSceneId]);
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
+  const [twinMode, setTwinMode] = useState<"3d" | "heatmap" | "2d">("3d");
   const [dispatchedHotspots, setDispatchedHotspots] = useState<Record<string, 'idle' | 'dispatching' | 'dispatched'>>({});
 
   useEffect(() => {
@@ -314,41 +317,82 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
     <div className="flex flex-col flex-1 min-h-0 min-w-0 gap-2 lg:gap-3">
       <nav className="relative z-10 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
         <div className="flex min-w-0 items-center justify-between gap-3 overflow-x-auto scroll-smooth touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-max">
-            <h2 className="shrink-0 text-xs sm:text-sm font-bold tracking-tight text-foreground flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-              <span>{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</span>
-            </h2>
-            <span className="hidden sm:inline-block shrink-0 font-mono text-[10px] font-semibold uppercase text-muted-foreground/40">|</span>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-            {jumpScenes.map((scene) => {
-              const active = scene.id === activeSceneId;
-              return (
-                <button
-                  key={scene.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveSceneId(scene.id);
-                    selectHotspotAndScene(null);
-                  }}
-                  aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl border px-3 sm:px-4 text-xs lg:text-sm font-semibold transition-all duration-200 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                    active ? "border-primary/50 bg-primary/[0.16] text-foreground shadow-[0_0_18px_rgba(88,214,255,0.14)]" : "border-transparent text-muted-foreground hover:border-border hover:bg-background/65 hover:text-foreground"
-                  }`}
-                >
-                  {tr(scene.label)}
-                </button>
-              );
-            })}
-            </div>
+          {/* Left: View Mode Selectors */}
+          <div className="flex items-center gap-1 bg-secondary/60 p-1 rounded-xl border border-border/50 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playClick();
+                setTwinMode("3d");
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                twinMode === "3d" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Rotate3d className="h-3.5 w-3.5" />
+              <span>{language === "ar" ? "المجسم ثلاثي الأبعاد (3D)" : "3D Isometric"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playClick();
+                setTwinMode("heatmap");
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                twinMode === "heatmap" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Flame className="h-3.5 w-3.5" />
+              <span>{language === "ar" ? "خريطة الازدحام" : "Concourse Heatmap"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playClick();
+                setTwinMode("2d");
+              }}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                twinMode === "2d" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              <span>{language === "ar" ? "مخطط الساحات (2D)" : "2D Schematic"}</span>
+            </button>
           </div>
+
+          {/* Right: Scene jumps for 2D mode */}
+          {twinMode === "2d" && (
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <span className="hidden sm:inline-block shrink-0 font-mono text-[10px] font-semibold uppercase text-muted-foreground/40 me-1">|</span>
+              {jumpScenes.map((scene) => {
+                const active = scene.id === activeSceneId;
+                return (
+                  <button
+                    key={scene.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveSceneId(scene.id);
+                      selectHotspotAndScene(null);
+                    }}
+                    aria-current={active ? "page" : undefined}
+                    className={`inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-xl border px-3 text-xs font-semibold transition-all duration-200 active:scale-95 cursor-pointer ${
+                      active ? "border-primary/50 bg-primary/[0.16] text-foreground" : "border-transparent text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {tr(scene.label)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* ICAO Annex 14 Apron Stand & Wingspan Clearance Monitor */}
-      <ApronConflictDetector />
-
-      <SectionPanel className="flex flex-col flex-1 min-h-0 overflow-visible p-0!" title="">
+      {/* Main View Port based on twinMode */}
+      {twinMode === "3d" && <Airfield3DCanvas />}
+      {twinMode === "heatmap" && <TerminalHeatmapOverlay />}
+      {twinMode === "2d" && (
+        <SectionPanel className="flex flex-col flex-1 min-h-0 overflow-visible p-0!" title="">
         <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] flex-1 min-h-0 h-full">
           <div className="flex flex-col min-w-0 h-full relative">
             <div id="digital-twin-image-viewport" className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
@@ -682,7 +726,18 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
           </aside>
         </div>
       </SectionPanel>
+      )}
 
+      {/* ICAO Annex 14 Apron Stand & Wingspan Clearance Monitor */}
+      <ApronConflictDetector />
+
+      {/* Common bottom telemetry cards for 3D & Heatmap modes */}
+      {twinMode !== "2d" && (
+        <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
+          <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
+          <ZoneStatusPanel />
+        </div>
+      )}
     </div>
   );
 }

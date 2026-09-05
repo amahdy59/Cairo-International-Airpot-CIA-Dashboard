@@ -22,6 +22,8 @@ import {
   Users,
   Settings2,
   Check,
+  Smartphone,
+  Sliders,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
@@ -79,7 +81,15 @@ export function Header({
   const { tr } = useLocale();
   const { toggleKiosk, isKioskActive, isDrillActive } = useSimulation();
   const { isMuted, toggleMute, isTransmitting } = useAirfieldRadio();
-  const { isEnabled: sfxEnabled, toggleSoundEffects, playClick } = useSoundEffects();
+  const {
+    isEnabled: sfxEnabled,
+    toggleSoundEffects,
+    playClick,
+    profile,
+    setProfile,
+    isHapticsEnabled,
+    setHapticsEnabled,
+  } = useSoundEffects();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -374,6 +384,52 @@ export function Header({
                         </div>
                         <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${sfxEnabled ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
                           {sfxEnabled ? "ON" : "OFF"}
+                        </span>
+                      </button>
+
+                      {/* Tone Profile & Haptics Sub-Controls */}
+                      {sfxEnabled && (
+                        <div className="flex items-center justify-between gap-1.5 rounded-xl border border-border/40 bg-secondary/30 p-1.5 text-xs">
+                          <span className="text-[10px] text-muted-foreground font-medium ps-1 flex items-center gap-1">
+                            <Sliders className="h-3 w-3 text-primary" />
+                            {language === "ar" ? "النبرة:" : "Tone:"}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setProfile("chime")}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${profile === "chime" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                            >
+                              {language === "ar" ? "هادئ" : "Soft Chime"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProfile("penetrating")}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${profile === "penetrating" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                            >
+                              {language === "ar" ? "قوي" : "AOCC High"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mobile Airside Haptics */}
+                      <button
+                        type="button"
+                        onClick={() => setHapticsEnabled(!isHapticsEnabled)}
+                        className="flex w-full items-center justify-between rounded-xl border border-border/60 bg-background/50 p-2 text-start transition-colors hover:bg-secondary cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-secondary text-foreground">
+                            <Smartphone className={`h-3.5 w-3.5 ${isHapticsEnabled ? "text-primary" : "text-muted-foreground"}`} />
+                          </span>
+                          <div>
+                            <span className="font-semibold block text-foreground">Haptic Feedback</span>
+                            <span className="text-[10px] text-muted-foreground">Tactile Tablet Vibration</span>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${isHapticsEnabled ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {isHapticsEnabled ? "ON" : "OFF"}
                         </span>
                       </button>
                     </div>

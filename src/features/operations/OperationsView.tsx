@@ -7,6 +7,7 @@ import { exportToCsv } from '../../utils/exportCsv';
 import { FlightRow, Tone, shiftWaves, InfluxForecastPoint, TerminalId } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
 import { AcdmMilestones } from './AcdmMilestones';
+import { CairoRadarScope } from '../../components/command-center/CairoRadarScope';
 
 function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
   return (
@@ -404,6 +405,9 @@ function OperationsView() {
         <PassengerFlowChart />
         <QueuePressureChart />
       </div>
+
+      {/* Cairo TMA Approach Vector Radar Scope (50NM) */}
+      <CairoRadarScope />
 
       {/* Tables: Detailed lists */}
       <div className="grid gap-3 lg:gap-4 md:grid-cols-2">

@@ -26,6 +26,7 @@ import {
 } from "../data";
 import { notifyManager } from "../utils/toast";
 import { soundEffects } from "../services/soundEffects";
+import { aoccBroadcast } from "../services/broadcastChannel";
 
 export type KioskPreset = "all-cycle" | "flight-tactical" | "airside-ground" | "crisis-command";
 
@@ -84,16 +85,27 @@ export function SimulationProvider({
   onShowDashboard,
 }: SimulationProviderProps) {
   const [scenarioId, setScenarioIdState] = useState<ScenarioId>("baseline");
-  const [activeShiftWave, setActiveShiftWave] = useState<ShiftWaveId>("all");
+  const [activeShiftWave, setActiveShiftWaveState] = useState<ShiftWaveId>("all");
   const [activeTerminal, setActiveTerminalState] = useState<"ALL" | TerminalId>("ALL");
   const [isKioskActive, setIsKioskActive] = useState<boolean>(false);
   const [isKioskPaused, setIsKioskPaused] = useState<boolean>(false);
   const [kioskSecondsRemaining, setKioskSecondsRemaining] = useState<number>(KIOSK_CYCLE_SECONDS);
   const [kioskPreset, setKioskPreset] = useState<KioskPreset>("all-cycle");
 
-  const setActiveTerminal = useCallback((terminal: "ALL" | TerminalId) => {
+  const setActiveTerminal = useCallback((terminal: "ALL" | TerminalId, broadcast = true) => {
     setActiveTerminalState(terminal);
     soundEffects.playClick();
+    if (broadcast) {
+      aoccBroadcast.broadcast({ type: "TERMINAL_CHANGE", terminal });
+    }
+  }, []);
+
+  const setActiveShiftWave = useCallback((wave: ShiftWaveId, broadcast = true) => {
+    setActiveShiftWaveState(wave);
+    soundEffects.playClick();
+    if (broadcast) {
+      aoccBroadcast.broadcast({ type: "WAVE_CHANGE", waveId: wave });
+    }
   }, []);
 
   const activeScenario = useMemo(() => {
@@ -209,8 +221,11 @@ export function SimulationProvider({
     return activeScenario.recommendedSurgeUnitIds || [];
   }, [activeScenario]);
 
-  const setScenarioId = useCallback((id: ScenarioId) => {
+  const setScenarioId = useCallback((id: ScenarioId, broadcast = true) => {
     setScenarioIdState(id);
+    if (broadcast) {
+      aoccBroadcast.broadcast({ type: "SCENARIO_CHANGE", scenarioId: id });
+    }
     const target = drillScenarios.find((s) => s.id === id);
     if (target && id !== "baseline") {
       notifyManager(
@@ -225,6 +240,20 @@ export function SimulationProvider({
         "ok"
       );
     }
+  }, []);
+
+  // Synchronize across multi-display windows / tabs
+  useEffect(() => {
+    const unsubscribe = aoccBroadcast.subscribe((msg) => {
+      if (msg.type === "SCENARIO_CHANGE") {
+        setScenarioIdState(msg.scenarioId as ScenarioId);
+      } else if (msg.type === "WAVE_CHANGE") {
+        setActiveShiftWaveState(msg.waveId as ShiftWaveId);
+      } else if (msg.type === "TERMINAL_CHANGE") {
+        setActiveTerminalState(msg.terminal as "ALL" | TerminalId);
+      }
+    });
+    return unsubscribe;
   }, []);
 
   const resetDrill = useCallback(() => {
@@ -322,6 +351,7 @@ export function SimulationProvider({
       resetDrill,
       metar,
       activeShiftWave,
+      setActiveShiftWave,
       activeTerminal,
       setActiveTerminal,
       isKioskActive,

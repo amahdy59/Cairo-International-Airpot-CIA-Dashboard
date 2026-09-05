@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Zap, Download, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Zap, Download, ShieldAlert, ShieldCheck, FileText } from 'lucide-react';
 import { toneCssVar, localize } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
@@ -8,9 +8,11 @@ import { exportToCsv } from '../../utils/exportCsv';
 import { maintenanceRows, aircraftRiskRows, Tone } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
 import { IncidentPlaybookModal } from './IncidentPlaybookModal';
+import { DrillPostMortemModal } from './DrillPostMortemModal';
 
 function SafetyView() {
   const [isPlaybookOpen, setIsPlaybookOpen] = useState(false);
+  const [isPostMortemOpen, setIsPostMortemOpen] = useState(false);
   const { language } = useLocale();
 
   return (
@@ -32,17 +34,28 @@ function SafetyView() {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsPlaybookOpen(true)}
-          className="flex items-center gap-1.5 rounded-xl border border-status-crit/40 bg-status-crit/15 px-3.5 py-2 text-xs font-bold text-status-crit hover:bg-status-crit/25 active-spring transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <ShieldAlert className="h-4 w-4" />
-          <span>{language === "ar" ? "فتح كتيب الطوارئ (Playbooks)" : "Open Crisis Playbooks"}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsPostMortemOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-bold text-primary hover:bg-primary/20 active-spring transition-all cursor-pointer"
+          >
+            <FileText className="h-4 w-4" />
+            <span>{language === "ar" ? "تقرير الأزمة (Debrief)" : "Incident Debrief (PDF)"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPlaybookOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-status-crit/40 bg-status-crit/15 px-3.5 py-2 text-xs font-bold text-status-crit hover:bg-status-crit/25 active-spring transition-all cursor-pointer"
+          >
+            <ShieldAlert className="h-4 w-4" />
+            <span>{language === "ar" ? "فتح كتيب الطوارئ (Playbooks)" : "Open Crisis Playbooks"}</span>
+          </button>
+        </div>
       </div>
 
       <IncidentPlaybookModal isOpen={isPlaybookOpen} onClose={() => setIsPlaybookOpen(false)} />
+      <DrillPostMortemModal isOpen={isPostMortemOpen} onClose={() => setIsPostMortemOpen(false)} />
 
       {/* Top Section: 2x2 grid on desktop, single column on tablet/mobile */}
       <div className="grid gap-3 lg:gap-4 lg:grid-cols-2">
