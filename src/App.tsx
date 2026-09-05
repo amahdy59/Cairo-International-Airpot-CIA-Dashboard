@@ -16,6 +16,7 @@ import { ToastContainer } from './components/common/Toast';
 import { SimulationProvider } from './context/simulation';
 import { SimulationBanner } from './components/common/SimulationBanner';
 import { KioskBar } from './components/common/KioskBar';
+import { ExecutivePulseBar } from './components/layout/ExecutivePulseBar';
 
 function getInitialPageView(): PageView {
   if (typeof window === "undefined") {
@@ -153,9 +154,17 @@ export function App() {
             onShowResources={showResources}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           />
-          <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1720px] min-w-0 px-2 sm:px-4 lg:px-8 pt-28 sm:pt-32 xl:pt-20 pb-3 lg:pb-4">
+          <main id="main" className="mx-auto flex flex-col flex-1 min-h-0 w-full max-w-[1720px] min-w-0 px-2 sm:px-4 lg:px-8 pt-20 pb-3 lg:pb-4">
             {activePage !== "resources" && <h1 className="sr-only">{c.brand} - {c.airport}</h1>}
             {activePage !== "resources" && <SimulationBanner />}
+            {activePage !== "resources" && (
+              <ExecutivePulseBar
+                onNavigateTab={(tab) => {
+                  setActiveTab(tab);
+                  showDashboard();
+                }}
+              />
+            )}
             {activePage === "resources" ? (
               <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
                 <ErrorBoundary>
@@ -163,7 +172,7 @@ export function App() {
                 </ErrorBoundary>
               </div>
             ) : (
-            <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : activeTab === 'safety' ? 'Safety & Compliance' : 'Staffing & Workforce'} className="flex flex-col flex-1 min-h-0 min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both outline-none">
+            <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : activeTab === 'safety' ? 'Safety & Compliance' : 'Staffing & Workforce'} className="flex flex-col flex-1 min-h-0 min-w-0 fade-rise outline-none">
               <ErrorBoundary>
                 {activeTab === "digital" && <DigitalTwinView theme={theme} selectedSceneId={selectedSceneId} />}
                 {activeTab === "operations" && <OperationsView />}

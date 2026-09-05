@@ -58,7 +58,7 @@ export function MetricCard({
   );
 
   return (
-    <article className="panel relative overflow-hidden p-4 transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.6)] group bg-card">
+    <article className="panel relative overflow-hidden p-4 rounded-2xl border border-white/10 spring-transition hover:-translate-y-1 hover:shadow-md dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)] group bg-card">
       <div className="absolute -top-12 -start-12 h-32 w-32 rounded-full opacity-0 dark:opacity-15 blur-2xl pointer-events-none transition-opacity duration-500 group-hover:opacity-20 dark:group-hover:opacity-30" style={{ backgroundColor: accentHex }} />
       <div className={`absolute inset-y-0 start-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100 transition-transform duration-500 origin-top group-hover:scale-y-110`} />
       <div className="relative z-10 flex items-start justify-between gap-3 ps-1">

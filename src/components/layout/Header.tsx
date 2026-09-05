@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Activity,
   ArrowUp,
@@ -20,6 +20,8 @@ import {
   Bell,
   BellOff,
   Users,
+  Settings2,
+  Check,
 } from "lucide-react";
 import { ManagerTab, PageView, Language, ThemeMode, copy } from "../../data";
 import { useLocale } from "../../context/locale";
@@ -35,21 +37,12 @@ export function BackToTopButton() {
     <button
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-5 end-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-border bg-primary text-primary-foreground shadow-[0_14px_34px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_color-mix(in_oklab,var(--primary)_36%,transparent)]"
+      className="fixed bottom-5 end-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-border bg-primary text-primary-foreground shadow-[0_14px_34px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_color-mix(in_oklab,var(--primary)_36%,transparent)] cursor-pointer active-spring"
       aria-label={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
       title={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
     >
       <ArrowUp aria-hidden="true" className="h-5 w-5" />
     </button>
-  );
-}
-
-function TimeChip({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 text-xs">
-      <span className="hidden xl:inline text-muted-foreground font-sans font-medium select-none">{label}</span>
-      <span dir="ltr" className="font-mono font-bold leading-none">{value}</span>
-    </span>
   );
 }
 
@@ -84,221 +77,189 @@ export function Header({
 }) {
   const c = copy[language];
   const { tr } = useLocale();
-  const { toggleKiosk, isKioskActive } = useSimulation();
+  const { toggleKiosk, isKioskActive, isDrillActive } = useSimulation();
   const { isMuted, toggleMute, isTransmitting } = useAirfieldRadio();
   const { isEnabled: sfxEnabled, toggleSoundEffects, playClick } = useSoundEffects();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const ThemeIcon = theme === "dark" ? Sun : Moon;
-  const isResourcesPage = activePage === "resources";
-  const resourcesLabel = language === "ar" ? "توثيق ومواصفات المشروع" : "Documentation & Specs";
 
-  const handleMenuSelect = (action: () => void) => {
-    setIsMenuOpen(false);
-    // Smoothly close the menu first, delaying the heavy layout/theme re-render until the transition finishes
-    setTimeout(() => {
-      action();
-    }, 280);
-  };
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsTriggerRef = useRef<HTMLButtonElement>(null);
+
+  const isResourcesPage = activePage === "resources";
+  const resourcesLabel = language === "ar" ? "التوثيق والمواصفات" : "Docs & Specs";
+
+  // Close settings popover on outside click or Escape
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        settingsRef.current &&
+        !settingsRef.current.contains(e.target as Node) &&
+        settingsTriggerRef.current &&
+        !settingsTriggerRef.current.contains(e.target as Node)
+      ) {
+        setIsSettingsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSettingsOpen(false);
+        settingsTriggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSettingsOpen]);
+
+  const navItems = [
+    { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
+    { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
+    { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
+    { id: "staffing" as ManagerTab, label: c.staffing, icon: Users },
+  ];
+
   return (
-    <header className="fixed top-0 left-0 right-0 shrink-0 w-full z-50 border-b border-white/20 bg-background/40 backdrop-blur-3xl backdrop-saturate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-background/20 dark:border-white/10 dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)] supports-[backdrop-filter]:bg-background/30">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-xl font-bold text-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-2xl shadow-xs transition-colors duration-200">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-xl font-bold text-sm"
+      >
         {tr("Skip to content")}
       </a>
-      <div className="relative mx-auto flex min-h-16 max-w-[1720px] w-full items-center justify-between gap-3 sm:gap-4 px-3 py-2 sm:px-5 lg:px-8">
-        {/* Left Side: Brand Logo + Desktop Navigation Tabs */}
-        <div className="flex items-center gap-3 lg:gap-6 min-w-0 shrink-0">
-          <a href="#main" onClick={(event) => { event.preventDefault(); onShowDashboard(); setIsMenuOpen(false); }} className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 rounded-md active:scale-98 transition-transform" aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`} title={`${c.airport} - ${c.brand}`}>
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-primary/50 bg-primary/15 glow-cyan">
-              <Plane aria-hidden="true" className="h-5 w-5 text-primary" />
+
+      <div className="mx-auto flex h-16 max-w-[1720px] w-full items-center justify-between gap-3 px-3 sm:px-5 lg:px-8">
+        {/* Island 1: Brand & Operational Status Indicator */}
+        <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 min-w-0">
+          <a
+            href="#main"
+            onClick={(e) => {
+              e.preventDefault();
+              onShowDashboard();
+              setIsMobileMenuOpen(false);
+            }}
+            className="flex items-center gap-2.5 rounded-lg active-spring"
+            aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}
+            title={`${c.airport} - ${c.brand}`}
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/40 bg-primary/15 text-primary">
+              <Plane aria-hidden="true" className="h-5 w-5" />
             </span>
-            <span className="hidden min-w-0 sm:block sm:max-w-[180px] md:max-w-[220px]">
-              <span className="block truncate font-mono rtl:font-sans text-[10px] sm:text-xs uppercase rtl:normal-case tracking-[0.16em] rtl:tracking-normal text-primary">{c.airport}</span>
-              <span className="block truncate text-xs sm:text-sm font-bold">{c.brand}</span>
-            </span>
+            <div className="min-w-0">
+              <span className="block truncate font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary">
+                {c.airport}
+              </span>
+              <span className="block truncate text-xs sm:text-sm font-extrabold text-foreground">
+                {c.brand}
+              </span>
+            </div>
           </a>
 
-          {/* Navigation Tabs - Desktop (anchored next to brand with guaranteed spacing) */}
-          <nav className="hidden xl:flex items-center min-w-0" aria-label={tr("Manager dashboard sections")}>
-            <div role="tablist" aria-orientation="horizontal" className="flex h-11 items-center justify-center gap-1 rounded-xl border border-white/10 bg-background/30 p-1 backdrop-blur-md dark:bg-secondary/30"
-              onKeyDown={(e) => {
-                const tabs: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
-                const currentIndex = tabs.indexOf(activeTab);
-                let nextIndex = currentIndex;
-                
-                if (e.key === "ArrowRight") {
-                  nextIndex = (currentIndex + 1) % tabs.length;
-                  e.preventDefault();
-                } else if (e.key === "ArrowLeft") {
-                  nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-                  e.preventDefault();
-                } else if (e.key === "Home") {
-                  nextIndex = 0;
-                  e.preventDefault();
-                } else if (e.key === "End") {
-                  nextIndex = tabs.length - 1;
-                  e.preventDefault();
-                }
-                
-                if (nextIndex !== currentIndex && nextIndex !== -1) {
-                  const nextTab = tabs[nextIndex];
-                  setActiveTab(nextTab);
-                  onShowDashboard();
-                  setIsMenuOpen(false);
-                  setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
-                }
-              }}
-            >
-              {[
-                { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
-                { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
-                { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
-                { id: "staffing" as ManagerTab, label: c.staffing, icon: Users }
-              ].map((tab) => {
-                const Icon = tab.icon;
-                const isCurrentDashboardTab = activeTab === tab.id;
-                const isActive = !isResourcesPage && isCurrentDashboardTab;
-                return (
-                  <button
-                    key={tab.id}
-                    id={`tab-${tab.id}`}
-                    role="tab"
-                    tabIndex={isCurrentDashboardTab ? 0 : -1}
-                    aria-selected={isActive}
-                    aria-controls={isResourcesPage ? undefined : "main-content"}
-                    onClick={() => {
-                      playClick();
-                      setActiveTab(tab.id);
-                      onShowDashboard();
-                      setIsMenuOpen(false);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    title={tab.label}
-                    className={`group relative flex h-9 min-h-[36px] items-center justify-center gap-2 rounded-lg px-3 lg:px-4 text-xs lg:text-sm font-semibold whitespace-nowrap transition-all duration-200 ease-out focus-visible:z-10 active:scale-95 nav-tab-btn ${
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
-                        : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
-                    }`}
-                  >
-                    <Icon aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isActive ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
-                    <span className="truncate nav-tab-text">{tab.label}</span>
-                  </button>
-                );
-              })}
-
-              {/* Prominent Documentation & Specs Tab */}
-              <button
-                id="tab-docs"
-                role="tab"
-                tabIndex={isResourcesPage ? 0 : -1}
-                aria-selected={isResourcesPage}
-                onClick={() => {
-                  playClick();
-                  onShowResources();
-                  setIsMenuOpen(false);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                title={resourcesLabel}
-                className={`group relative flex h-9 min-h-[36px] items-center justify-center gap-2 rounded-lg px-3 lg:px-4 text-xs lg:text-sm font-semibold whitespace-nowrap transition-all duration-200 ease-out focus-visible:z-10 active:scale-95 nav-tab-btn ${
-                  isResourcesPage
-                    ? "bg-primary text-primary-foreground shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_26%,transparent)]"
-                    : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground"
-                }`}
-              >
-                <FileText aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isResourcesPage ? "scale-105" : "group-hover:-translate-y-0.5"}`} />
-                <span className="truncate nav-tab-text">{resourcesLabel}</span>
-              </button>
-            </div>
-          </nav>
+          {/* Operational Status Pill (situational context for executives) */}
+          <div className="hidden md:flex items-center gap-1.5 rounded-full border border-border/50 bg-secondary/35 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+            <span className={`h-2 w-2 rounded-full ${isDrillActive ? "bg-status-crit animate-ping" : "bg-status-ok"}`} />
+            <span className="font-mono font-bold text-foreground">
+              {isDrillActive ? (language === "ar" ? "محاكاة طوارئ" : "DRILL") : "AOCC ACTIVE"}
+            </span>
+            <span>&bull;</span>
+            <span>CAT III</span>
+          </div>
         </div>
 
-        {/* Right Side: Airfield METAR & Action Tools */}
+        {/* Island 2: Central Segmented Navigation Tabs (Desktop lg+) */}
+        <nav className="hidden lg:flex items-center justify-center min-w-0 mx-2" aria-label={tr("Manager dashboard sections")}>
+          <div
+            role="tablist"
+            aria-orientation="horizontal"
+            className="flex h-11 items-center gap-1 rounded-xl border border-white/10 bg-secondary/30 p-1 backdrop-blur-md"
+            onKeyDown={(e) => {
+              const tabs: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
+              const currentIndex = tabs.indexOf(activeTab);
+              let nextIndex = currentIndex;
+              if (e.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
+              else if (e.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+              else if (e.key === "Home") nextIndex = 0;
+              else if (e.key === "End") nextIndex = tabs.length - 1;
+
+              if (nextIndex !== currentIndex && nextIndex !== -1) {
+                e.preventDefault();
+                const nextTab = tabs[nextIndex];
+                setActiveTab(nextTab);
+                onShowDashboard();
+                setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
+              }
+            }}
+          >
+            {navItems.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = !isResourcesPage && activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  id={`tab-${tab.id}`}
+                  role="tab"
+                  tabIndex={isActive ? 0 : -1}
+                  aria-selected={isActive}
+                  aria-controls={isResourcesPage ? undefined : "main-content"}
+                  onClick={() => {
+                    playClick();
+                    setActiveTab(tab.id);
+                    onShowDashboard();
+                  }}
+                  className={`group relative flex h-9 min-h-[36px] items-center gap-1.5 rounded-lg px-3 lg:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
+                  }`}
+                  title={tab.label}
+                >
+                  <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+
+            {/* Documentation & Specs Tab */}
+            <button
+              id="tab-docs"
+              role="tab"
+              tabIndex={isResourcesPage ? 0 : -1}
+              aria-selected={isResourcesPage}
+              onClick={() => {
+                playClick();
+                onShowResources();
+              }}
+              className={`group relative flex h-9 min-h-[36px] items-center gap-1.5 rounded-lg px-3 lg:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
+                isResourcesPage
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
+              }`}
+              title={resourcesLabel}
+            >
+              <FileText aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              <span>{resourcesLabel}</span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Island 3: Executive Controls & Quick Tools */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ms-auto">
-          <div className="hidden sm:block">
+          {/* Integrated Telemetry & Weather Pill */}
+          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border/60 bg-secondary/35 px-2 py-1">
+            <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span dir="ltr" className="font-mono text-xs font-bold text-foreground">
+              {times.cairo}
+            </span>
+            <span className="text-[10px] text-muted-foreground font-semibold">CAI</span>
+            <span className="h-3 w-px bg-border/80" />
             <MetarWidget />
           </div>
 
-          {/* Cairo Tower ATC & Airfield Radio Speaker Button */}
-          <button
-            type="button"
-            onClick={() => {
-              playClick();
-              toggleMute();
-            }}
-            className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
-              !isMuted
-                ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
-                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-            }`}
-            aria-label={
-              isMuted
-                ? language === "ar"
-                  ? "تشغيل إذاعة برج مراقبة القاهرة (118.1 MHz)"
-                  : "Unmute Cairo Tower ATC Radio (118.1 MHz)"
-                : language === "ar"
-                  ? "كتم إذاعة برج مراقبة القاهرة (118.1 MHz)"
-                  : "Mute Cairo Tower ATC Radio (118.1 MHz)"
-            }
-            title={
-              isMuted
-                ? language === "ar"
-                  ? "تشغيل صوت إذاعة وبرج القاهرة (118.1 MHz)"
-                  : "Unmute Cairo Tower ATC Radio (118.1 MHz)"
-                : language === "ar"
-                  ? "كتم صوت إذاعة وبرج القاهرة (118.1 MHz)"
-                  : "Mute Cairo Tower ATC Radio (118.1 MHz)"
-            }
-          >
-            {!isMuted ? (
-              <div className="relative">
-                <Volume2 aria-hidden="true" className="h-4 w-4 text-primary" />
-                {isTransmitting && (
-                  <span className="absolute -top-1 -end-1 h-2 w-2 rounded-full bg-status-ok animate-ping" />
-                )}
-              </div>
-            ) : (
-              <VolumeX aria-hidden="true" className="h-4 w-4" />
-            )}
-          </button>
-
-          {/* Tactile Audio Feedback (SFX) Earcon Toggle */}
-          <button
-            type="button"
-            onClick={toggleSoundEffects}
-            className={`hidden sm:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
-              sfxEnabled
-                ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
-                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-            }`}
-            aria-label={
-              sfxEnabled
-                ? language === "ar" ? "تعطيل مؤثرات النقر الصوتية" : "Disable Click Sound Effects"
-                : language === "ar" ? "تفعيل مؤثرات النقر الصوتية" : "Enable Click Sound Effects"
-            }
-            title={
-              sfxEnabled
-                ? language === "ar" ? "مؤثرات النقر الصوتية (مفعل)" : "Click Sound Effects (Active)"
-                : language === "ar" ? "مؤثرات النقر الصوتية (معطل)" : "Click Sound Effects (Muted)"
-            }
-          >
-            {sfxEnabled ? <Bell aria-hidden="true" className="h-4 w-4 text-primary" /> : <BellOff aria-hidden="true" className="h-4 w-4" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              playClick();
-              toggleKiosk();
-            }}
-            className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors cursor-pointer ${
-              isKioskActive
-                ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
-                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-            }`}
-            aria-label={language === "ar" ? "تفعيل نمط شاشة العمليات AOCC" : "Toggle AOCC Video Wall Mode"}
-            title={language === "ar" ? "تفعيل نمط شاشة العمليات AOCC" : "Toggle AOCC Video Wall Mode"}
-          >
-            <Tv aria-hidden="true" className="h-4 w-4" />
-          </button>
+          {/* Quick Search / Command Palette Shortcut */}
           {onOpenCommandPalette && (
             <button
               type="button"
@@ -306,285 +267,250 @@ export function Header({
                 playClick();
                 onOpenCommandPalette();
               }}
-              className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground transition-colors cursor-pointer"
+              className="flex h-10 items-center gap-2 rounded-xl border border-border bg-secondary/35 px-2.5 sm:px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active-spring cursor-pointer"
               aria-label={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
               title={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
             >
               <Search aria-hidden="true" className="h-4 w-4" />
+              <kbd className="hidden md:inline-flex h-5 items-center rounded border border-border/80 bg-background/80 px-1.5 font-mono text-[10px] font-semibold text-muted-foreground">
+                Ctrl+K
+              </kbd>
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              playClick();
-              onShowResources();
-              setIsMenuOpen(false);
-            }}
-            className={`grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border transition-colors ${
-              isResourcesPage
-                ? "border-primary/45 bg-primary/10 text-primary"
-                : "border-border bg-secondary/25 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-            }`}
-            aria-label={resourcesLabel}
-            aria-current={isResourcesPage ? "page" : undefined}
-            title={resourcesLabel}
-          >
-            <FileText aria-hidden="true" className="h-4 w-4" />
-          </button>
-          <div className="hidden h-11 items-center gap-2 rounded-xl border border-border bg-secondary/50 px-3.5 2xl:flex" title={tr("Current Cairo and UTC Time")}>
-            <Clock3 aria-hidden="true" className="h-4 w-4 text-primary" />
-            <TimeChip label={tr("Cairo")} value={times.cairo} />
-            <span className="h-5 w-px bg-border" />
-            <TimeChip label={tr("UTC")} value={times.utc} />
-          </div>
-          <button type="button" onClick={() => setHighContrast(!highContrast)} className="hidden xl:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary" aria-label={c.contrast} title={c.contrast}>
-            <Contrast aria-hidden="true" className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="hidden xl:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`} title={`${c.theme}: ${theme === "dark" ? "Light" : "Dark"}`}>
-            <ThemeIcon aria-hidden="true" className="h-4 w-4 text-primary" />
-          </button>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "ar" : "en")} className="hidden xl:grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary" aria-label={`${c.language}: ${language === "en" ? "AR" : "EN"}`} title={`${c.language}: ${language === "en" ? "AR" : "EN"}`}>
-            <Languages aria-hidden="true" className="h-4 w-4 text-primary" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="relative grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/40 hover:bg-secondary xl:hidden transition-colors overflow-hidden"
-            aria-expanded={isMenuOpen}
-            aria-label={tr("Toggle navigation menu")}
-            title={tr("Toggle navigation menu")}
-          >
-            <div className="relative w-4 h-4">
-              <span className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-                isMenuOpen ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-              }`}>
-                <Menu className="h-4 w-4 text-primary" />
-              </span>
-              <span className={`absolute inset-0 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-                isMenuOpen ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
-              }`}>
-                <X className="h-4 w-4 text-primary" />
-              </span>
-            </div>
-          </button>
-        </div>
-      </div>
 
-      {/* Navigation tab strip for mobile and tablet viewports (< xl) */}
-      <nav className="xl:hidden border-t border-border/40 bg-background/95 px-3 py-1.5 flex justify-center" aria-label={tr("Manager dashboard sections")}>
-        <div role="tablist" aria-orientation="horizontal" className="flex h-11 w-full max-w-lg items-center justify-between gap-1.5 rounded-xl border border-white/10 bg-secondary/30 p-1">
-          {[
-            { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
-            { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
-            { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
-            { id: "staffing" as ManagerTab, label: c.staffing, icon: Users },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isCurrentDashboardTab = activeTab === tab.id;
-            const isActive = !isResourcesPage && isCurrentDashboardTab;
-            return (
-              <button
-                key={`mob-${tab.id}`}
-                id={`tab-mob-${tab.id}`}
-                role="tab"
-                tabIndex={isCurrentDashboardTab ? 0 : -1}
-                aria-selected={isActive}
-                aria-controls={isResourcesPage ? undefined : "main-content"}
-                onClick={() => {
-                  playClick();
-                  setActiveTab(tab.id);
-                  onShowDashboard();
-                  setIsMenuOpen(false);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                title={tab.label}
-                className={`flex-1 flex h-9 min-h-[36px] items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-1.5 sm:px-2 text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "bg-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">{tab.label}</span>
-              </button>
-            );
-          })}
-          {/* Documentation Mobile Tab */}
-          <button
-            id="tab-mob-docs"
-            role="tab"
-            tabIndex={isResourcesPage ? 0 : -1}
-            aria-selected={isResourcesPage}
-            onClick={() => {
-              playClick();
-              onShowResources();
-              setIsMenuOpen(false);
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            title={resourcesLabel}
-            className={`flex-1 flex h-9 min-h-[36px] items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-1.5 sm:px-2 text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
-              isResourcesPage
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "bg-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <FileText aria-hidden="true" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-            <span className="truncate">{resourcesLabel}</span>
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile/Tablet Navigation Dropdown with microinteractions */}
-      <div
-        className={`xl:hidden overflow-hidden transition-all pointer-events-auto ${
-          isMenuOpen
-            ? "max-h-[500px] opacity-100 border-t border-white/20 visible duration-300 ease-out"
-            : "max-h-0 opacity-0 border-t-0 invisible pointer-events-none duration-300 ease-in"
-        }`}
-      >
-        <div className="bg-background/95 backdrop-blur-2xl px-4 py-4 shadow-[inset_0_4px_12px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_4px_12px_rgba(0,0,0,0.15)]">
-          <div className="flex flex-col gap-4 max-w-xl mx-auto">
-            {/* Clock/Time in a single row matching other buttons */}
-            <div className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/25 px-4 text-sm font-medium select-none">
-              <Clock3 className="h-4 w-4 text-primary shrink-0 animate-pulse" />
-              <div className="flex items-center gap-2.5 font-mono text-xs text-foreground">
-                <span>{tr("Cairo")}: {times.cairo}</span>
-                <span className="text-muted-foreground/30 font-sans">|</span>
-                <span>{tr("UTC")}: {times.utc}</span>
-              </div>
-            </div>
-
-            {/* Menu options with full text */}
-            <div className="grid gap-2">
-              {/* Airfield Weather & Runway Status (Mobile) */}
-              <div className="sm:hidden flex justify-center py-1">
-                <MetarWidget />
-              </div>
-
-              {/* Cairo Tower ATC & Airfield Radio Toggle in Drawer */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(toggleMute)}
-                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
-                  !isMuted
-                    ? "border-primary/50 bg-primary/15 text-primary"
-                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
-                }`}
-              >
-                {!isMuted ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4 text-muted-foreground" />}
-                <span>
-                  {language === "ar"
-                    ? !isMuted ? "كتم إذاعة وبرج مراقبة القاهرة (118.1 MHz)" : "تشغيل إذاعة وبرج مراقبة القاهرة (118.1 MHz)"
-                    : !isMuted ? "Mute Cairo Tower ATC Radio (118.1 MHz)" : "Unmute Cairo Tower ATC Radio (118.1 MHz)"}
-                </span>
-              </button>
-
-              {/* Tactile Click Sound Effects (SFX) Toggle in Drawer */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(toggleSoundEffects)}
-                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
-                  sfxEnabled
-                    ? "border-primary/50 bg-primary/15 text-primary"
-                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
-                }`}
-              >
-                {sfxEnabled ? <Bell className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4 text-muted-foreground" />}
-                <span>
-                  {language === "ar"
-                    ? sfxEnabled ? "تعطيل مؤثرات النقر الصوتية (SFX)" : "تفعيل مؤثرات النقر الصوتية (SFX)"
-                    : sfxEnabled ? "Disable Click Sound Feedback (SFX)" : "Enable Click Sound Feedback (SFX)"}
-                </span>
-              </button>
-
-              {/* Video Wall Mode Toggle */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(toggleKiosk)}
-                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
-                  isKioskActive
-                    ? "border-primary/50 bg-primary/15 text-primary"
-                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
-                }`}
-              >
-                <Tv className="h-4 w-4 text-primary" />
-                <span>
-                  {language === "ar"
-                    ? isKioskActive ? "إيقاف شاشة العمليات AOCC" : "تشغيل شاشة العمليات AOCC"
-                    : isKioskActive ? "Exit AOCC Video Wall Mode" : "Start AOCC Video Wall Mode"}
-                </span>
-              </button>
-              {/* Resources & Case Study Link */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(onShowResources)}
-                className={`flex h-11 w-full items-center gap-3 rounded-lg border px-4 text-sm font-semibold transition-all active:scale-[0.97] duration-200 cursor-pointer ${
-                  isResourcesPage
-                    ? "border-primary/50 bg-primary/15 text-primary"
-                    : "border-border bg-secondary/20 hover:bg-secondary/40 text-foreground"
-                }`}
-              >
-                <FileText className="h-4 w-4 text-primary" />
-                <span>{resourcesLabel}</span>
-              </button>
-
-              {onOpenCommandPalette && (
-                <button
-                  type="button"
-                  onClick={() => handleMenuSelect(onOpenCommandPalette)}
-                  className="flex h-11 w-full items-center gap-3 rounded-lg border border-primary/40 bg-primary/10 px-4 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground transition-all active:scale-[0.97] duration-200 cursor-pointer"
-                >
-                  <Search className="h-4 w-4" />
-                  <span>
-                    {language === "ar" ? "لوحة الأوامر والبحث السريع (Ctrl+K)" : "Command Palette & Quick Search (Ctrl+K)"}
-                  </span>
-                </button>
+          {/* Unified System & Audio Settings Hub Popover */}
+          <div className="relative" ref={settingsRef}>
+            <button
+              ref={settingsTriggerRef}
+              type="button"
+              onClick={() => {
+                playClick();
+                setIsSettingsOpen(!isSettingsOpen);
+              }}
+              className={`relative grid h-10 w-10 min-h-[40px] min-w-[40px] place-items-center rounded-xl border transition-all active-spring cursor-pointer ${
+                isSettingsOpen || !isMuted
+                  ? "border-primary/60 bg-primary/20 text-primary shadow-xs"
+                  : "border-border bg-secondary/35 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+              aria-expanded={isSettingsOpen}
+              aria-haspopup="dialog"
+              aria-label={language === "ar" ? "إعدادات الصوت والنظام والواجهة" : "System & Audio Settings"}
+              title={language === "ar" ? "إعدادات الصوت والنظام والواجهة" : "System & Audio Settings"}
+            >
+              <Settings2 aria-hidden="true" className="h-4 w-4" />
+              {/* Active Audio / Stream transmission indicator */}
+              {!isMuted && (
+                <span className={`absolute top-1 end-1 h-2 w-2 rounded-full ${isTransmitting ? "bg-status-ok animate-ping" : "bg-primary"}`} />
               )}
-              {/* Theme Mode Toggle */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(() => setTheme(theme === "dark" ? "light" : "dark"))}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-all active:scale-[0.97] active:bg-secondary/40 duration-200 cursor-pointer"
-              >
-                <ThemeIcon className="h-4 w-4 text-primary" />
-                <span>
-                  {theme === "dark"
-                    ? localize({ en: "Switch to Light Mode", ar: "التحويل للوضع الفاتح" }, language)
-                    : localize({ en: "Switch to Dark Mode", ar: "التحويل للوضع الداكن" }, language)
-                  }
-                </span>
-              </button>
+            </button>
 
-              {/* High Contrast Toggle */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(() => setHighContrast(!highContrast))}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-all active:scale-[0.97] active:bg-secondary/40 duration-200 cursor-pointer"
+            {/* Settings Dropdown Popover */}
+            {isSettingsOpen && (
+              <div
+                role="dialog"
+                aria-label={language === "ar" ? "لوحة التحكم السريعة بالنظام" : "Quick System Controls"}
+                className="absolute end-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-white/10 bg-surface/95 p-3.5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-200 dark:bg-card/95"
               >
-                <Contrast className="h-4 w-4 text-primary" />
-                <span>
-                  {highContrast
-                    ? localize({ en: "Disable High Contrast", ar: "إلغاء التباين العالي" }, language)
-                    : localize({ en: "Enable High Contrast", ar: "تفعيل التباين العالي" }, language)
-                  }
-                </span>
-              </button>
+                <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+                  <span className="text-xs font-bold text-foreground">
+                    {language === "ar" ? "لوحة الإعدادات والتحكم" : "Executive Controls"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="h-6 w-6 grid place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer"
+                    aria-label={tr("Close")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
 
-              {/* Language Switcher */}
-              <button
-                type="button"
-                onClick={() => handleMenuSelect(() => setLanguage(language === "en" ? "ar" : "en"))}
-                className="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-secondary/20 px-4 text-sm font-medium hover:bg-secondary/40 transition-all active:scale-[0.97] active:bg-secondary/40 duration-200 cursor-pointer"
-              >
-                <Languages className="h-4 w-4 text-primary" />
-                <span>
-                  {language === "en" ? "تبديل إلى اللغة العربية (AR)" : "Switch to English (EN)"}
-                </span>
-              </button>
-            </div>
+                <div className="mt-3 space-y-3 text-xs">
+                  {/* Section 1: Airfield Comms & Audio */}
+                  <div>
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                      {language === "ar" ? "إذاعة المطار والمؤثرات" : "Airfield Audio & Comms"}
+                    </span>
+                    <div className="space-y-1.5">
+                      {/* ATC Radio */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playClick();
+                          toggleMute();
+                        }}
+                        className="flex w-full items-center justify-between rounded-xl border border-border/60 bg-background/50 p-2 text-start transition-colors hover:bg-secondary cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-primary">
+                            {!isMuted ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+                          </span>
+                          <div>
+                            <span className="font-semibold block text-foreground">Cairo Tower ATC</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">118.1 MHz Live Feed</span>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${!isMuted ? "bg-status-ok/20 text-status-ok" : "bg-muted text-muted-foreground"}`}>
+                          {!isMuted ? (language === "ar" ? "يعمل" : "LIVE") : (language === "ar" ? "صامت" : "MUTED")}
+                        </span>
+                      </button>
+
+                      {/* Click SFX */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          toggleSoundEffects();
+                        }}
+                        className="flex w-full items-center justify-between rounded-xl border border-border/60 bg-background/50 p-2 text-start transition-colors hover:bg-secondary cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-secondary text-foreground">
+                            {sfxEnabled ? <Bell className="h-3.5 w-3.5 text-primary" /> : <BellOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                          </span>
+                          <div>
+                            <span className="font-semibold block text-foreground">Tactile Earcons</span>
+                            <span className="text-[10px] text-muted-foreground">UI Click Audio Feedback</span>
+                          </div>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${sfxEnabled ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {sfxEnabled ? "ON" : "OFF"}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Appearance & Localization */}
+                  <div>
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                      {language === "ar" ? "المظهر وإمكانية الوصول" : "Display & Language"}
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {/* Theme Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 p-2 hover:bg-secondary transition-colors cursor-pointer"
+                      >
+                        {theme === "dark" ? <Sun className="h-3.5 w-3.5 text-primary" /> : <Moon className="h-3.5 w-3.5 text-primary" />}
+                        <span className="font-medium">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                      </button>
+
+                      {/* High Contrast */}
+                      <button
+                        type="button"
+                        onClick={() => setHighContrast(!highContrast)}
+                        className={`flex items-center gap-2 rounded-xl border p-2 transition-colors cursor-pointer ${
+                          highContrast ? "border-primary bg-primary/15 text-primary" : "border-border/60 bg-background/50 hover:bg-secondary"
+                        }`}
+                      >
+                        <Contrast className="h-3.5 w-3.5" />
+                        <span className="font-medium">AAA Contrast</span>
+                      </button>
+
+                      {/* Language Switch */}
+                      <button
+                        type="button"
+                        onClick={() => setLanguage(language === "en" ? "ar" : "en")}
+                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 p-2 hover:bg-secondary transition-colors cursor-pointer col-span-2"
+                      >
+                        <Languages className="h-3.5 w-3.5 text-primary" />
+                        <span className="font-medium">
+                          {language === "en" ? "العربية (Arabic RTL)" : "English (LTR)"}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Video Wall Kiosk Mode */}
+                  <div className="border-t border-border/40 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick();
+                        toggleKiosk();
+                        setIsSettingsOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-xl border p-2 transition-colors cursor-pointer ${
+                        isKioskActive ? "border-primary/60 bg-primary/20 text-primary" : "border-border/60 bg-background/50 hover:bg-secondary"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Tv className="h-3.5 w-3.5" />
+                        <span className="font-medium">{language === "ar" ? "شاشة غرف العمليات (Kiosk)" : "AOCC Video Wall Mode"}</span>
+                      </div>
+                      {isKioskActive && <Check className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Mobile Hamburger Trigger (lg:hidden) */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="grid h-10 w-10 min-h-[40px] min-w-[40px] place-items-center rounded-xl border border-border bg-secondary/35 text-foreground hover:bg-secondary lg:hidden transition-colors cursor-pointer"
+            aria-expanded={isMobileMenuOpen}
+            aria-label={tr("Toggle navigation menu")}
+          >
+            {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Slide-Over Drawer Navigation (< lg) */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 top-16 z-40 lg:hidden bg-background/95 backdrop-blur-xl border-t border-border/40 p-4 flex flex-col gap-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="space-y-1">
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block px-2 mb-1">
+              {tr("Manager dashboard sections")}
+            </span>
+            {navItems.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = !isResourcesPage && activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    playClick();
+                    setActiveTab(tab.id);
+                    onShowDashboard();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`flex h-12 w-full items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-colors cursor-pointer ${
+                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => {
+                playClick();
+                onShowResources();
+                setIsMobileMenuOpen(false);
+              }}
+              className={`flex h-12 w-full items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-colors cursor-pointer ${
+                isResourcesPage ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+              }`}
+            >
+              <FileText className="h-4 w-4 shrink-0" />
+              <span>{resourcesLabel}</span>
+            </button>
+          </div>
+
+          <div className="mt-auto border-t border-border/40 pt-4 flex items-center justify-between text-xs text-muted-foreground">
+            <span className="font-mono font-bold text-foreground">{times.cairo} CAI</span>
+            <span>HECA AOCC Command Hub</span>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
