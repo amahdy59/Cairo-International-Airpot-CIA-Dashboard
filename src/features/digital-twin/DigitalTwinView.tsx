@@ -172,7 +172,15 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
 
   useEffect(() => {
     setIsImageLoaded(false);
-  }, [activeSceneId]);
+    // Instant cache detection: if image is cached in memory, set isImageLoaded immediately
+    const img = new Image();
+    img.src = imageMode === "dark" ? activeScene.darkImage : activeScene.image;
+    if (img.complete && img.naturalWidth > 0) {
+      setIsImageLoaded(true);
+    } else {
+      img.onload = () => setIsImageLoaded(true);
+    }
+  }, [activeSceneId, imageMode, activeScene.darkImage, activeScene.image]);
 
   const activeScene = scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0];
   const jumpScenes = ["terminal-1", "terminal-2", "terminal-3", "services", "landside"]
@@ -295,12 +303,15 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
 
   return (
     <div className="flex flex-col flex-1 min-h-0 min-w-0 gap-2 lg:gap-3">
-      <nav className="relative z-10 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
-        <div className="flex min-w-0 items-center justify-between gap-4 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-2.5">
-            <h2 className="shrink-0 text-sm sm:text-base font-bold tracking-tight text-foreground">{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</h2>
+      <nav className="relative z-10 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
+        <div className="flex min-w-0 items-center justify-between gap-3 overflow-x-auto scroll-smooth touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-max">
+            <h2 className="shrink-0 text-xs sm:text-sm font-bold tracking-tight text-foreground flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+              <span>{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</span>
+            </h2>
             <span className="hidden sm:inline-block shrink-0 font-mono text-[10px] font-semibold uppercase text-muted-foreground/40">|</span>
-            <div className="flex min-w-max items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5">
             {jumpScenes.map((scene) => {
               const active = scene.id === activeSceneId;
               return (
@@ -329,6 +340,18 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
         <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] flex-1 min-h-0 h-full">
           <div className="flex flex-col min-w-0 h-full relative">
             <div id="digital-twin-image-viewport" className="relative min-w-0 bg-black/40 aspect-[4/3] sm:aspect-[3/2] md:aspect-auto w-full md:h-full md:flex-1 rounded-xl border border-border shadow-inner overflow-hidden">
+              {/* Airfield Twin Loading Overlay */}
+              {!isImageLoaded && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2.5 bg-background/80 backdrop-blur-xs text-muted-foreground animate-in fade-in duration-150">
+                  <div className="relative h-8 w-8">
+                    <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                    <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  </div>
+                  <span className="font-mono text-xs uppercase tracking-widest text-foreground/80">
+                    {language === "ar" ? "جاري مزامنة المشهد المرئي..." : "Syncing airfield twin..."}
+                  </span>
+                </div>
+              )}
               <div 
                 id="digital-twin-image-container" 
                 ref={imageContainerRef} 
