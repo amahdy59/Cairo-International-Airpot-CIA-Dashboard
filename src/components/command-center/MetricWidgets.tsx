@@ -88,10 +88,12 @@ export function StatusPill({
   tone = "ok",
   icon,
   children,
+  className = "",
 }: {
   tone?: StatusTone;
   icon?: ReactNode;
   children: ReactNode;
+  className?: string;
 }) {
   const toneClass = {
     ok: "bg-status-ok/15 text-status-ok border-status-ok/30",
