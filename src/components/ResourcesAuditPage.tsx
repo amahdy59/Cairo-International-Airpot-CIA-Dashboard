@@ -11,17 +11,10 @@ import {
   ArrowLeft,
   Bot,
   Code2,
-  Tv,
   Volume2,
   VolumeX,
   Radio,
-  FileSpreadsheet,
-  CloudRain,
-  Flame,
   CheckCircle2,
-  Globe,
-  Plane,
-  Building2,
   MousePointer,
 } from "lucide-react";
 import { useLocale } from "../context/locale";
@@ -176,7 +169,7 @@ function ScrollableImageContainer({
   );
 }
 
-type TabKey = "overview" | "architecture" | "accessibility" | "tools";
+type TabKey = "architecture" | "design" | "accessibility" | "tools";
 
 export default function ResourcesAuditPage({
   theme = "dark",
@@ -187,7 +180,7 @@ export default function ResourcesAuditPage({
 }) {
   const { language } = useLocale();
   const isDark = theme === "dark";
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [activeTab, setActiveTab] = useState<TabKey>("architecture");
   const [activePersonaId, setActivePersonaId] = useState<string>("karim");
   const [imageMode, setImageMode] = useState<"side-by-side" | "wireframe" | "polished">("side-by-side");
 
@@ -211,16 +204,16 @@ export default function ResourcesAuditPage({
 
   const subTabs = [
     {
-      id: "overview" as const,
-      label: { en: "Airport Overview", ar: "نظرة عامة على المطار" },
-      icon: Plane,
-      hint: { en: "Capacity & Features", ar: "السعة والميزات" },
-    },
-    {
       id: "architecture" as const,
       label: { en: "Architecture", ar: "معمارية النظام" },
       icon: Bot,
       hint: { en: "AI & Tech Stack", ar: "الذكاء الاصطناعي والتقنيات" },
+    },
+    {
+      id: "design" as const,
+      label: { en: "Design Evolution", ar: "تطور التصميم" },
+      icon: Eye,
+      hint: { en: "Wireframe vs 4K UI", ar: "المخطط والواجهة الرقمية" },
     },
     {
       id: "accessibility" as const,
@@ -301,212 +294,7 @@ export default function ResourcesAuditPage({
       </header>
 
       {/* ============================================================ */}
-      {/* TAB 1: AIRPORT OVERVIEW & FEATURES */}
-      {/* ============================================================ */}
-      {activeTab === "overview" && (
-        <main className="flex flex-col gap-4 animate-in fade-in duration-200">
-          
-          {/* 3 Clear Metric Pillars */}
-          <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-border/70 bg-card p-4 flex flex-col gap-1 text-start">
-              <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                <Building2 className="h-4 w-4 text-primary" />
-                {localize({ en: "Annual Passengers", ar: "المسافرون سنوياً" }, language)}
-              </span>
-              <div className="text-2xl font-bold font-mono text-foreground">30M+ PAX</div>
-              <p className="text-xs text-muted-foreground">
-                {localize({ en: "Across Terminals 1, 2, and 3", ar: "عبر الصالات ١ و ٢ و ٣" }, language)}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-border/70 bg-card p-4 flex flex-col gap-1 text-start">
-              <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                <Plane className="h-4 w-4 text-primary" />
-                {localize({ en: "Active Runways", ar: "المدرجات النشطة" }, language)}
-              </span>
-              <div className="text-2xl font-bold font-mono text-foreground">3 Runways</div>
-              <p className="text-xs text-muted-foreground font-mono">05L/23R, 05C/23C, 05R/23L</p>
-            </div>
-
-            <div className="rounded-xl border border-border/70 bg-card p-4 flex flex-col gap-1 text-start">
-              <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                <Globe className="h-4 w-4 text-primary" />
-                {localize({ en: "Bilingual Operations", ar: "التشغيل ثنائي اللغة" }, language)}
-              </span>
-              <div className="text-2xl font-bold font-mono text-foreground">RTL + LTR</div>
-              <p className="text-xs text-muted-foreground">
-                {localize({ en: "Arabic & English mirrored layout", ar: "محاذاة كاملة للغة العربية" }, language)}
-              </p>
-            </div>
-          </section>
-
-          {/* 4 Core Features (Clean 2x2 Grid) */}
-          <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
-            <h2 className="text-sm font-bold text-foreground">
-              {localize({ en: "Primary Operational Capabilities", ar: "الميزات والقدرات التشغيلية الأساسية" }, language)}
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl border border-border/60 bg-secondary/15 flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <CloudRain className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-foreground">
-                    {localize({ en: "Live METAR & Wind Vectors", ar: "تقرير الطقس ومسار الرياح" }, language)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    {localize(
-                      {
-                        en: "Calculates crosswinds and assigns optimal runways (05L/05C) in real time.",
-                        ar: "حساب سرعة الرياح المتقاطعة وتحديد أنسب المدرجات (05L/05C) فورياً.",
-                      },
-                      language
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border/60 bg-secondary/15 flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <Tv className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-foreground">
-                    {localize({ en: "AOCC Video Wall Carousel", ar: "شاشات مركز العمليات الدوارة" }, language)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    {localize(
-                      {
-                        en: "Auto-cycles screens every 25s for command walls with authentic ATC radio.",
-                        ar: "تبديل تلقائي كل ٢٥ ثانية لشاشات القيادة المعلقة مع إذاعة صوتية.",
-                      },
-                      language
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border/60 bg-secondary/15 flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-status-warn/10 text-status-warn shrink-0">
-                  <Flame className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-foreground">
-                    {localize({ en: "Emergency Drill Sandbox", ar: "محاكاة حالات الطوارئ" }, language)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    {localize(
-                      {
-                        en: "Simulates sandstorm low-visibility CAT II and Terminal 3 baggage jams.",
-                        ar: "محاكاة العواصف الترابية وانخفاض الرؤية وتكدس حقائب الركاب.",
-                      },
-                      language
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border/60 bg-secondary/15 flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-status-ok/10 text-status-ok shrink-0">
-                  <FileSpreadsheet className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-foreground">
-                    {localize({ en: "RFC-4180 Arabic CSV Export", ar: "تصدير البيانات بصيغة CSV" }, language)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    {localize(
-                      {
-                        en: "Exports compliant spreadsheets with UTF-8 BOM preserving Arabic in Excel.",
-                        ar: "تصدير متوافق مع إكسل باللغة العربية دون تشوه للخطوط.",
-                      },
-                      language
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-border/60 bg-secondary/15 flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <Users className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-foreground">
-                    {localize({ en: "Staffing & Surge Workforce", ar: "إدارة القوى العاملة والطوارئ" }, language)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                    {localize(
-                      {
-                        en: "Shift wave allocator (<85% surge alerts), ICAO Annex 14/17 compliance, and 1-click tactical crew dispatch.",
-                        ar: "توزيع ورديات العمل وتحذيرات السعة، متابعة شارات الإيكاو، وإعادة انتشار فوري لفرق الطوارئ بنقرة واحدة.",
-                      },
-                      language
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Wireframe vs Polished Interface (Clean Toggle or Side-by-Side) */}
-          <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                  <Eye className="h-4 w-4 text-primary" />
-                  <span>{localize({ en: "Design Evolution", ar: "مراحل تطور التصميم" }, language)}</span>
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  {localize(
-                    { en: "From field paper wireframe to 4K dark mode cockpit.", ar: "من المخطط الميداني الورقي إلى الواجهة الرقمية النهائية." },
-                    language
-                  )}
-                </p>
-              </div>
-
-              {/* View Selector */}
-              <div className="flex gap-1 bg-secondary/40 p-0.5 rounded-lg border border-border/60 text-xs">
-                {(["side-by-side", "wireframe", "polished"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setImageMode(mode)}
-                    className={`px-2.5 py-1 rounded-md transition cursor-pointer font-medium ${
-                      imageMode === mode ? "bg-background text-foreground shadow-sm font-bold" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {mode === "side-by-side" && localize({ en: "Both", ar: "معاً" }, language)}
-                    {mode === "wireframe" && localize({ en: "Wireframe", ar: "المخطط" }, language)}
-                    {mode === "polished" && localize({ en: "Polished", ar: "النهائي" }, language)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className={`grid gap-4 mt-1 ${imageMode === "side-by-side" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-              {(imageMode === "side-by-side" || imageMode === "wireframe") && (
-                <ScrollableImageContainer
-                  src={import.meta.env.BASE_URL + "operations_wireframe.jpg"}
-                  alt="Paper wireframe"
-                  title={localize({ en: "1. Field Paper Wireframe", ar: "١. المخطط الورقي الأولي" }, language)}
-                />
-              )}
-              {(imageMode === "side-by-side" || imageMode === "polished") && (
-                <ScrollableImageContainer
-                  src={polishedSrc}
-                  alt="Polished UI"
-                  title={localize({ en: "2. Production 4K Interface", ar: "٢. الواجهة النهائية عالية الدقة" }, language)}
-                />
-              )}
-            </div>
-          </section>
-
-        </main>
-      )}
-
-      {/* ============================================================ */}
-      {/* TAB 2: AI & CODE ARCHITECTURE */}
+      {/* TAB 1: AI & CODE ARCHITECTURE */}
       {/* ============================================================ */}
       {activeTab === "architecture" && (
         <main className="flex flex-col gap-4 animate-in fade-in duration-200">
@@ -618,6 +406,66 @@ export default function ResourcesAuditPage({
             </div>
           </section>
 
+        </main>
+      )}
+
+      {/* ============================================================ */}
+      {/* TAB 2: DESIGN EVOLUTION & PROTOTYPING */}
+      {/* ============================================================ */}
+      {activeTab === "design" && (
+        <main className="flex flex-col gap-4 animate-in fade-in duration-200">
+          {/* Wireframe vs Polished Interface (Clean Toggle or Side-by-Side) */}
+          <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                  <Eye className="h-4 w-4 text-primary" />
+                  <span>{localize({ en: "Design Evolution", ar: "مراحل تطور التصميم" }, language)}</span>
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {localize(
+                    { en: "From field paper wireframe to 4K dark mode cockpit.", ar: "من المخطط الميداني الورقي إلى الواجهة الرقمية النهائية." },
+                    language
+                  )}
+                </p>
+              </div>
+
+              {/* View Selector */}
+              <div className="flex gap-1 bg-secondary/40 p-0.5 rounded-lg border border-border/60 text-xs">
+                {(["side-by-side", "wireframe", "polished"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setImageMode(mode)}
+                    className={`px-2.5 py-1 rounded-md transition cursor-pointer font-medium ${
+                      imageMode === mode ? "bg-background text-foreground shadow-sm font-bold" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {mode === "side-by-side" && localize({ en: "Both", ar: "معاً" }, language)}
+                    {mode === "wireframe" && localize({ en: "Wireframe", ar: "المخطط" }, language)}
+                    {mode === "polished" && localize({ en: "Polished", ar: "النهائي" }, language)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={`grid gap-4 mt-1 ${imageMode === "side-by-side" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+              {(imageMode === "side-by-side" || imageMode === "wireframe") && (
+                <ScrollableImageContainer
+                  src={import.meta.env.BASE_URL + "operations_wireframe.jpg"}
+                  alt="Paper wireframe"
+                  title={localize({ en: "1. Field Paper Wireframe", ar: "١. المخطط الورقي الأولي" }, language)}
+                />
+              )}
+              {(imageMode === "side-by-side" || imageMode === "polished") && (
+                <ScrollableImageContainer
+                  src={polishedSrc}
+                  alt="Polished UI"
+                  title={localize({ en: "2. Production 4K Interface", ar: "٢. الواجهة النهائية عالية الدقة" }, language)}
+                />
+              )}
+            </div>
+          </section>
         </main>
       )}
 

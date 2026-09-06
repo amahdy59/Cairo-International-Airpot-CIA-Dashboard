@@ -128,4 +128,24 @@ describe("Code Review & Telemetry Data Integrity", () => {
       });
     });
   });
+
+  it("validates that System Documentation focuses exclusively on technical specifications", async () => {
+    // Read the source file to verify technical tab keys and absence of marketing overview
+    const fs = await import("fs");
+    const path = await import("path");
+    const content = fs.readFileSync(path.resolve(__dirname, "../components/ResourcesAuditPage.tsx"), "utf8");
+
+    // Tab definition verification
+    expect(content).toContain('type TabKey = "architecture" | "design" | "accessibility" | "tools";');
+    expect(content).toContain('useState<TabKey>("architecture")');
+    expect(content).not.toContain('id: "overview"');
+    expect(content).not.toContain("30M+ PAX");
+    expect(content).not.toContain("Primary Operational Capabilities");
+
+    // Technical tabs verification
+    expect(content).toContain('id: "architecture"');
+    expect(content).toContain('id: "design"');
+    expect(content).toContain('id: "accessibility"');
+    expect(content).toContain('id: "tools"');
+  });
 });
