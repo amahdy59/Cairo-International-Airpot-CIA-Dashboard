@@ -40,11 +40,59 @@ try {
 }
 
 try {
+  execSync("npx vitest run src/tests/acdmEngine.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ A-CDM Milestone & Turnaround Engine: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ A-CDM Milestone Engine tests failed");
+}
+
+try {
+  execSync("npx vitest run src/tests/apronClearance.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ ICAO Apron Stand & Wingspan Safety: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ Apron Clearance tests failed");
+}
+
+try {
+  execSync("npx vitest run src/tests/safetyPlaybooks.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ Airfield Emergency SOP Playbooks: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ Safety Playbooks tests failed");
+}
+
+try {
   execSync("npx vitest run src/tests/staffing.test.ts", { stdio: "pipe", shell: true });
   results.codeReview.details.push("✅ Workforce & Staffing Roster: 100% tests passed");
 } catch (e) {
   results.codeReview.passed = false;
   results.codeReview.details.push("❌ Workforce & Staffing tests failed");
+}
+
+try {
+  execSync("npx vitest run src/tests/utilitiesAndExport.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ RFC 4180 BOM Export & Localization Utilities: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ Utilities & Export tests failed");
+}
+
+try {
+  execSync("npx vitest run src/tests/telemetryAndBroadcast.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ Multi-Screen Broadcast & Haptics: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ Multi-Screen Broadcast tests failed");
+}
+
+try {
+  execSync("npx vitest run src/tests/reactivity.test.ts", { stdio: "pipe", shell: true });
+  results.codeReview.details.push("✅ Scenario & Reactive State Propagation: 100% tests passed");
+} catch (e) {
+  results.codeReview.passed = false;
+  results.codeReview.details.push("❌ Scenario Reactivity tests failed");
 }
 
 // 2. Responsiveness Review

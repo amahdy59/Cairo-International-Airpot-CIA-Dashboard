@@ -15,7 +15,7 @@ class AoccBroadcastService {
   private listeners: Set<(msg: AoccBroadcastMessage) => void> = new Set();
 
   constructor() {
-    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+    if (typeof BroadcastChannel !== "undefined") {
       try {
         this.channel = new BroadcastChannel("cia-aocc-telemetry");
         this.channel.onmessage = (event: MessageEvent<AoccBroadcastMessage>) => {
