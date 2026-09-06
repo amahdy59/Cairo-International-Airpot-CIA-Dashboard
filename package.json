@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:responsive": "vitest run src/tests/responsiveness.test.ts",
     "review": "node scripts/ci-review.mjs",
     "audit:all": "npm run typecheck && npm run lint && npm run test && npm run build",
     "verify:live": "node scripts/verify-live-deployment.mjs"

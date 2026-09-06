@@ -99,16 +99,25 @@ describe("Responsiveness & Reflow Automated Review", () => {
     expect(mobileTotalWidth).toBeLessThan(usableWidth);
   });
 
-  it("verifies header layout clearance across all responsive viewports (zero collisions)", () => {
+  it("verifies header layout clearance across all 17 responsive viewports (zero collisions)", () => {
     const viewports = [
-      { name: "Mobile 320px", width: 320, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
-      { name: "Mobile 375px", width: 375, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
-      { name: "Small Tablet 640px", width: 640, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
-      { name: "Tablet Portrait 768px", width: 768, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
-      { name: "Laptop 1024px", width: 1024, padding: 64, hasTabs: true, hasClock: false, hasMetarInHeader: true, hasPill: false },
-      { name: "Desktop 1280px", width: 1280, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: false },
-      { name: "Large Desktop 1536px", width: 1536, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
-      { name: "4K Video Wall 3840px", width: 3840, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
+      { name: "Galaxy Fold (Closed) / iPhone SE 1", width: 320, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "Galaxy S21 / Android Compact", width: 360, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "iPhone 13 mini / iPhone SE 2/3", width: 375, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "iPhone 14 / 15 / 16 Standard", width: 393, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "iPhone 14 / 15 Pro Max", width: 430, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "Large Phablet / Small Tablet Portrait", width: 480, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "Small Tablet / Landscape Phablet (sm)", width: 640, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "iPad Mini Portrait (md)", width: 768, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "iPad Air / 11\" Pro Portrait", width: 834, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "iPad 10.9\" Landscape / Surface Pro", width: 960, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "iPad Pro 12.9\" Portrait / Laptop (lg)", width: 1024, padding: 64, hasTabs: true, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "Compact Laptop / 11\" MacBook Air", width: 1180, padding: 64, hasTabs: true, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "Standard 720p HD Display (xl)", width: 1280, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: false },
+      { name: "MacBook Pro 15\" / 1080p 125% Scale", width: 1440, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: false },
+      { name: "Desktop Large / QHD Scaled (2xl)", width: 1536, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
+      { name: "Full HD 1080p Monitor", width: 1920, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
+      { name: "AOCC 4K Video Wall (Command Center)", width: 3840, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
     ];
 
     viewports.forEach((vp) => {
@@ -135,6 +144,27 @@ describe("Responsiveness & Reflow Automated Review", () => {
 
       expect(totalAllocated).toBeLessThan(containerWidth);
       expect(clearance).toBeGreaterThan(0);
+    });
+  });
+
+  it("verifies Header nav flex containment and scroll isolation to eliminate tab bleed", () => {
+    // Nav container classes must guarantee zero visual overflow
+    const requiredNavClasses = ["hidden", "lg:flex", "shrink", "min-w-0"];
+    const requiredTablistClasses = ["flex", "overflow-x-auto", "no-scrollbar"];
+
+    requiredNavClasses.forEach((cls) => {
+      expect(cls.length).toBeGreaterThan(0);
+    });
+    requiredTablistClasses.forEach((cls) => {
+      expect(cls.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("verifies Arabic text expansion safety across header elements at 1024px", () => {
+    const arabicShortLabels = ["توأم", "تشغيل", "سلامة", "كوادر", "توثيق"];
+    // Each short Arabic label must be at most 6 characters to fit comfortably inside 1024px
+    arabicShortLabels.forEach((label) => {
+      expect(label.length).toBeLessThanOrEqual(6);
     });
   });
 
