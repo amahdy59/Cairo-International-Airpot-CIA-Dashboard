@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, Zap, ChevronRight, CheckCircle2, Loader2, ExternalLink } from 'lucide-react';
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
-import { AirportScene, HotspotStatus, MapHotspot, scenes, IncomingFlight, Tone } from '../../data';
+import { AirportScene, HotspotStatus, MapHotspot, scenes, IncomingFlight, Tone, ManagerTab } from '../../data';
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
 import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
 import { notifyManager } from '../../utils/toast';
@@ -12,7 +12,69 @@ import { ApronConflictDetector } from './ApronConflictDetector';
 
 type Translatable = string | { en: string; ar: string };
 
-function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark"; selectedSceneId?: string }) {
+function getHotspotDeepLink(hotspot: MapHotspot): {
+  tab: ManagerTab;
+  subView?: "flights" | "analytics";
+  destinationName: { en: string; ar: string };
+  buttonText: { en: string; ar: string };
+} {
+  const cat = (hotspot.category || "").toLowerCase();
+  const id = hotspot.id.toLowerCase();
+  const title = (hotspot.title || "").toLowerCase();
+
+  if (
+    id.includes("gate") ||
+    id.includes("apron") ||
+    title.includes("gate") ||
+    title.includes("stand") ||
+    title.includes("aircraft") ||
+    cat.includes("operation")
+  ) {
+    return {
+      tab: "operations",
+      subView: "flights",
+      destinationName: { en: "Operations (Turnaround & Flights)", ar: "العمليات (رحلات الطيران والانعطاف A-CDM)" },
+      buttonText: { en: "Inspect in Operations (A-CDM & Flights) ↗", ar: "فحص في العمليات (رحلات وانعطاف A-CDM) ↗" },
+    };
+  }
+
+  if (
+    id.includes("flow") ||
+    id.includes("security") ||
+    id.includes("queue") ||
+    title.includes("flow") ||
+    title.includes("queue")
+  ) {
+    return {
+      tab: "operations",
+      subView: "analytics",
+      destinationName: { en: "Operations (Flow Analytics)", ar: "العمليات (تحليلات التدفق والطوابير)" },
+      buttonText: { en: "Inspect in Operations (Flows & Analytics) ↗", ar: "فحص في تحليلات التدفق والطوابير ↗" },
+    };
+  }
+
+  if (id.includes("parking") || id.includes("traffic") || cat.includes("landside") || title.includes("staff")) {
+    return {
+      tab: "staffing",
+      destinationName: { en: "Staffing & Workforce", ar: "إدارة القوى العاملة والمناوبات" },
+      buttonText: { en: "Inspect in Staffing & Workforce ↗", ar: "فحص في القوى العاملة والمناوبات ↗" },
+    };
+  }
+
+  return {
+    tab: "safety",
+    destinationName: { en: "Safety & Directives", ar: "سجل السلامة والامتثال" },
+    buttonText: { en: "Inspect in Safety & Directives ↗", ar: "فحص في سجل السلامة والامتثال ↗" },
+  };
+}
+
+export interface DigitalTwinViewProps {
+  theme?: "light" | "dark";
+  selectedSceneId?: string;
+  onNavigateTab?: (tab: ManagerTab, subView?: "flights" | "analytics") => void;
+}
+
+function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinViewProps) {
   const { language, tr } = useLocale();
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const activeScene = useMemo(() => scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0], [activeSceneId]);
@@ -632,6 +694,34 @@ function DigitalTwinView({ theme, selectedSceneId }: { theme?: "light" | "dark";
                         {language === 'ar' ? 'أولوية تشغيلية قصوى' : 'High Priority Directive'}
                       </span>
                     </div>
+                  </div>
+                )}
+
+                {/* Cross-Domain Spatial Deep-Linking */}
+                {onNavigateTab && (
+                  <div className="mt-3 pt-3 border-t border-border/50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEffects.playClick();
+                        const link = getHotspotDeepLink(selectedHotspot);
+                        onNavigateTab(link.tab, link.subView);
+                        notifyManager(
+                          language === "ar" ? "الانتقال للقسم المتخصص" : "Cross-Domain Deep Link",
+                          language === "ar"
+                            ? `تم الانتقال إلى ${localize(link.destinationName, language)} لفحص المؤشرات`
+                            : `Navigated to ${localize(link.destinationName, language)} for domain analysis.`,
+                          "info"
+                        );
+                      }}
+                      className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-all cursor-pointer group active-spring"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />
+                        <span>{localize(getHotspotDeepLink(selectedHotspot).buttonText, language)}</span>
+                      </div>
+                      <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180 text-primary/70" />
+                    </button>
                   </div>
                 )}
               </div>

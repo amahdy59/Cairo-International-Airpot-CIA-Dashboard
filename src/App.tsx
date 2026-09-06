@@ -89,8 +89,17 @@ export function App() {
     safeStorage.setItem("cai_language", lang);
   };
   const [selectedSceneId, setSelectedSceneId] = useState<string | undefined>(undefined);
+  const [operationsSubView, setOperationsSubView] = useState<"flights" | "analytics">("flights");
   const times = useHeaderClock();
   const c = copy[language];
+
+  const handleNavigateTab = (tab: ManagerTab, subView?: "flights" | "analytics") => {
+    setActiveTab(tab);
+    if (subView) {
+      setOperationsSubView(subView);
+    }
+    showDashboard();
+  };
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -226,12 +235,7 @@ export function App() {
             {activePage !== "resources" && <h1 className="sr-only">{c.brand} - {c.airport}</h1>}
             {activePage !== "resources" && <SimulationBanner />}
             {activePage !== "resources" && (
-              <ExecutivePulseBar
-                onNavigateTab={(tab) => {
-                  setActiveTab(tab);
-                  showDashboard();
-                }}
-              />
+              <ExecutivePulseBar onNavigateTab={handleNavigateTab} />
             )}
             {activePage === "resources" ? (
               <div id="main-content" tabIndex={-1} className="mt-3 lg:mt-4 outline-none">
@@ -242,8 +246,19 @@ export function App() {
             ) : (
             <div key={activeTab} id="main-content" tabIndex={-1} role="tabpanel" aria-label={activeTab === 'digital' ? 'Digital Twin' : activeTab === 'operations' ? 'Operations' : activeTab === 'safety' ? 'Safety & Compliance' : 'Staffing & Workforce'} className="flex flex-col flex-1 min-h-0 min-w-0 fade-rise outline-none">
               <ErrorBoundary>
-                {activeTab === "digital" && <DigitalTwinView theme={theme} selectedSceneId={selectedSceneId} />}
-                {activeTab === "operations" && <OperationsView />}
+                {activeTab === "digital" && (
+                  <DigitalTwinView
+                    theme={theme}
+                    selectedSceneId={selectedSceneId}
+                    onNavigateTab={handleNavigateTab}
+                  />
+                )}
+                {activeTab === "operations" && (
+                  <OperationsView
+                    subView={operationsSubView}
+                    onSubViewChange={setOperationsSubView}
+                  />
+                )}
                 {activeTab === "safety" && <SafetyView />}
                 {activeTab === "staffing" && <StaffingView />}
               </ErrorBoundary>

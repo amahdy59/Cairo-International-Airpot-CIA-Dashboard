@@ -169,4 +169,65 @@ describe("Code Review & Telemetry Data Integrity", () => {
     expect(headerContent).toContain("min-h-[44px]");
     expect(headerContent).toContain("min-w-[44px]");
   });
+
+  it("validates Executive Decisions Dock architecture and 3 cross-domain approvals", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const modalContent = fs.readFileSync(
+      path.resolve(__dirname, "../components/common/ExecutiveDecisionsModal.tsx"),
+      "utf8"
+    );
+    const pulseBarContent = fs.readFileSync(
+      path.resolve(__dirname, "../components/layout/ExecutivePulseBar.tsx"),
+      "utf8"
+    );
+
+    // Modal structure verification
+    expect(modalContent).toContain("Executive Decision Dock");
+    expect(modalContent).toContain("Shift Turnover Briefing Formal Sign-Off");
+    expect(modalContent).toContain("Stand Conflict: Wingspan Separation Margin");
+    expect(modalContent).toContain("Tactical Surge: Dispatch 14 Roving Biometric Marshals");
+    expect(modalContent).toContain("role=\"dialog\"");
+    expect(modalContent).toContain("aria-modal=\"true\"");
+
+    // PulseBar trigger integration
+    expect(pulseBarContent).toContain("ExecutiveDecisionsModal");
+    expect(pulseBarContent).toContain("isDecisionsOpen");
+    expect(pulseBarContent).toContain("Decisions");
+  });
+
+  it("validates Operations View sub-view segmentation (flights vs analytics)", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const opsContent = fs.readFileSync(
+      path.resolve(__dirname, "../features/operations/OperationsView.tsx"),
+      "utf8"
+    );
+
+    expect(opsContent).toContain('export interface OperationsViewProps');
+    expect(opsContent).toContain('subView?: "flights" | "analytics"');
+    expect(opsContent).toContain('role="tablist"');
+    expect(opsContent).toContain('id="tab-flights"');
+    expect(opsContent).toContain('id="tab-analytics"');
+    expect(opsContent).toContain('id="panel-flights"');
+    expect(opsContent).toContain('id="panel-analytics"');
+    expect(opsContent).toContain('AcdmMilestones');
+    expect(opsContent).toContain('PassengerFlowChart');
+  });
+
+  it("validates Cross-Domain Spatial Deep-Linking from Digital Twin hotspots", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const twinContent = fs.readFileSync(
+      path.resolve(__dirname, "../features/digital-twin/DigitalTwinView.tsx"),
+      "utf8"
+    );
+
+    expect(twinContent).toContain("getHotspotDeepLink");
+    expect(twinContent).toContain("Inspect in Operations (A-CDM & Flights) ↗");
+    expect(twinContent).toContain("Inspect in Operations (Flows & Analytics) ↗");
+    expect(twinContent).toContain("Inspect in Staffing & Workforce ↗");
+    expect(twinContent).toContain("Inspect in Safety & Directives ↗");
+    expect(twinContent).toContain("onNavigateTab(link.tab, link.subView)");
+  });
 });

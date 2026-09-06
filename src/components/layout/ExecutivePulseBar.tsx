@@ -6,17 +6,19 @@ import { useNetworkStatus } from "../../hooks/useNetworkStatus";
 import { notifyManager } from "../../utils/toast";
 import { soundEffects } from "../../services/soundEffects";
 import { ShiftHandoverModal } from "../common/ShiftHandoverModal";
+import { ExecutiveDecisionsModal } from "../common/ExecutiveDecisionsModal";
 
 export function ExecutivePulseBar({
   onNavigateTab,
 }: {
-  onNavigateTab?: (tab: "digital" | "operations" | "safety" | "staffing") => void;
+  onNavigateTab?: (tab: "digital" | "operations" | "safety" | "staffing", subView?: "flights" | "analytics") => void;
 }) {
   const { language } = useLocale();
   const { isDrillActive, metar } = useSimulation();
   const { isOnline } = useNetworkStatus();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHandoverOpen, setIsHandoverOpen] = useState(false);
+  const [isDecisionsOpen, setIsDecisionsOpen] = useState(false);
 
   const handleQuickAction = (actionName: string) => {
     soundEffects.playClick();
@@ -92,6 +94,30 @@ export function ExecutivePulseBar({
 
           {/* Right: Rapid Action Buttons & Detail Toggle */}
           <div className="flex items-center gap-1.5 sm:gap-2 ms-auto">
+            {/* Executive Decisions Pending Dock Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playClick();
+                setIsDecisionsOpen(true);
+              }}
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-status-warn/40 bg-status-warn/10 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-status-warn transition-all duration-200 hover:bg-status-warn/20 active-spring cursor-pointer shadow-xs"
+              title={language === "ar" ? "مركز القرارات التنفيذية والموافقات الفورية" : "Executive Decision Dock (Approvals)"}
+              aria-haspopup="dialog"
+              aria-label={language === "ar" ? "القرارات التنفيذية: 3 موافقات معلقة" : "Executive Decisions: 3 Pending Approvals"}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-warn opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-status-warn" />
+              </span>
+              <span className="font-bold text-foreground">
+                {language === "ar" ? "القرارات التنفيذية" : "Decisions"}
+              </span>
+              <span className="rounded-md bg-status-warn/20 px-1.5 py-0.5 text-[10px] font-mono font-bold text-status-warn">
+                3
+              </span>
+            </button>
+
             {/* Shift Handover Briefing Trigger */}
             <button
               type="button"
@@ -164,6 +190,14 @@ export function ExecutivePulseBar({
 
       {/* Official Shift Handover Turnover Briefing Modal */}
       <ShiftHandoverModal isOpen={isHandoverOpen} onClose={() => setIsHandoverOpen(false)} />
+
+      {/* Executive Decisions Pending Approvals Modal */}
+      <ExecutiveDecisionsModal
+        isOpen={isDecisionsOpen}
+        onClose={() => setIsDecisionsOpen(false)}
+        onOpenHandover={() => setIsHandoverOpen(true)}
+        onNavigateTab={onNavigateTab}
+      />
     </>
   );
 }

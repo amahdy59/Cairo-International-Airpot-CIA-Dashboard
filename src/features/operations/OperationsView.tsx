@@ -1,9 +1,10 @@
 import { memo, useState, useMemo } from 'react';
-import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen, Search, X, Download } from 'lucide-react';
+import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen, Search, X, Download, Plane } from 'lucide-react';
 import { localize, toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
 import { exportToCsv } from '../../utils/exportCsv';
+import { soundEffects } from '../../services/soundEffects';
 import { FlightRow, Tone, shiftWaves, InfluxForecastPoint, TerminalId } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
 import { AcdmMilestones } from './AcdmMilestones';
@@ -283,7 +284,12 @@ function TerminalFilterSelector() {
   );
 }
 
-function OperationsView() {
+export interface OperationsViewProps {
+  subView?: "flights" | "analytics";
+  onSubViewChange?: (subView: "flights" | "analytics") => void;
+}
+
+function OperationsView({ subView: controlledSubView, onSubViewChange }: OperationsViewProps = {}) {
   const { tr, language } = useLocale();
   const {
     activeShiftWave,
@@ -293,6 +299,18 @@ function OperationsView() {
     reactiveDepartures,
     reactiveArrivals,
   } = useSimulation();
+
+  const [internalSubView, setInternalSubView] = useState<"flights" | "analytics">("flights");
+  const activeSubView = controlledSubView ?? internalSubView;
+
+  const setSubView = (val: "flights" | "analytics") => {
+    soundEffects.playClick();
+    if (onSubViewChange) {
+      onSubViewChange(val);
+    } else {
+      setInternalSubView(val);
+    }
+  };
 
   // Metrics dynamic to activeShiftWave & activeTerminal
   const shiftMetrics = useMemo(() => {
@@ -396,22 +414,98 @@ function OperationsView() {
         />
       </section>
 
-      {/* A-CDM Turnaround Milestone Engine */}
-      <AcdmMilestones />
+      {/* Sub-View Navigation Segmented Switcher */}
+      <div
+        role="tablist"
+        aria-label={localize({ en: "Operations Sub-Views", ar: "الأقسام الفرعية للعمليات" }, language)}
+        className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-border/80 bg-secondary/30 backdrop-blur-md max-w-fit"
+      >
+        <button
+          type="button"
+          role="tab"
+          id="tab-flights"
+          aria-selected={activeSubView === "flights"}
+          aria-controls="panel-flights"
+          onClick={() => setSubView("flights")}
+          className={`min-h-[44px] flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
+            activeSubView === "flights"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+          }`}
+        >
+          <Plane className="h-4 w-4" aria-hidden="true" />
+          <span>{localize({ en: "Turnaround & Flights", ar: "رحلات الطيران والانعطاف الميداني" }, language)}</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+              activeSubView === "flights"
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : "bg-secondary text-muted-foreground"
+            }`}
+          >
+            {reactiveDepartures.length + reactiveArrivals.length}
+          </span>
+        </button>
 
-      {/* Middle: Charts for visual absorption */}
-      <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
-        <PassengerFlowChart />
-        <QueuePressureChart />
+        <button
+          type="button"
+          role="tab"
+          id="tab-analytics"
+          aria-selected={activeSubView === "analytics"}
+          aria-controls="panel-analytics"
+          onClick={() => setSubView("analytics")}
+          className={`min-h-[44px] flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
+            activeSubView === "analytics"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+          }`}
+        >
+          <Gauge className="h-4 w-4" aria-hidden="true" />
+          <span>{localize({ en: "Flow Analytics & Forecast", ar: "تحليلات التدفق والتوقعات" }, language)}</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono uppercase ${
+              activeSubView === "analytics"
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : "bg-secondary text-muted-foreground"
+            }`}
+          >
+            LIVE
+          </span>
+        </button>
       </div>
 
-      {/* Tables: Detailed lists */}
-      <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
-        <FlightBoard title={tr("Departures")} direction="to" rows={reactiveDepartures} />
-        <FlightBoard title={tr("Arrivals")} direction="from" rows={reactiveArrivals} />
-      </div>
+      {/* Sub-View Content */}
+      {activeSubView === "flights" ? (
+        <div
+          id="panel-flights"
+          role="tabpanel"
+          aria-labelledby="tab-flights"
+          className="grid gap-3 lg:gap-4 animate-in fade-in duration-200"
+        >
+          {/* A-CDM Turnaround Milestone Engine */}
+          <AcdmMilestones />
 
-      <DigitalOperationalGrid />
+          {/* Tables: Detailed flight lists */}
+          <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
+            <FlightBoard title={tr("Departures")} direction="to" rows={reactiveDepartures} />
+            <FlightBoard title={tr("Arrivals")} direction="from" rows={reactiveArrivals} />
+          </div>
+        </div>
+      ) : (
+        <div
+          id="panel-analytics"
+          role="tabpanel"
+          aria-labelledby="tab-analytics"
+          className="grid gap-3 lg:gap-4 animate-in fade-in duration-200"
+        >
+          {/* Middle: Charts for visual absorption */}
+          <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
+            <PassengerFlowChart />
+            <QueuePressureChart />
+          </div>
+
+          <DigitalOperationalGrid />
+        </div>
+      )}
     </div>
   );
 }
