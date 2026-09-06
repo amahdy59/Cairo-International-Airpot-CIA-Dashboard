@@ -85,13 +85,13 @@
   --input: oklch(0.85 0.03 250 / 0.6);
   --ring: oklch(0.45 0.16 250);
 
-  --status-ok: oklch(0.50 0.15 155);
-  --status-info: oklch(0.48 0.14 220);
-  --status-warn: oklch(0.58 0.14 85);
-  --status-high: oklch(0.55 0.17 55);
-  --status-crit: oklch(0.54 0.20 25);
-  --magenta: oklch(0.52 0.20 335);
-  --cyan: oklch(0.48 0.14 220);
+  --status-ok: #065F46;
+  --status-info: #1E40AF;
+  --status-warn: #78350F;
+  --status-high: #991B1B;
+  --status-crit: #991B1B;
+  --magenta: #6B21A8;
+  --cyan: #164E63;
   --grid: oklch(0.42 0.04 240 / 0.10);
 
   --chart-1: var(--cyan);
@@ -111,39 +111,40 @@
   color-scheme: light;
 }
 
-/* Clean, WCAG compliant Light Mode */
+/* Clean, WCAG 2.2 AAA compliant Light Mode */
 .light {
   --background: #F8FAFC;
-  --foreground: #0F172A;
+  --foreground: #0F172A; /* 17.1:1 AAA */
   
   --surface: #FFFFFF;
-  --surface-2: #F9FAFB;
+  --surface-2: #F1F5F9;
   
   --card: #FFFFFF;
   --card-foreground: #0F172A;
   
-  --primary: #1D4ED8;
+  --primary: #1E40AF; /* 8.3:1 AAA */
   --primary-foreground: #FFFFFF;
-  --primary-glow: #1D4ED8;
+  --primary-glow: #1E40AF;
   
-  --accent: #2563EB;
+  --accent: #1E40AF;
   --accent-foreground: #FFFFFF;
   
   --secondary: #EFF6FF;
-  --secondary-foreground: #1D4ED8;
+  --secondary-foreground: #1E40AF;
   
-  --border: #E2E8F0;
-  --muted: #F8FAFC;
-  --muted-foreground: #334155; /* Meets WCAG AAA 7:1 contrast ratio against slate background */
+  --border: #CBD5E1;
+  --input: #94A3B8;
+  --muted: #F1F5F9;
+  --muted-foreground: #334155; /* 9.9:1 AAA */
 
-  --status-ok: #047857;
-  --status-info: #1D4ED8;
-  --status-warn: #B45309;
-  --status-high: #B91C1C;
-  --status-crit: #B91C1C;
+  --status-ok: #065F46;   /* 7.3:1 AAA */
+  --status-info: #1E40AF; /* 8.3:1 AAA */
+  --status-warn: #78350F; /* 8.7:1 AAA */
+  --status-high: #991B1B; /* 7.9:1 AAA */
+  --status-crit: #991B1B; /* 7.9:1 AAA */
 
-  --cyan: #1D4ED8; /* Info */
-  --magenta: #6D28D9; /* AI / Insight */
+  --cyan: #164E63;        /* 8.7:1 AAA */
+  --magenta: #6B21A8;     /* 8.3:1 AAA */
 }
 
 html.light body {
@@ -192,7 +193,7 @@ html.light body {
   --status-info: oklch(0.76 0.13 220);   /* cyan - 7.8:1 AAA */
   --status-warn: oklch(0.78 0.16 85);    /* amber - 7.2:1 AAA */
   --status-high: oklch(0.74 0.18 55);    /* orange - 7.1:1 AAA */
-  --status-crit: oklch(0.68 0.22 25);    /* red - 7.4:1 AAA */
+  --status-crit: oklch(0.74 0.19 25);    /* red - 8.1:1 AAA surface / 8.9:1 AAA bg */
   --magenta: oklch(0.72 0.18 300);
   --cyan: oklch(0.78 0.14 215);
   --grid: oklch(0.40 0.03 250 / 0.06);

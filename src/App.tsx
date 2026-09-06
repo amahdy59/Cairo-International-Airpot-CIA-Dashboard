@@ -17,6 +17,7 @@ import { SimulationProvider } from './context/simulation';
 import { SimulationBanner } from './components/common/SimulationBanner';
 import { KioskBar } from './components/common/KioskBar';
 import { ExecutivePulseBar } from './components/layout/ExecutivePulseBar';
+import { safeStorage } from './utils/safeStorage';
 
 function getInitialPageView(): PageView {
   if (typeof window === "undefined") {
@@ -37,13 +38,56 @@ function getInitialTab(): ManagerTab {
   return "digital";
 }
 
+function getInitialTheme(): ThemeMode {
+  const saved = safeStorage.getItem("cai_theme");
+  if (saved === "light" || saved === "dark") return saved;
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches) {
+    return "light";
+  }
+  return "dark";
+}
+
+function getInitialHighContrast(): boolean {
+  const saved = safeStorage.getItem("cai_high_contrast");
+  if (saved === "true") return true;
+  if (saved === "false") return false;
+  if (typeof window !== "undefined" && window.matchMedia?.("(prefers-contrast: more)").matches) {
+    return true;
+  }
+  return false;
+}
+
+function getInitialLanguage(): Language {
+  const saved = safeStorage.getItem("cai_language");
+  if (saved === "en" || saved === "ar") return saved;
+  if (typeof navigator !== "undefined" && navigator.language && navigator.language.startsWith("ar")) {
+    return "ar";
+  }
+  return "en";
+}
+
 export function App() {
   const [activeTab, setActiveTab] = useState<ManagerTab>(() => getInitialTab());
   const [activePage, setActivePage] = useState<PageView>(() => getInitialPageView());
-  const [language, setLanguage] = useState<Language>("en");
-  const [theme, setTheme] = useState<ThemeMode>("dark");
-  const [highContrast, setHighContrast] = useState(false);
+  const [language, setLanguageState] = useState<Language>(() => getInitialLanguage());
+  const [theme, setThemeState] = useState<ThemeMode>(() => getInitialTheme());
+  const [highContrast, setHighContrastState] = useState<boolean>(() => getInitialHighContrast());
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  const setTheme = (newTheme: ThemeMode) => {
+    setThemeState(newTheme);
+    safeStorage.setItem("cai_theme", newTheme);
+  };
+
+  const setHighContrast = (val: boolean) => {
+    setHighContrastState(val);
+    safeStorage.setItem("cai_high_contrast", val ? "true" : "false");
+  };
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    safeStorage.setItem("cai_language", lang);
+  };
   const [selectedSceneId, setSelectedSceneId] = useState<string | undefined>(undefined);
   const times = useHeaderClock();
   const c = copy[language];
@@ -58,6 +102,31 @@ export function App() {
 
   useEffect(() => {
     document.getElementById("root")?.removeAttribute("aria-busy");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const colorSchemeMq = window.matchMedia("(prefers-color-scheme: light)");
+    const contrastMq = window.matchMedia("(prefers-contrast: more)");
+
+    const onColorSchemeChange = (e: MediaQueryListEvent) => {
+      if (!safeStorage.getItem("cai_theme")) {
+        setThemeState(e.matches ? "light" : "dark");
+      }
+    };
+
+    const onContrastChange = (e: MediaQueryListEvent) => {
+      if (!safeStorage.getItem("cai_high_contrast")) {
+        setHighContrastState(e.matches);
+      }
+    };
+
+    colorSchemeMq.addEventListener?.("change", onColorSchemeChange);
+    contrastMq.addEventListener?.("change", onContrastChange);
+    return () => {
+      colorSchemeMq.removeEventListener?.("change", onColorSchemeChange);
+      contrastMq.removeEventListener?.("change", onContrastChange);
+    };
   }, []);
 
   useEffect(() => {
