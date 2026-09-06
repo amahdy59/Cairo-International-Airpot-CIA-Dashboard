@@ -724,52 +724,69 @@ export default function ResourcesAuditPage({
             })()}
           </section>
 
-          {/* Creator Credentials */}
-          <section className="rounded-2xl border border-primary/25 bg-primary/5 p-4 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <img
-                src={import.meta.env.BASE_URL + "ahmed-mahdy.png"}
-                alt="Ahmed Mahdy"
-                className="h-12 w-12 rounded-xl object-cover border border-primary/30 shrink-0"
-              />
-              <div>
-                <h3 className="text-sm font-bold text-foreground">
-                  {localize({ en: "Ahmed Mahdy", ar: "أحمد مهدي" }, language)}
-                </h3>
-                <p className="text-xs text-primary font-medium">
-                  {localize({ en: "UX Designer & Data Analyst • Advansys IS", ar: "مصمم تجربة مستخدم ومحلل بيانات • أدفانسيس" }, language)}
-                </p>
-                <span className="text-[10px] text-muted-foreground font-mono">
-                  Google UX • Google Data Analytics • Tableau BI • WCAG 2.2 AAA
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 text-xs">
-              <a
-                href="https://www.linkedin.com/in/creativemahdy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-semibold text-foreground hover:text-primary transition-colors"
-              >
-                <Linkedin className="h-3.5 w-3.5 text-primary" />
-                <span>LinkedIn</span>
-                <ExternalLink className="h-3 w-3 opacity-60" />
-              </a>
-              <a
-                href="https://mahdy-resume.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-semibold text-primary hover:underline"
-              >
-                <span>{localize({ en: "Resume", ar: "السيرة الذاتية" }, language)}</span>
-                <ExternalLink className="h-3 w-3 opacity-60" />
-              </a>
-            </div>
-          </section>
-
         </main>
       )}
+
+      {/* Verified System Architect & Creator Credentials (Persistent across all tabs) */}
+      <footer className="rounded-2xl border border-primary/25 bg-primary/5 p-4 sm:p-5 flex items-center justify-between gap-4 flex-wrap mt-2">
+        <div className="flex items-center gap-3.5">
+          <img
+            src={import.meta.env.BASE_URL + "ahmed-mahdy.png"}
+            alt="Ahmed Mahdy"
+            className="h-13 w-13 rounded-2xl object-cover border-2 border-primary/40 shadow-sm shrink-0"
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-extrabold text-foreground">
+                {localize({ en: "Ahmed Mahdy", ar: "أحمد مهدي" }, language)}
+              </h2>
+              <span className="rounded-md bg-primary/20 px-2 py-0.5 font-mono text-[10px] font-bold text-primary uppercase">
+                {localize({ en: "System Architect", ar: "معماري النظام" }, language)}
+              </span>
+            </div>
+            <p className="text-xs text-primary font-semibold mt-0.5">
+              {localize(
+                {
+                  en: "Lead Product Designer & Systems Architect • Advansys IS",
+                  ar: "كبير مصممي المنتجات ومعماري الأنظمة • أدفانسيس للحلول المتطورة",
+                },
+                language
+              )}
+            </p>
+            <span className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
+              {localize(
+                {
+                  en: "Mission-Critical Cockpits • Human Factors Engineering • WCAG 2.2 AAA Certified",
+                  ar: "تصميم أنظمة العمليات الحرجة • هندسة العوامل البشرية • معيار AAA لإتاحة الوصول",
+                },
+                language
+              )}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-xs self-end sm:self-center">
+          <a
+            href="https://www.linkedin.com/in/creativemahdy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-primary/30 bg-background/60 px-3 py-2 font-bold text-foreground hover:bg-primary/10 hover:text-primary transition-all active-spring"
+          >
+            <Linkedin className="h-4 w-4 text-primary" />
+            <span>LinkedIn</span>
+            <ExternalLink className="h-3.5 w-3.5 opacity-60" />
+          </a>
+          <a
+            href="https://mahdy-resume.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 font-bold text-primary-foreground shadow hover:opacity-90 transition-all active-spring"
+          >
+            <span>{localize({ en: "View Resume", ar: "السيرة الذاتية" }, language)}</span>
+            <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+          </a>
+        </div>
+      </footer>
 
     </div>
   );

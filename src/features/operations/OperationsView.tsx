@@ -539,33 +539,41 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
           <caption className="sr-only">{title}</caption>
           <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
-              <th className="px-1 py-2 text-start">{tr("Flight")}</th>
-              <th className="px-1 py-2 text-start">{direction === "to" ? tr("To") : tr("From")}</th>
-              <th className="px-1 py-2 text-start">{tr("Time")}</th>
-              <th className="px-1 py-2 text-start">{tr("Gate")}</th>
-              <th className="px-1 py-2 text-start">{tr("Status")}</th>
+              <th className="px-2 py-2.5 text-start">{tr("Flight")}</th>
+              <th className="px-2 py-2.5 text-start">{direction === "to" ? tr("To") : tr("From")}</th>
+              <th className="px-2 py-2.5 text-start" title={language === "ar" ? "توقيت القاهرة المحلي (UTC+2)" : "Cairo Local Time (UTC+2)"}>
+                {tr("Time")}
+              </th>
+              <th className="px-2 py-2.5 text-start">{tr("Gate")}</th>
+              <th className="px-2 py-2.5 text-start">{tr("Status")}</th>
             </tr>
           </thead>
           <tbody>
             {filteredRows.length > 0 ? (
               filteredRows.map((row) => (
                 <tr key={row.flight} className="border-t border-border/60 hover:bg-secondary/20 transition-colors">
-                  <td className="px-1 py-3 font-mono font-semibold text-foreground">{row.flight}</td>
-                  <td className="px-1 py-3">{tr(row.city)}</td>
-                  <td className="px-1 py-3 font-mono">{row.time}</td>
-                  <td className="px-1 py-3 font-mono text-muted-foreground">{row.gate}</td>
-                  <td className="px-1 py-3"><StatusPill tone={row.tone}>{tr(row.status)}</StatusPill></td>
+                  <td className="px-2 py-3 font-mono font-semibold text-foreground">{row.flight}</td>
+                  <td className="px-2 py-3">{tr(row.city)}</td>
+                  <td className="px-2 py-3 font-mono">{row.time}</td>
+                  <td className="px-2 py-3 font-mono text-muted-foreground">{row.gate}</td>
+                  <td className="px-2 py-3"><StatusPill tone={row.tone}>{tr(row.status)}</StatusPill></td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="py-6 text-center text-xs text-muted-foreground">
-                  <div className="flex flex-col items-center gap-1.5">
-                    <span>{localize({ en: "No flights matching criteria.", ar: "لا توجد رحلات مطابقة." }, language)}</span>
+                <td colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2 max-w-xs mx-auto">
+                    <Search className="h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
+                    <p className="font-semibold text-foreground text-sm">
+                      {localize({ en: "No flights matching criteria", ar: "لا توجد رحلات مطابقة لمعايير البحث" }, language)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {localize({ en: "Try adjusting search query or status filter.", ar: "جرب تعديل نص البحث أو تصفية الحالة." }, language)}
+                    </p>
                     <button
                       type="button"
                       onClick={() => { setSearch(""); setFilter("all"); }}
-                      className="text-primary hover:underline font-medium cursor-pointer"
+                      className="mt-1 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl bg-secondary px-4 py-2 text-xs font-semibold text-foreground hover:bg-secondary/80 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary active-spring"
                     >
                       {localize({ en: "Reset filters", ar: "إعادة تعيين الفلاتر" }, language)}
                     </button>

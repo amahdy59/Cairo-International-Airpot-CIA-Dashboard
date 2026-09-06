@@ -185,10 +185,10 @@ export function ApronConflictDetector() {
                 <span
                   className={`px-1.5 py-0.5 rounded font-mono text-[10px] font-bold ${
                     stand.icaoCode === "F"
-                      ? "bg-purple-500/20 text-purple-400"
+                      ? "bg-magenta/15 text-magenta border border-magenta/30"
                       : stand.icaoCode === "E"
-                      ? "bg-primary/20 text-primary"
-                      : "bg-secondary text-muted-foreground"
+                      ? "bg-primary/20 text-primary border border-primary/30"
+                      : "bg-secondary text-muted-foreground border border-border/40"
                   }`}
                 >
                   Code {stand.icaoCode}

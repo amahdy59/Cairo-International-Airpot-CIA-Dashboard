@@ -277,18 +277,47 @@ export function App() {
           {/* AOCC Video Wall Auto-Cycle Control Bar */}
           <KioskBar activeTab={activeTab} />
 
-          <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
-            {c.footer}
-            <span className="mx-3 text-muted-foreground/60" aria-hidden="true">|</span>
-            {activePage === "resources" ? (
-              <a className="font-medium text-primary hover:underline" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
-                {language === "en" ? "Go back to Dashboard" : "العودة إلى لوحة التحكم"}
-              </a>
-            ) : (
-              <a className="font-medium text-primary hover:underline" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
-                {c.resources}
-              </a>
-            )}
+          <footer className="border-t border-border/80 px-4 py-6 text-xs text-muted-foreground">
+            <div className="max-w-[1720px] mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-start">
+              <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                <span>{c.footer}</span>
+                <span className="text-muted-foreground/50 hidden sm:inline" aria-hidden="true">&bull;</span>
+                <span className="font-medium text-foreground/80">
+                  {language === "ar"
+                    ? "تصميم وهندسة النظم: أحمد مهدي (أدفانسيس للحلول المتطورة)"
+                    : "Designed & Architected by Ahmed Mahdy (Advansys IS)"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 font-medium flex-wrap justify-center">
+                <a
+                  href="https://www.linkedin.com/in/creativemahdy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  LinkedIn
+                </a>
+                <span className="text-muted-foreground/40" aria-hidden="true">&bull;</span>
+                <a
+                  href="https://mahdy-resume.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {language === "ar" ? "السيرة الذاتية" : "Resume"}
+                </a>
+                <span className="text-muted-foreground/40" aria-hidden="true">&bull;</span>
+                {activePage === "resources" ? (
+                  <a className="text-primary hover:underline font-bold" href="#" onClick={(event) => { event.preventDefault(); showDashboard(); }}>
+                    {language === "en" ? "Dashboard" : "لوحة التحكم"}
+                  </a>
+                ) : (
+                  <a className="text-primary hover:underline font-bold" href="#resources" onClick={(event) => { event.preventDefault(); showResources(); }}>
+                    {c.resources}
+                  </a>
+                )}
+              </div>
+            </div>
           </footer>
           <BackToTopButton />
         </div>

@@ -244,12 +244,13 @@ export function Header({
                     setActiveTab(tab.id);
                     onShowDashboard();
                   }}
-                  className={`group relative flex h-9 min-h-[36px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
+                  className={`group relative flex h-10 min-h-[40px] xl:min-h-[42px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-xs"
+                      ? "bg-primary text-primary-foreground shadow-xs font-bold"
                       : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
                   }`}
                   title={tab.label}
+                  aria-label={tab.label}
                 >
                   <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                   <span className="hidden xl:inline">{tab.label}</span>
@@ -268,12 +269,13 @@ export function Header({
                 playClick();
                 onShowResources();
               }}
-              className={`group relative flex h-9 min-h-[36px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
+              className={`group relative flex h-10 min-h-[40px] xl:min-h-[42px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
                 isResourcesPage
-                  ? "bg-primary text-primary-foreground shadow-xs"
+                  ? "bg-primary text-primary-foreground shadow-xs font-bold"
                   : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
               }`}
               title={resourcesLabel}
+              aria-label={resourcesLabel}
             >
               <FileText aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden xl:inline">{resourcesLabel}</span>
@@ -357,7 +359,7 @@ export function Header({
                   <button
                     type="button"
                     onClick={() => setIsSettingsOpen(false)}
-                    className="h-9 w-9 min-h-[36px] min-w-[36px] grid place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
+                    className="h-11 w-11 min-h-[44px] min-w-[44px] grid place-items-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none transition-colors"
                     aria-label={tr("Close")}
                   >
                     <X className="h-4 w-4" />
@@ -427,14 +429,14 @@ export function Header({
                             <button
                               type="button"
                               onClick={() => setProfile("chime")}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${profile === "chime" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                              className={`px-2.5 py-1.5 min-h-[32px] rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${profile === "chime" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
                             >
                               {language === "ar" ? "هادئ" : "Soft Chime"}
                             </button>
                             <button
                               type="button"
                               onClick={() => setProfile("penetrating")}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${profile === "penetrating" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+                              className={`px-2.5 py-1.5 min-h-[32px] rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${profile === "penetrating" ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
                             >
                               {language === "ar" ? "قوي" : "AOCC High"}
                             </button>

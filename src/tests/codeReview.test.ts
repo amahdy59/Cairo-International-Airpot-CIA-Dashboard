@@ -147,5 +147,26 @@ describe("Code Review & Telemetry Data Integrity", () => {
     expect(content).toContain('id: "design"');
     expect(content).toContain('id: "accessibility"');
     expect(content).toContain('id: "tools"');
+
+    // Persistent author signature verification
+    expect(content).toContain("Lead Product Designer & Systems Architect");
+    expect(content).toContain("Advansys IS");
+  });
+
+  it("validates global application footer author attribution and touch targets", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const appContent = fs.readFileSync(path.resolve(__dirname, "../App.tsx"), "utf8");
+    const headerContent = fs.readFileSync(path.resolve(__dirname, "../components/layout/Header.tsx"), "utf8");
+
+    // Footer attribution verification
+    expect(appContent).toContain("Designed & Architected by Ahmed Mahdy (Advansys IS)");
+    expect(appContent).toContain("https://www.linkedin.com/in/creativemahdy");
+    expect(appContent).toContain("https://mahdy-resume.vercel.app/");
+
+    // Header AAA touch target verification (>= 40-44px class tokens)
+    expect(headerContent).toContain("min-h-[40px]");
+    expect(headerContent).toContain("min-h-[44px]");
+    expect(headerContent).toContain("min-w-[44px]");
   });
 });
