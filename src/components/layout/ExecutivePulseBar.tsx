@@ -99,7 +99,7 @@ export function ExecutivePulseBar({
                 soundEffects.playClick();
                 setIsHandoverOpen(true);
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-primary transition-all duration-200 hover:bg-primary/20 active-spring cursor-pointer"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/10 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-primary transition-all duration-200 hover:bg-primary/20 active-spring cursor-pointer"
               title={language === "ar" ? "محضر تسليم وتسلم الوردية" : "Shift Handover Briefing"}
             >
               <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -109,7 +109,7 @@ export function ExecutivePulseBar({
             <button
               type="button"
               onClick={() => handleQuickAction("surge")}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary/30 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:bg-secondary active-spring cursor-pointer"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-border bg-secondary/30 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:bg-secondary active-spring cursor-pointer"
               title={language === "ar" ? "إرسال تعزيزات ميدانية سريعة" : "Dispatch Emergency Surge Crew"}
             >
               <Users className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />
@@ -119,7 +119,7 @@ export function ExecutivePulseBar({
             <button
               type="button"
               onClick={() => handleQuickAction("safety")}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-secondary/30 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:bg-secondary active-spring cursor-pointer"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-xl border border-border bg-secondary/30 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-foreground transition-all duration-200 hover:bg-secondary active-spring cursor-pointer"
               title={language === "ar" ? "فحص المدارج والسلامة" : "Verify Safety & Directives"}
             >
               <ShieldCheck className="h-3.5 w-3.5 text-status-ok shrink-0" aria-hidden="true" />
@@ -129,7 +129,7 @@ export function ExecutivePulseBar({
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="grid h-8 w-8 place-items-center rounded-xl border border-border bg-secondary/30 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active-spring cursor-pointer"
+              className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/30 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active-spring cursor-pointer"
               aria-expanded={isExpanded}
               aria-label={isExpanded ? (language === "ar" ? "طي التفاصيل" : "Collapse details") : (language === "ar" ? "توسيع التفاصيل" : "Expand details")}
               title={isExpanded ? (language === "ar" ? "طي التفاصيل" : "Collapse details") : (language === "ar" ? "توسيع التفاصيل" : "Expand details")}

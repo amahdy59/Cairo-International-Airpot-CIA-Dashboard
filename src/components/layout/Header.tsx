@@ -163,9 +163,9 @@ export function Header({
         {tr("Skip to content")}
       </a>
 
-      <div className="mx-auto flex h-16 max-w-[1720px] w-full items-center justify-between gap-3 px-3 sm:px-5 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-[1720px] w-full items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 lg:px-8">
         {/* Island 1: Brand & Operational Status Indicator */}
-        <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
           <a
             href="#main"
             onClick={(e) => {
@@ -173,14 +173,14 @@ export function Header({
               onShowDashboard();
               setIsMobileMenuOpen(false);
             }}
-            className="flex items-center gap-2.5 rounded-lg active-spring"
+            className="flex items-center gap-2 sm:gap-2.5 rounded-lg active-spring min-w-0"
             aria-label={`${c.airport} ${c.brand}. ${tr("Go to dashboard")}`}
             title={`${c.airport} - ${c.brand}`}
           >
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/40 bg-primary/15 text-primary">
               <Plane aria-hidden="true" className="h-5 w-5" />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 max-w-[140px] sm:max-w-none">
               <span className="hidden sm:block truncate font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary">
                 {c.airport}
               </span>
@@ -348,7 +348,7 @@ export function Header({
               <div
                 role="dialog"
                 aria-label={language === "ar" ? "لوحة التحكم السريعة بالنظام" : "Quick System Controls"}
-                className="absolute end-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-white/10 bg-surface/95 p-3.5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-200 dark:bg-card/95"
+                className="absolute end-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/10 bg-surface/95 p-3.5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-200 dark:bg-card/95"
               >
                 <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                   <span className="text-xs font-bold text-foreground">
@@ -357,10 +357,10 @@ export function Header({
                   <button
                     type="button"
                     onClick={() => setIsSettingsOpen(false)}
-                    className="h-6 w-6 grid place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer"
+                    className="h-9 w-9 min-h-[36px] min-w-[36px] grid place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
                     aria-label={tr("Close")}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
 

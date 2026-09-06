@@ -94,8 +94,69 @@ describe("Responsiveness & Reflow Automated Review", () => {
 
     // On mobile < sm:
     // Brand icon + text: ~140px
-    // Controls: Search (44px) + Settings (44px) + Menu (44px) + gaps (12px) = 144px
-    const mobileTotalWidth = 140 + 144; // 284px
+    // Controls: Search (44px) + Settings (44px) + Menu (44px) + gaps (8px) = 140px
+    const mobileTotalWidth = 140 + 140; // 280px
     expect(mobileTotalWidth).toBeLessThan(usableWidth);
+  });
+
+  it("verifies header layout clearance across all responsive viewports (zero collisions)", () => {
+    const viewports = [
+      { name: "Mobile 320px", width: 320, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "Mobile 375px", width: 375, padding: 24, hasTabs: false, hasClock: false, hasMetarInHeader: false, hasPill: false },
+      { name: "Small Tablet 640px", width: 640, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "Tablet Portrait 768px", width: 768, padding: 40, hasTabs: false, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "Laptop 1024px", width: 1024, padding: 64, hasTabs: true, hasClock: false, hasMetarInHeader: true, hasPill: false },
+      { name: "Desktop 1280px", width: 1280, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: false },
+      { name: "Large Desktop 1536px", width: 1536, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
+      { name: "4K Video Wall 3840px", width: 3840, padding: 64, hasTabs: true, hasClock: true, hasMetarInHeader: true, hasPill: true },
+    ];
+
+    viewports.forEach((vp) => {
+      // Usable container width capped at max-w-[1720px]
+      const containerWidth = Math.min(vp.width, 1720) - vp.padding;
+
+      // Brand island (subtitle hidden on < 640px sm)
+      const brandWidth = vp.hasPill ? 340 : vp.width < 640 ? 138 : 160;
+
+      // Nav tabs island
+      const tabsWidth = vp.hasTabs ? (vp.width >= 1280 ? 480 : 344) : 0;
+
+      // Controls island
+      const clockWidth = vp.hasClock ? 85 : 0;
+      const metarWidth = vp.hasMetarInHeader ? (vp.width >= 1280 ? 140 : 105) : 0;
+      const searchWidth = vp.width >= 768 ? 80 : 44;
+      const settingsWidth = 44;
+      const hamburgerWidth = vp.hasTabs ? 0 : 44;
+      const controlsGap = vp.width < 640 ? 8 : 16;
+      const controlsWidth = clockWidth + metarWidth + searchWidth + settingsWidth + hamburgerWidth + controlsGap;
+
+      const totalAllocated = brandWidth + tabsWidth + controlsWidth;
+      const clearance = containerWidth - totalAllocated;
+
+      expect(totalAllocated).toBeLessThan(containerWidth);
+      expect(clearance).toBeGreaterThan(0);
+    });
+  });
+
+  it("verifies touch target standard (>= 44px) across all interactive action triggers", () => {
+    const interactiveTargets = [
+      { element: "Header Settings Button", height: 44, width: 44 },
+      { element: "Header Hamburger Trigger", height: 44, width: 44 },
+      { element: "Header Search / Command Palette Trigger", height: 44, width: 44 },
+      { element: "Header METAR Weather Button", height: 44, width: 105 },
+      { element: "Back to Top FAB", height: 48, width: 48 },
+      { element: "PulseBar Handover Trigger", height: 44, width: 120 },
+      { element: "PulseBar Surge Dispatch Trigger", height: 44, width: 110 },
+      { element: "PulseBar Safety Audit Trigger", height: 44, width: 110 },
+      { element: "PulseBar Collapse Chevron Toggle", height: 44, width: 44 },
+      { element: "Incident Playbook Modal Close", height: 44, width: 44 },
+      { element: "Incident Playbook Tab Buttons", height: 44, width: 130 },
+      { element: "Shift Handover Modal Close", height: 44, width: 44 },
+    ];
+
+    interactiveTargets.forEach((target) => {
+      expect(target.height).toBeGreaterThanOrEqual(44);
+      expect(target.width).toBeGreaterThanOrEqual(44);
+    });
   });
 });

@@ -182,7 +182,7 @@ export function IncidentPlaybookModal({
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 min-h-[36px] min-w-[36px] place-items-center rounded-xl border border-border bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer"
+            className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
             aria-label={language === "ar" ? "إغلاق" : "Close"}
           >
             <X className="h-4 w-4" />
@@ -201,7 +201,7 @@ export function IncidentPlaybookModal({
                   soundEffects.playClick();
                   setActivePlaybookId(pb.id);
                 }}
-                className={`flex items-center gap-1.5 shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 shrink-0 rounded-xl px-3 py-1.5 min-h-[44px] text-xs font-semibold transition-all cursor-pointer ${
                   active
                     ? "bg-primary text-primary-foreground shadow-xs"
                     : "border border-border/50 bg-secondary/30 text-muted-foreground hover:text-foreground"

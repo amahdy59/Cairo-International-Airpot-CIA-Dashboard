@@ -83,7 +83,7 @@ export function ShiftHandoverModal({
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 min-h-[36px] min-w-[36px] place-items-center rounded-xl border border-border bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer"
+            className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
             aria-label={language === "ar" ? "إغلاق" : "Close"}
           >
             <X className="h-4 w-4" />
