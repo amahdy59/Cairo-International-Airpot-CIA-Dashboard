@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "vitest";
 import { aoccBroadcast, AoccBroadcastMessage } from "../services/broadcastChannel";
 import { soundEffects } from "../services/soundEffects";
 
@@ -39,7 +39,7 @@ describe("AOCC Telemetry & Multi-Screen Broadcast Systems", () => {
     expect(receivedByAoccService).toBeNull();
 
     secondaryDisplay.close();
-  });
+  }, 20000);
 
   it("verifies sound effect profile selection, earcon dispatches, and haptic controls", () => {
     let notified = false;

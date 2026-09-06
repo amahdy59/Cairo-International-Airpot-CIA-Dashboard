@@ -127,11 +127,32 @@ export function Header({
   }, [isSettingsOpen]);
 
   const navItems = [
-    { id: "digital" as ManagerTab, label: c.digital, icon: Radar },
-    { id: "operations" as ManagerTab, label: c.operations, icon: Activity },
-    { id: "safety" as ManagerTab, label: c.safety, icon: ShieldCheck },
-    { id: "staffing" as ManagerTab, label: c.staffing, icon: Users },
+    {
+      id: "digital" as ManagerTab,
+      label: c.digital,
+      shortLabel: language === "ar" ? "توأم" : "Twin",
+      icon: Radar,
+    },
+    {
+      id: "operations" as ManagerTab,
+      label: c.operations,
+      shortLabel: language === "ar" ? "تشغيل" : "Ops",
+      icon: Activity,
+    },
+    {
+      id: "safety" as ManagerTab,
+      label: c.safety,
+      shortLabel: language === "ar" ? "سلامة" : "Safety",
+      icon: ShieldCheck,
+    },
+    {
+      id: "staffing" as ManagerTab,
+      label: c.staffing,
+      shortLabel: language === "ar" ? "كوادر" : "Staff",
+      icon: Users,
+    },
   ];
+  const resourcesShortLabel = language === "ar" ? "توثيق" : "Docs";
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-2xl shadow-xs transition-colors duration-200">
@@ -160,7 +181,7 @@ export function Header({
               <Plane aria-hidden="true" className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <span className="block truncate font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary">
+              <span className="hidden sm:block truncate font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider text-primary">
                 {c.airport}
               </span>
               <span className="block truncate text-xs sm:text-sm font-extrabold text-foreground">
@@ -170,7 +191,7 @@ export function Header({
           </a>
 
           {/* Operational Status Pill (situational context for executives) */}
-          <div className="hidden md:flex items-center gap-1.5 rounded-full border border-border/50 bg-secondary/35 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+          <div className="hidden 2xl:flex items-center gap-1.5 rounded-full border border-border/50 bg-secondary/35 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
             <span className={`h-2 w-2 rounded-full ${isDrillActive ? "bg-status-crit animate-ping" : "bg-status-ok"}`} />
             <span className="font-mono font-bold text-foreground">
               {isDrillActive ? (language === "ar" ? "محاكاة طوارئ" : "DRILL") : "AOCC ACTIVE"}
@@ -181,11 +202,14 @@ export function Header({
         </div>
 
         {/* Island 2: Central Segmented Navigation Tabs (Desktop lg+) */}
-        <nav className="hidden lg:flex items-center justify-center min-w-0 mx-2" aria-label={tr("Manager dashboard sections")}>
+        <nav
+          className="hidden lg:flex items-center justify-center shrink min-w-0 max-w-full mx-1 xl:mx-2"
+          aria-label={tr("Manager dashboard sections")}
+        >
           <div
             role="tablist"
             aria-orientation="horizontal"
-            className="flex h-11 items-center gap-1 rounded-xl border border-white/10 bg-secondary/30 p-1 backdrop-blur-md"
+            className="flex h-11 items-center gap-0.5 xl:gap-1 rounded-xl border border-white/10 bg-secondary/30 p-1 backdrop-blur-md overflow-x-auto no-scrollbar"
             onKeyDown={(e) => {
               const tabs: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
               const currentIndex = tabs.indexOf(activeTab);
@@ -220,7 +244,7 @@ export function Header({
                     setActiveTab(tab.id);
                     onShowDashboard();
                   }}
-                  className={`group relative flex h-9 min-h-[36px] items-center gap-1.5 rounded-lg px-3 lg:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
+                  className={`group relative flex h-9 min-h-[36px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
@@ -228,7 +252,8 @@ export function Header({
                   title={tab.label}
                 >
                   <Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                  <span>{tab.label}</span>
+                  <span className="hidden xl:inline">{tab.label}</span>
+                  <span className="inline xl:hidden">{tab.shortLabel}</span>
                 </button>
               );
             })}
@@ -243,7 +268,7 @@ export function Header({
                 playClick();
                 onShowResources();
               }}
-              className={`group relative flex h-9 min-h-[36px] items-center gap-1.5 rounded-lg px-3 lg:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
+              className={`group relative flex h-9 min-h-[36px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring ${
                 isResourcesPage
                   ? "bg-primary text-primary-foreground shadow-xs"
                   : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
@@ -251,21 +276,25 @@ export function Header({
               title={resourcesLabel}
             >
               <FileText aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-              <span>{resourcesLabel}</span>
+              <span className="hidden xl:inline">{resourcesLabel}</span>
+              <span className="inline xl:hidden">{resourcesShortLabel}</span>
             </button>
           </div>
         </nav>
 
         {/* Island 3: Executive Controls & Quick Tools */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ms-auto">
-          {/* Integrated Telemetry & Weather Pill */}
-          <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border/60 bg-secondary/35 px-2 py-1">
+          {/* Cairo Clock Telemetry (Desktop xl+) */}
+          <div className="hidden xl:flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/35 px-2.5 h-11 min-h-[44px]">
             <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-primary shrink-0" />
             <span dir="ltr" className="font-mono text-xs font-bold text-foreground">
               {times.cairo}
             </span>
             <span className="text-[10px] text-muted-foreground font-semibold">CAI</span>
-            <span className="h-3 w-px bg-border/80" />
+          </div>
+
+          {/* Standalone METAR Weather Widget (Tablet & Desktop sm+) */}
+          <div className="hidden sm:block">
             <MetarWidget />
           </div>
 
@@ -561,9 +590,14 @@ export function Header({
             </button>
           </div>
 
-          <div className="mt-auto border-t border-border/40 pt-4 flex items-center justify-between text-xs text-muted-foreground">
-            <span className="font-mono font-bold text-foreground">{times.cairo} CAI</span>
-            <span>HECA AOCC Command Hub</span>
+          <div className="mt-auto border-t border-border/40 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs text-muted-foreground">
+            <div className="sm:hidden">
+              <MetarWidget />
+            </div>
+            <div className="flex w-full items-center justify-between">
+              <span className="font-mono font-bold text-foreground">{times.cairo} CAI</span>
+              <span>HECA AOCC Command Hub</span>
+            </div>
           </div>
         </div>
       )}

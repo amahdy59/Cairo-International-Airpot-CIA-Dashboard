@@ -104,9 +104,9 @@ export function MetarWidget() {
 
         {/* METAR Quick Metrics */}
         <div className="flex items-center gap-1.5 font-mono">
-          <span className="font-bold text-foreground">{metar.windSpeedKt}kt</span>
-          <span className="text-muted-foreground/50">|</span>
-          <span>{metar.tempC}°C</span>
+          <span className="hidden xl:inline font-bold text-foreground">{metar.windSpeedKt}kt</span>
+          <span className="hidden xl:inline text-muted-foreground/50">|</span>
+          <span className="font-bold text-foreground">{metar.tempC}°C</span>
         </div>
 
         {/* Category Pill */}
