@@ -25,3 +25,7 @@ dist-ssr
 
 # Scratch folder
 scratch/
+
+# Local browser review evidence
+.playwright-cli/
+output/playwright/

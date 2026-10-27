@@ -1,13 +1,20 @@
-import { memo, useState, useMemo } from 'react';
-import { Users, Activity, Clock3, AlertTriangle, Gauge, RadioTower, DoorOpen, Search, X, Download, Plane } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Users, Activity, Clock3, AlertTriangle, Gauge, Search, X, Download, Plane, ArrowRight } from 'lucide-react';
 import { localize, toneCssVar } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
+import { useOperationalEvents } from '../../context/operationalEvents';
 import { exportToCsv } from '../../utils/exportCsv';
 import { soundEffects } from '../../services/soundEffects';
-import { FlightRow, Tone, shiftWaves, InfluxForecastPoint, TerminalId } from '../../data';
+import { FlightRow, Tone, shiftWaves, TerminalId, ManagerTab } from '../../data';
 import { MetricCard, ProgressBar, SectionPanel, Sparkline, StatusPill } from '../../components/command-center/MetricWidgets';
 import { AcdmMilestones } from './AcdmMilestones';
+import { ForecastLineChart } from './ForecastLineChart';
+import { FlightStatusChart } from './FlightStatusChart';
+import { QueuePressureHeatmap } from './QueuePressureHeatmap';
+import { PassengerJourneyBoard } from './PassengerJourneyBoard';
+import { BaggageExceptionFlow } from './BaggageExceptionFlow';
+import { SelectMenu } from '../../components/common/SelectMenu';
 
 function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
   return (
@@ -27,16 +34,12 @@ function Legend({ color, label, dashed }: { color: string; label: string; dashed
 }
 
 
-function DigitalOperationalGrid() {
+function DigitalOperationalGrid({ onInspectEvent }: { onInspectEvent?: (id: string) => void }) {
   return (
     <section className="grid gap-3 lg:gap-4 md:grid-cols-2 md:items-start" aria-label="Digital twin operational analytics">
-      <div className="grid gap-3 lg:gap-4">
-        <PassengerInfluxForecast />
-        <GateWaitChart />
-      </div>
-      <div className="grid gap-3 lg:gap-4">
-        <AlertsPanel />
-      </div>
+      <PassengerInfluxForecast />
+      <GateWaitChart />
+      <div className="md:col-span-2"><AlertsPanel onInspectEvent={onInspectEvent} /></div>
     </section>
   );
 }
@@ -47,95 +50,22 @@ function PassengerInfluxForecast() {
 
   return (
     <SectionPanel
-      title={localize({ en: "Passenger influx forecast", ar: "توقع تدفق الركاب" }, language)}
+      title={localize({ en: "Demand vs modeled capacity", ar: "الطلب مقابل السعة النموذجية" }, language)}
       action={
         activeTerminal !== "ALL" ? (
           <StatusPill tone="info">{activeTerminal}</StatusPill>
         ) : undefined
       }
     >
-      <p className="mb-4 text-sm text-muted-foreground">
-        {localize({ en: "Forecasted trend of passenger flow over the next 4 hours.", ar: "الاتجاه المتوقع لتدفق الركاب خلال الـ 4 ساعات القادمة." }, language)}
-      </p>
       <ForecastLineChart data={reactiveInfluxForecast} />
       <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <Legend color="bg-cyan" label={localize({ en: "Current trajectory", ar: "المسار الحالي" }, language)} />
-        <Legend color="bg-status-warn" dashed label={localize({ en: "Forecast", ar: "التوقع" }, language)} />
+        <Legend color="bg-status-warn" dashed label={localize({ en: "Forecast demand", ar: "الطلب المتوقع" }, language)} />
+        <Legend color="bg-primary" label={localize({ en: "Modeled capacity", ar: "السعة النموذجية" }, language)} />
       </div>
+      <p className="mt-2 text-xs text-muted-foreground">{language === "ar" ? "سيناريو تدريبي · قيم لكل ساعة · لا يوجد تحديث مباشر" : "Training scenario · hourly values · no live timestamp"}</p>
     </SectionPanel>
   );
 }
-
-const ForecastLineChart = memo(function ForecastLineChart({ data }: { data: InfluxForecastPoint[] }) {
-  const values = data.flatMap((row) => [row.current, row.forecast]);
-  const min = Math.max(0, Math.min(...values) - 100);
-  const max = Math.max(...values) + 100;
-  const span = max - min || 1;
-  const width = 420;
-  const height = 150;
-  
-  const getPoint = (value: number, index: number): [number, number] => {
-    const x = 18 + (index / (data.length - 1)) * (width - 36);
-    const y = height - 18 - ((value - min) / span) * (height - 38);
-    return [x, y];
-  };
-
-  const createSmoothPath = (coords: [number, number][]) => {
-    if (coords.length === 0) return "";
-    let d = `M ${coords[0][0]},${coords[0][1]}`;
-    for (let i = 1; i < coords.length; i++) {
-      const p1 = coords[i - 1];
-      const p2 = coords[i];
-      const cpX = (p1[0] + p2[0]) / 2;
-      d += ` C ${cpX},${p1[1]} ${cpX},${p2[1]} ${p2[0]},${p2[1]}`;
-    }
-    return d;
-  };
-
-  const currentCoords = data.map((row, index) => getPoint(row.current, index));
-  const forecastCoords = data.map((row, index) => getPoint(row.forecast, index));
-  
-  const currentPath = createSmoothPath(currentCoords);
-  const forecastPath = createSmoothPath(forecastCoords);
-  
-  const areaPath = currentCoords.length > 0
-    ? `${currentPath} L ${currentCoords[currentCoords.length - 1][0]},${height - 18} L ${currentCoords[0][0]},${height - 18} Z`
-    : "";
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-44 w-full overflow-visible" role="img" aria-label={`Passenger influx forecast: current trajectory peaks at ${Math.max(...data.map(r => r.current)).toLocaleString()} passengers, with forecasted peak of ${Math.max(...data.map(r => r.forecast)).toLocaleString()} passengers.`}>
-      <defs>
-        <linearGradient id="forecast-cyan-grad" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="var(--cyan)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="var(--cyan)" stopOpacity="0.0" />
-        </linearGradient>
-      </defs>
-      {[0, 1, 2].map((line) => (
-        <line key={line} x1="18" x2={width - 18} y1={28 + line * 42} y2={28 + line * 42} stroke="var(--border)" strokeOpacity="0.55" strokeDasharray={line > 0 ? "4 4" : "none"} />
-      ))}
-      <path d={areaPath} fill="url(#forecast-cyan-grad)" />
-      <path d={currentPath} fill="none" stroke="var(--cyan)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={forecastPath} fill="none" stroke="var(--status-warn)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 6" />
-      
-      {/* Current Points - Dots */}
-      {currentCoords.map((coord, index) => (
-        <circle key={`curr-${index}`} cx={coord[0]} cy={coord[1]} r="4" fill="var(--background)" stroke="var(--cyan)" strokeWidth="2" />
-      ))}
-      
-      {/* Forecast Points - Dots */}
-      {forecastCoords.map((coord, index) => (
-        <circle key={`fore-${index}`} cx={coord[0]} cy={coord[1]} r="4" fill="var(--background)" stroke="var(--status-warn)" strokeWidth="2" />
-      ))}
-      
-      {/* X Axis Labels */}
-      {data.map((row, index) => (
-        <text key={row.time} x={currentCoords[index][0]} y={height - 2} textAnchor="middle" fill="var(--muted-foreground)" fontSize="12" className="font-mono">
-          {row.time}
-        </text>
-      ))}
-    </svg>
-  );
-});
 
 function GateWaitChart() {
   const { language } = useLocale();
@@ -154,14 +84,11 @@ function GateWaitChart() {
         </StatusPill>
       }
     >
-      <p className="mb-4 text-sm text-muted-foreground">
-        {localize({ en: "Current wait times across active gates.", ar: "أوقات الانتظار الحالية عبر البوابات النشطة." }, language)}
-      </p>
       <div className="grid gap-3">
         {reactiveGateWaits.map((row) => (
           <div key={row.gate} className="grid grid-cols-[56px_minmax(0,1fr)_58px] items-center gap-3">
             <span className="font-mono text-sm font-semibold">{row.gate}</span>
-            <ProgressBar value={row.wait} max={maxWait} color={toneCssVar(row.tone)} />
+            <ProgressBar value={row.wait} max={maxWait} color={toneCssVar(row.tone)} label={localize({ en: `Gate ${row.gate}: ${row.wait} minutes wait`, ar: `البوابة ${row.gate}: انتظار ${row.wait} دقيقة` }, language)} />
             <span className="justify-self-end font-mono text-sm text-muted-foreground">{row.wait}m</span>
           </div>
         ))}
@@ -170,31 +97,25 @@ function GateWaitChart() {
   );
 }
 
-function AlertsPanel() {
+function AlertsPanel({ onInspectEvent }: { onInspectEvent?: (id: string) => void }) {
   const { language } = useLocale();
-  const warnings = [
-    { icon: Gauge, title: { en: "Threshold warning", ar: "تحذير حد تشغيلي" }, detail: { en: "Deploy 3 additional screening staff to T2 security immediately.", ar: "قم بتوجيه 3 موظفي فحص إضافيين لأمن مبنى 2 فوراً." }, tone: "warn" as Tone },
-    { icon: RadioTower, title: { en: "Ground crew buffer", ar: "احتياطي الطاقم الأرضي" }, detail: { en: "Hold floaters at T3 passport control for incoming wave.", ar: "أبق الدعم المتحرك متمركزاً قرب جوازات مبنى 3 للموجة القادمة." }, tone: "ok" as Tone },
-    { icon: DoorOpen, title: { en: "Open counter recommendation", ar: "توصية فتح كاونتر" }, detail: { en: "Open two counters before the +2h forecast peak.", ar: "افتح كاونترين قبل ذروة التوقع بعد ساعتين." }, tone: "info" as Tone },
-  ];
+  const { events } = useOperationalEvents();
+  const warnings = events.filter((event) => event.state !== "simulated" && ["passenger", "airside", "baggage"].includes(event.domain)).slice(0, 3);
   return (
-    <SectionPanel title={localize({ en: "Alerts & Recommendations", ar: "التنبيهات والتوصيات" }, language)} action={<StatusPill tone="info">AI</StatusPill>}>
-      <div className="grid gap-3">
-        {warnings.map((warning) => {
-          const Icon = warning.icon;
-          return (
-            <article key={warning.title.en} className="panel-inner flex items-start gap-3 p-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-border bg-background/60">
-                <Icon aria-hidden="true" className="h-4 w-4" style={{ color: toneCssVar(warning.tone) }} />
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold">{localize(warning.title, language)}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{localize(warning.detail, language)}</p>
+    <SectionPanel title={localize({ en: "Decision paths from open events", ar: "مسارات القرار من الأحداث المفتوحة" }, language)} action={<StatusPill tone="info">{language === "ar" ? "سيناريو" : "Scenario"}</StatusPill>}>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {warnings.map((event) => <article key={event.id} className="panel-inner flex flex-col gap-2 p-3">
+              <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">{localize(event.title, language)}</h3><span className="text-[11px] font-bold text-status-warn">{event.terminal}</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 text-xs">
+                <span className="rounded-lg border border-border bg-card p-2 text-muted-foreground">{localize(event.evidence, language)}</span>
+                <ArrowRight aria-hidden="true" className="mt-2 h-4 w-4 shrink-0 text-primary rtl:rotate-180" />
+                <span className="rounded-lg border border-primary/30 bg-primary/5 p-2 font-semibold text-foreground">{localize(event.proposedAction, language)}</span>
               </div>
+              {onInspectEvent && <button type="button" onClick={() => onInspectEvent(event.id)} className="mt-auto min-h-11 self-start rounded-lg px-2 text-xs font-semibold text-primary hover:bg-secondary">{language === "ar" ? "عرض السجل والخريطة" : "Open record on map"}</button>}
             </article>
-          );
-        })}
+        )}
       </div>
+      {warnings.length === 0 && <p className="text-sm text-muted-foreground">{language === "ar" ? "لا توجد أحداث مفتوحة في هذا السيناريو." : "No open events in this scenario."}</p>}
     </SectionPanel>
   );
 }
@@ -202,95 +123,32 @@ function AlertsPanel() {
 function ShiftWaveSelector() {
   const { language } = useLocale();
   const { activeShiftWave, setActiveShiftWave } = useSimulation();
-
-  return (
-    <div
-      role="radiogroup"
-      aria-label={localize({ en: "Operational Shift Waves", ar: "نوبات العمل التشغيلية" }, language)}
-      className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl border border-border/80 bg-secondary/20"
-    >
-      <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground me-1">
-        <Clock3 className="h-3.5 w-3.5 text-primary" />
-        <span className="hidden sm:inline">{localize({ en: "Shift Wave:", ar: "فترة النوبة:" }, language)}</span>
-      </div>
-      {shiftWaves.map((wave) => {
-        const isSelected = activeShiftWave === wave.id;
-        return (
-          <button
-            key={wave.id}
-            type="button"
-            role="radio"
-            aria-checked={isSelected}
-            onClick={() => setActiveShiftWave(wave.id)}
-            className={`min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 active:scale-95 cursor-pointer ${
-              isSelected
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "bg-background/60 text-muted-foreground hover:bg-background hover:text-foreground"
-            }`}
-            title={localize(wave.description, language)}
-          >
-            <span>{localize(wave.label, language)}</span>
-            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${isSelected ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
-              {wave.window}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
+  return <div className="flex min-w-0 flex-col gap-1.5">
+    <label htmlFor="shift-wave" className="cursor-pointer text-sm font-medium text-muted-foreground">{language === "ar" ? "فترة النوبة" : "Shift wave"}</label>
+    <SelectMenu id="shift-wave" label={language === "ar" ? "فترة النوبة" : "Shift wave"} value={activeShiftWave} onChange={setActiveShiftWave} className="w-full"
+      options={shiftWaves.map(wave => ({ value: wave.id, label: localize(wave.label, language), detail: wave.window }))} />
+  </div>;
 }
 
 function TerminalFilterSelector() {
   const { language } = useLocale();
   const { activeTerminal, setActiveTerminal } = useSimulation();
-
-  const terminals: Array<{ id: "ALL" | TerminalId; label: { en: string; ar: string } }> = [
-    { id: "ALL", label: { en: "All Terminals", ar: "جميع المباني" } },
-    { id: "T1", label: { en: "Terminal 1", ar: "مبنى ١" } },
-    { id: "T2", label: { en: "Terminal 2", ar: "مبنى ٢" } },
-    { id: "T3", label: { en: "Terminal 3", ar: "مبنى ٣" } },
-  ];
-
-  return (
-    <div
-      role="radiogroup"
-      aria-label={localize({ en: "Terminal Filter", ar: "تصفية مبنى الركاب" }, language)}
-      className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl border border-border/80 bg-secondary/20"
-    >
-      <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-muted-foreground me-1">
-        <DoorOpen className="h-3.5 w-3.5 text-primary" />
-        <span className="hidden sm:inline">{localize({ en: "Terminal:", ar: "المبنى:" }, language)}</span>
-      </div>
-      {terminals.map((t) => {
-        const isSelected = activeTerminal === t.id;
-        return (
-          <button
-            key={t.id}
-            type="button"
-            role="radio"
-            aria-checked={isSelected}
-            onClick={() => setActiveTerminal(t.id)}
-            className={`min-h-[44px] flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-all duration-200 active:scale-95 cursor-pointer ${
-              isSelected
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "bg-background/60 text-muted-foreground hover:bg-background hover:text-foreground"
-            }`}
-          >
-            <span>{localize(t.label, language)}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
+  return <div className="flex min-w-0 flex-col gap-1.5">
+    <label htmlFor="terminal-filter" className="cursor-pointer text-sm font-medium text-muted-foreground">{language === "ar" ? "المبنى" : "Terminal"}</label>
+    <SelectMenu<"ALL" | TerminalId> id="terminal-filter" label={language === "ar" ? "المبنى" : "Terminal"} value={activeTerminal} onChange={setActiveTerminal} className="w-full"
+      options={[{ value: "ALL", label: language === "ar" ? "جميع المباني" : "All terminals" }, ...(["T1", "T2", "T3"] as const).map((terminal,index) => ({ value: terminal, label: language === "ar" ? "مبنى " + (index+1) : "Terminal " + (index+1) }))]} />
+  </div>;
 }
 
 export interface OperationsViewProps {
   subView?: "flights" | "analytics";
   onSubViewChange?: (subView: "flights" | "analytics") => void;
+  onNavigateTab?: (tab: ManagerTab) => void;
 }
 
-function OperationsView({ subView: controlledSubView, onSubViewChange }: OperationsViewProps = {}) {
+function OperationsView({ subView: controlledSubView, onSubViewChange, onNavigateTab }: OperationsViewProps = {}) {
   const { tr, language } = useLocale();
+  const { events, selectEvent, standForFlight } = useOperationalEvents();
   const {
     activeShiftWave,
     activeTerminal,
@@ -298,10 +156,13 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
     isDrillActive,
     reactiveDepartures,
     reactiveArrivals,
+    reactiveQueueRows,
   } = useSimulation();
 
   const [internalSubView, setInternalSubView] = useState<"flights" | "analytics">("flights");
   const activeSubView = controlledSubView ?? internalSubView;
+  const displayDepartures = reactiveDepartures.map((flight) => ({ ...flight, gate: standForFlight(flight.flight) ?? flight.gate }));
+  const displayArrivals = reactiveArrivals.map((flight) => ({ ...flight, gate: standForFlight(flight.flight) ?? flight.gate }));
 
   const setSubView = (val: "flights" | "analytics") => {
     soundEffects.playClick();
@@ -362,19 +223,19 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
   const taxiDelta = isDrillActive ? localize({ en: "+14 min hold", ar: "+١٤ د تأخير" }, language) : "-2 min";
   const taxiTone = isDrillActive ? "crit" : "warn";
 
-  const alertsValue = activeScenario.kpiOverrides?.activeAlerts || "3";
-  const alertsHint = isDrillActive ? localize({ en: "Drill Influx Active", ar: "تنبيهات المحاكاة نشطة" }, language) : tr("2 medium, 1 high");
+  const alertsValue = events.filter((event) => event.state !== "simulated" && (activeTerminal === "ALL" || event.terminal === activeTerminal)).length.toString();
+  const alertsHint = isDrillActive ? localize({ en: "Drill tasks in selected area", ar: "مهام التدريب في المنطقة المحددة" }, language) : localize({ en: "Scenario tasks in selected area", ar: "مهام السيناريو في المنطقة المحددة" }, language);
   const alertsTone = (activeScenario.kpiOverrides?.deltaTone || "warn") as Tone;
 
   return (
     <div className="grid gap-3 lg:gap-4 mt-3 lg:mt-4">
       {/* Shift Wave & Terminal Selectors */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <ShiftWaveSelector />
         <TerminalFilterSelector />
       </div>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Operations key metrics">
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4" aria-label="Operations key metrics">
         <MetricCard
           label={tr("Passengers today")}
           value={shiftMetrics.passengers}
@@ -418,14 +279,22 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
       <div
         role="tablist"
         aria-label={localize({ en: "Operations Sub-Views", ar: "الأقسام الفرعية للعمليات" }, language)}
-        className="flex items-center gap-1.5 p-1.5 rounded-2xl border border-border/80 bg-secondary/30 backdrop-blur-md max-w-fit"
+        className="grid grid-cols-2 gap-1.5 p-1.5 rounded-xl border border-border bg-secondary/30 w-full sm:w-fit"
+        onKeyDown={event => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const next = event.key === "Home" ? "flights" : event.key === "End" ? "analytics" : activeSubView === "flights" ? "analytics" : "flights";
+          setSubView(next);
+          requestAnimationFrame(() => document.getElementById(`tab-${next}`)?.focus());
+        }}
       >
         <button
           type="button"
           role="tab"
           id="tab-flights"
           aria-selected={activeSubView === "flights"}
-          aria-controls="panel-flights"
+          aria-controls={activeSubView === "flights" ? "panel-flights" : undefined}
+          tabIndex={activeSubView === "flights" ? 0 : -1}
           onClick={() => setSubView("flights")}
           className={`min-h-[44px] flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
             activeSubView === "flights"
@@ -434,7 +303,7 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
           }`}
         >
           <Plane className="h-4 w-4" aria-hidden="true" />
-          <span>{localize({ en: "Turnaround & Flights", ar: "رحلات الطيران والانعطاف الميداني" }, language)}</span>
+          <span>{localize({ en: "Flights & turnaround", ar: "الرحلات والتجهيز" }, language)}</span>
           <span
             className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
               activeSubView === "flights"
@@ -451,7 +320,8 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
           role="tab"
           id="tab-analytics"
           aria-selected={activeSubView === "analytics"}
-          aria-controls="panel-analytics"
+          aria-controls={activeSubView === "analytics" ? "panel-analytics" : undefined}
+          tabIndex={activeSubView === "analytics" ? 0 : -1}
           onClick={() => setSubView("analytics")}
           className={`min-h-[44px] flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
             activeSubView === "analytics"
@@ -460,7 +330,7 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
           }`}
         >
           <Gauge className="h-4 w-4" aria-hidden="true" />
-          <span>{localize({ en: "Flow Analytics & Forecast", ar: "تحليلات التدفق والتوقعات" }, language)}</span>
+          <span>{localize({ en: "Flow & forecast", ar: "التدفق والتوقعات" }, language)}</span>
           <span
             className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono uppercase ${
               activeSubView === "analytics"
@@ -468,7 +338,7 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
                 : "bg-secondary text-muted-foreground"
             }`}
           >
-            LIVE
+            {language === "ar" ? "محاكاة" : "SIM"}
           </span>
         </button>
       </div>
@@ -481,13 +351,16 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
           aria-labelledby="tab-flights"
           className="grid gap-3 lg:gap-4 animate-in fade-in duration-200"
         >
+          <FlightStatusChart departures={displayDepartures} arrivals={displayArrivals} />
+          <BaggageExceptionFlow onInspect={onNavigateTab ? () => { selectEvent("t3-baggage"); onNavigateTab("digital"); } : undefined} />
+
           {/* A-CDM Turnaround Milestone Engine */}
           <AcdmMilestones />
 
           {/* Tables: Detailed flight lists */}
           <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
-            <FlightBoard title={tr("Departures")} direction="to" rows={reactiveDepartures} />
-            <FlightBoard title={tr("Arrivals")} direction="from" rows={reactiveArrivals} />
+            <FlightBoard title={tr("Departures")} direction="to" rows={displayDepartures} />
+            <FlightBoard title={tr("Arrivals")} direction="from" rows={displayArrivals} />
           </div>
         </div>
       ) : (
@@ -497,13 +370,14 @@ function OperationsView({ subView: controlledSubView, onSubViewChange }: Operati
           aria-labelledby="tab-analytics"
           className="grid gap-3 lg:gap-4 animate-in fade-in duration-200"
         >
+          <PassengerJourneyBoard onInspectEvent={onNavigateTab ? (id) => { selectEvent(id); onNavigateTab("digital"); } : undefined} />
           {/* Middle: Charts for visual absorption */}
           <div className="grid gap-3 lg:gap-4 md:grid-cols-2">
             <PassengerFlowChart />
-            <QueuePressureChart />
+            <QueuePressureHeatmap rows={reactiveQueueRows} activeTerminal={activeTerminal} />
           </div>
 
-          <DigitalOperationalGrid />
+          <DigitalOperationalGrid onInspectEvent={onNavigateTab ? (id) => { selectEvent(id); onNavigateTab("digital"); } : undefined} />
         </div>
       )}
     </div>
@@ -570,7 +444,6 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
           <span className="text-xs font-mono text-muted-foreground me-1">
             {localize({ en: `${filteredRows.length} of ${rows.length}`, ar: `${filteredRows.length} من ${rows.length}` }, language)}
           </span>
-          <StatusPill tone="info">{tr("Next 60 min")}</StatusPill>
         </div>
       }
     >
@@ -628,18 +501,31 @@ function FlightBoard({ title, direction, rows }: { title: string; direction: "to
         </div>
       </div>
 
-      <div className="-mx-1 overflow-x-auto">
+      <div className="grid gap-2 xl:hidden" aria-label={title}>
+        {filteredRows.length ? filteredRows.map(row => <article key={row.flight} className="min-w-0 rounded-lg border border-border bg-background/40 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <strong className="font-mono text-sm text-foreground">{row.flight}</strong>
+            <StatusPill tone={row.tone}>{tr(row.status)}</StatusPill>
+          </div>
+          <p className="mt-1.5 break-words text-sm text-foreground">{tr(row.city)}</p>
+          <p className="mt-1 text-xs text-muted-foreground"><span className="font-mono text-foreground">{row.time}</span> {language === "ar" ? "بتوقيت القاهرة" : "Cairo time"} · {row.gate.startsWith("Gate ") || row.gate.startsWith("Stand ") ? "" : `${tr("Gate")} `}<span className="font-mono text-foreground">{language === "ar" ? row.gate.replace(/^Gate /, "البوابة ").replace(/^Stand /, "الموقف ") : row.gate}</span></p>
+        </article>) : <div className="rounded-lg border border-dashed border-border p-4 text-center">
+          <p className="text-sm font-semibold">{language === "ar" ? "لا توجد رحلات مطابقة" : "No matching flights"}</p>
+          <button type="button" onClick={() => { setSearch(""); setFilter("all"); }} className="mt-2 min-h-11 rounded-lg px-3 text-sm font-semibold text-primary hover:bg-secondary">{language === "ar" ? "مسح المرشحات" : "Clear filters"}</button>
+        </div>}
+      </div>
+      <div className="table-scroll hidden xl:block" role="region" tabIndex={0} aria-label={title}>
         <table className="w-full min-w-[580px] text-sm">
           <caption className="sr-only">{title}</caption>
           <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
-              <th className="px-2 py-2.5 text-start">{tr("Flight")}</th>
-              <th className="px-2 py-2.5 text-start">{direction === "to" ? tr("To") : tr("From")}</th>
-              <th className="px-2 py-2.5 text-start" title={language === "ar" ? "توقيت القاهرة المحلي (UTC+2)" : "Cairo Local Time (UTC+2)"}>
+              <th scope="col" className="px-2 py-2.5 text-start">{tr("Flight")}</th>
+              <th scope="col" className="px-2 py-2.5 text-start">{direction === "to" ? tr("To") : tr("From")}</th>
+              <th scope="col" className="px-2 py-2.5 text-start" title={language === "ar" ? "توقيت القاهرة المحلي" : "Cairo local time"}>
                 {tr("Time")}
               </th>
-              <th className="px-2 py-2.5 text-start">{tr("Gate")}</th>
-              <th className="px-2 py-2.5 text-start">{tr("Status")}</th>
+              <th scope="col" className="px-2 py-2.5 text-start">{tr("Gate")}</th>
+              <th scope="col" className="px-2 py-2.5 text-start">{tr("Status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -687,7 +573,7 @@ function PassengerFlowChart() {
   const { reactiveFlowData } = useSimulation();
 
   return (
-    <SectionPanel title={tr("Passenger flow")}>
+    <SectionPanel title={tr("Passenger flow")} action={<StatusPill tone="neutral">{language === "ar" ? "جميع المباني · سيناريو" : "All terminals · scenario"}</StatusPill>}>
       <h3 className="text-base font-semibold">{localize(reactiveFlowData.headline, language)}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{localize(reactiveFlowData.subtitle, language)}</p>
       <div className="mt-4">
@@ -702,79 +588,9 @@ function PassengerFlowChart() {
           <span>17:00</span>
         </div>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <FlowZone label={tr("Check-in")} percent={reactiveFlowData.checkIn.percent} tone={reactiveFlowData.checkIn.tone} />
-        <FlowZone label={tr("Security")} percent={reactiveFlowData.security.percent} tone={reactiveFlowData.security.tone} />
-        <FlowZone label={tr("Passport")} percent={reactiveFlowData.passport.percent} tone={reactiveFlowData.passport.tone} />
-      </div>
+      <p className="mt-3 text-xs text-muted-foreground">{language === "ar" ? "مؤشر نسبي للتدفق في السيناريو؛ يعرض مخطط الرحلة أدناه ضغط المراحل حسب المبنى." : "Relative scenario flow index. The journey diagram above shows stage pressure by terminal."}</p>
     </SectionPanel>
   );
 }
-
-function FlowZone({ label, percent, tone }: { label: string; percent: number; tone: "ok" | "warn" | "crit" }) {
-  const color = tone === "crit" ? "var(--status-crit)" : tone === "warn" ? "var(--status-warn)" : "var(--status-ok)";
-
-  return (
-    <article className="panel-inner p-3 text-center">
-      <p className="font-mono text-xs text-muted-foreground font-medium">{label}</p>
-      <p className="mt-1 text-2xl font-semibold">{percent}%</p>
-      <ProgressBar value={percent} color={color} className="mt-3" />
-    </article>
-  );
-}
-
-function QueuePressureChart() {
-  const { tr, language } = useLocale();
-  const { reactiveQueueRows, activeTerminal } = useSimulation();
-
-  return (
-    <SectionPanel
-      title={tr("Queue pressure by terminal")}
-      action={
-        <div className="flex items-center gap-1.5">
-          {activeTerminal !== "ALL" && <StatusPill tone="info">{activeTerminal}</StatusPill>}
-          <StatusPill tone="info">{tr("Stacked bar")}</StatusPill>
-        </div>
-      }
-    >
-      <p className="mb-4 text-sm text-muted-foreground">{localize({ en: "Breakdown of passenger congestion by processing stage.", ar: "تفصيل ازدحام الركاب حسب مرحلة المعالجة." }, language)}</p>
-      
-      {/* Screen reader accessible data table */}
-      <table className="sr-only">
-        <caption>{tr("Queue pressure by terminal")}</caption>
-        <thead>
-          <tr><th>Terminal</th><th>Check-in</th><th>Passport</th><th>Security</th><th>Total</th></tr>
-        </thead>
-        <tbody>
-          {reactiveQueueRows.map((row) => (
-            <tr key={`sr-${row.terminal}`}>
-              <td>{row.terminal}</td><td>{row.checkIn}%</td><td>{row.passport}%</td><td>{row.security}%</td><td>{row.total}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="space-y-4" aria-hidden="true">
-        {reactiveQueueRows.map((row) => (
-          <div key={row.terminal} className="grid grid-cols-[42px_minmax(0,1fr)_42px] items-center gap-3">
-            <span className="font-mono font-semibold">{row.terminal}</span>
-            <div className="flex h-4 overflow-hidden rounded-full bg-secondary">
-              <span className="bg-cyan transition-opacity hover:opacity-80 cursor-help" style={{ width: `${row.checkIn}%` }} title={`${tr("Check-in")}: ${row.checkIn}%`} />
-              <span className="bg-cyan/70 transition-opacity hover:opacity-80 cursor-help" style={{ width: `${row.passport}%` }} title={`${tr("Passport")}: ${row.passport}%`} />
-              <span className="bg-cyan/40 transition-opacity hover:opacity-80 cursor-help" style={{ width: `${row.security}%` }} title={`${tr("Security")}: ${row.security}%`} />
-            </div>
-            <span className="font-mono text-sm text-muted-foreground">{row.total}%</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground" aria-hidden="true">
-        <Legend color="bg-cyan" label={tr("Check-in")} />
-        <Legend color="bg-cyan/70" label={tr("Passport")} />
-        <Legend color="bg-cyan/40" label={tr("Security")} />
-      </div>
-    </SectionPanel>
-  );
-}
-
 
 export default OperationsView;

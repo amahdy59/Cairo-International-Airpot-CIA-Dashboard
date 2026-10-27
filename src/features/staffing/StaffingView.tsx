@@ -16,11 +16,13 @@ import {
 import { useStaffingRoster } from "../../hooks/useStaffingRoster";
 import { useLocale } from "../../context/locale";
 import { localize } from "../../utils/helpers";
+import { RosterStatusWaffle } from "./RosterStatusWaffle";
+import { SelectMenu } from "../../components/common/SelectMenu";
+import type { AirsideZoneId, StaffMember } from "../../data";
 import {
   MetricCard,
   SectionPanel,
   StatusPill,
-  ProgressBar,
 } from "../../components/command-center/MetricWidgets";
 
 export default function StaffingView() {
@@ -36,6 +38,7 @@ export default function StaffingView() {
     shiftWaves,
     totalStaffOnDuty,
     icaoMetrics,
+    roster,
     filteredRoster,
     surgeUnits,
     dispatchSurgeUnit,
@@ -47,20 +50,33 @@ export default function StaffingView() {
   } = useStaffingRoster(language);
 
   const isAr = language === "ar";
+  const readyUnits = surgeUnits.filter(unit => unit.status === "ready");
+  const averageReadyEta = readyUnits.length
+    ? (readyUnits.reduce((sum, unit) => sum + unit.dispatchEtaMin, 0) / readyUnits.length).toFixed(1)
+    : "—";
+  const hasRosterFilters = Boolean(filters.searchQuery || filters.selectedZone !== "ALL" || filters.selectedCertFilter !== "ALL");
+  const zoneOptions: { value: AirsideZoneId | "ALL"; label: string }[] = ["ALL", "RAMP", "SECURITY", "T1", "T2", "T3", "BAGGAGE", "ARFF"].map(zone => ({
+    value: zone as AirsideZoneId | "ALL",
+    label: zone === "ALL" ? (isAr ? "كل المناطق" : "All zones") : zone,
+  }));
+  const certOptions: { value: "ALL" | "valid" | "expiring_soon" | "expired"; label: string }[] = [
+    { value: "ALL", label: isAr ? "كل التصاريح" : "All badges" },
+    { value: "valid", label: tr("Valid") },
+    { value: "expiring_soon", label: tr("Expiring Soon") },
+    { value: "expired", label: tr("Expired") },
+  ];
 
   return (
     <div className="flex flex-col gap-3 lg:gap-4 mt-3 lg:mt-4">
       {/* 1. Executive KPIs Row */}
-      <section aria-label={tr("Staffing & Workforce Management")} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <section aria-label={tr("Staffing & Workforce Management")} className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <MetricCard
-          label={tr("Total Staff on Duty")}
+          label={isAr ? "الموجودون ضمن العينة" : "Sample roster on duty"}
           value={totalStaffOnDuty}
-          unit={`/ ${shiftWaves.find((w) => w.id === filters.activeWaveId)?.allocatedStaff ?? 442}`}
-          hint={isAr ? "جميع مباني الركاب والمهابط" : "Across all terminals & apron stands"}
+          unit={`/ ${icaoMetrics.total}`}
+          hint={isAr ? "من سجلات النموذج التجريبي" : "Of prototype roster entries"}
           icon={Users}
           accent="cyan"
-          delta={isAr ? "+12 دعم إضافي" : "+12 surge support"}
-          deltaTone="ok"
         />
 
         <MetricCard
@@ -74,24 +90,22 @@ export default function StaffingView() {
         />
 
         <MetricCard
-          label={tr("ICAO Badge Compliance")}
+          label={isAr ? "صلاحية تصاريح العينة" : "Sample badge validity"}
           value={`${icaoMetrics.compliancePct}%`}
           hint={`${icaoMetrics.expiringSoon} ${isAr ? "يقترب من التجديد" : "expiring soon"} | ${icaoMetrics.expired} ${isAr ? "منتهي" : "expired"}`}
           icon={ShieldCheck}
           accent={icaoMetrics.expired > 0 ? "crit" : icaoMetrics.expiringSoon > 0 ? "warn" : "ok"}
-          delta={icaoMetrics.expired > 0 ? (isAr ? "يتطلب تجديداً فورياً" : "Requires renewal") : (isAr ? "مطابق لمعايير الملحق 14" : "Annex 14 compliant")}
+          delta={icaoMetrics.expired > 0 ? (isAr ? "يتطلب تجديداً فورياً" : "Requires renewal") : (isAr ? "لا تصاريح منتهية في العينة" : "No expired badges in sample")}
           deltaTone={icaoMetrics.expired > 0 ? "crit" : "ok"}
         />
 
         <MetricCard
-          label={tr("Surge Response ETA")}
-          value="2.5"
-          unit={isAr ? "دقيقة" : "min"}
-          hint={isAr ? "4 سرايا تدخل سريع جاهزة" : "4 tactical units on hot standby"}
+          label={isAr ? "متوسط وصول التعزيز" : "Avg ready-unit ETA"}
+          value={averageReadyEta}
+          unit={readyUnits.length ? (isAr ? "دقيقة" : "min") : undefined}
+          hint={isAr ? `${readyUnits.length} فرق جاهزة` : `${readyUnits.length} ready units`}
           icon={Zap}
           accent="magenta"
-          delta={isAr ? "جاهزية فورية (ICAO Cat 9)" : "Instant standby (Cat 9)"}
-          deltaTone="ok"
         />
       </section>
 
@@ -137,23 +151,27 @@ export default function StaffingView() {
                   {localize(wave.name, language)}
                 </h3>
 
-                <p className="text-xs text-muted-foreground mb-3">
-                  {isAr ? "المشرف المناوب:" : "Duty Lead:"} <strong className="text-foreground/90">{localize(wave.leadManager, language)}</strong> ({wave.leadCallsign})
-                </p>
-
-                <div className="mt-auto space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono text-muted-foreground">
-                    <span>{isAr ? "رحلات الذروة:" : "Flight Load:"} {wave.flightLoad}</span>
-                    <span>{wave.allocatedStaff} / {wave.requiredStaff}</span>
+                <div className="mt-auto pt-4 space-y-2">
+                  <div role="img" aria-label={isAr
+                    ? `${localize(wave.name, language)}: ${wave.allocatedStaff} مخصص من ${wave.requiredStaff} مطلوب، تغطية ${pct}٪، الهدف ٩٠٪`
+                    : `${localize(wave.name, language)}: ${wave.allocatedStaff} allocated of ${wave.requiredStaff} required, ${pct}% coverage, 90% target`}
+                    className="relative h-3.5 rounded-full bg-secondary">
+                    <div aria-hidden="true" className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(0, pct))}%`, background: isUnderstaffed ? "var(--status-warn)" : "var(--status-ok)" }} />
+                    <span aria-hidden="true" className="absolute start-[90%] -top-1 h-5 w-0.5 bg-foreground" />
                   </div>
-                  <ProgressBar
-                    value={pct}
-                    color={isUnderstaffed ? "var(--status-warn)" : "var(--status-ok)"}
-                  />
+                  <div className="flex items-center justify-between gap-2 text-xs tabular-nums text-muted-foreground">
+                    <span><strong className="text-foreground">{wave.allocatedStaff}</strong> / {wave.requiredStaff} {isAr ? "موظف" : "staff"}</span>
+                    <span>{isAr ? "الهدف ٩٠٪" : "90% target"}</span>
+                  </div>
                 </div>
               </button>
             );
           })}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
+          <span>{isAr ? "مشرف النوبة:" : "Duty lead:"} <strong className="text-foreground">{localize(currentWave.leadManager, language)}</strong> <span className="font-mono">{currentWave.leadCallsign}</span></span>
+          <span>{isAr ? "رحلات الذروة:" : "Peak flights:"} <strong className="text-foreground tabular-nums">{currentWave.flightLoad}</strong></span>
         </div>
 
         {/* Warning Callout when wave is under 90% */}
@@ -169,8 +187,8 @@ export default function StaffingView() {
               </strong>
               <p className="mt-0.5 text-foreground/80">
                 {isAr
-                  ? `وردية (${localize(currentWave.name, "ar")}) تسجل تغطية ${Math.round(currentWave.coverageRatio * 100)}% بالتزامن مع ${currentWave.flightLoad} رحلة. يُنصح بتفعيل سرايا التدخل السريع لمواكبة تسريع دوران المهابط والتفتيش الأمني.`
-                  : `Wave (${localize(currentWave.name, "en")}) is at ${Math.round(currentWave.coverageRatio * 100)}% capacity with ${currentWave.flightLoad} peak flights. Deploy surge details below to protect departure on-time performance.`}
+                  ? `العجز ${currentWave.requiredStaff - currentWave.allocatedStaff} موظف؛ راجع فرق التعزيز أدناه.`
+                  : `${currentWave.requiredStaff - currentWave.allocatedStaff} staff short. Review surge crews below.`}
               </p>
             </div>
           </div>
@@ -199,8 +217,8 @@ export default function StaffingView() {
               </strong>
               <p className="mt-0.5 text-foreground/80">
                 {isAr
-                  ? `توصي بروتوكولات إدارة الأزمات بنشر السرايا التكتيكية الموصى بها لمواجهة تداعيات المحاكاة وتفادي تراكم التأخيرات.`
-                  : `AOCC contingency protocols advise priority dispatch of recommended tactical surge crews to mitigate incident delays.`}
+                  ? `يقترح السيناريو مراجعة فرق الدعم المتاحة. لا يرسل هذا النموذج أي فرق ميدانية.`
+                  : `The scenario suggests reviewing available surge teams. This prototype does not dispatch crews.`}
               </p>
             </div>
           </div>
@@ -225,7 +243,7 @@ export default function StaffingView() {
                   <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
                     <div className="flex items-center gap-1.5">
                       <StatusPill tone={isDispatched ? "info" : "ok"}>
-                        {isDispatched ? tr("Dispatched") : isAr ? "جاهز للانتشار" : "Ready"}
+                        {isDispatched ? (isAr ? "مخصص في المحاكاة" : "Assigned in simulation") : isAr ? "متاح في المحاكاة" : "Available in simulation"}
                       </StatusPill>
                       {unit.isRecommended && (
                         <StatusPill tone="crit">
@@ -234,7 +252,7 @@ export default function StaffingView() {
                       )}
                     </div>
                     <span className="text-xs font-mono text-muted-foreground">
-                      ETA {unit.dispatchEtaMin}m
+                      {isAr ? "وقت افتراضي" : "Model ETA"} {unit.dispatchEtaMin}m
                     </span>
                   </div>
 
@@ -265,7 +283,7 @@ export default function StaffingView() {
                       className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-secondary/40 hover:text-foreground transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>{tr("Recall / Standby")}</span>
+                      <span>{isAr ? "إلغاء التخصيص" : "Undo assignment"}</span>
                     </button>
                   ) : (
                     <button
@@ -274,7 +292,7 @@ export default function StaffingView() {
                       className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground px-3 py-1.5 text-xs font-bold hover:brightness-110 shadow-xs transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       <Zap className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>{tr("Dispatch Crew")}</span>
+                      <span>{isAr ? "تخصيص في المحاكاة" : "Assign in simulation"}</span>
                     </button>
                   )}
                 </div>
@@ -286,7 +304,7 @@ export default function StaffingView() {
 
       {/* 4. Filterable Dynamic Roster Grid */}
       <SectionPanel
-        title={tr("Dynamic Roster Grid")}
+        title={isAr ? "سجل العاملين التدريبي" : "Sample staff roster"}
         action={
           <button
             type="button"
@@ -294,14 +312,13 @@ export default function StaffingView() {
             className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-lg border border-border bg-secondary/30 px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-secondary/60 transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <Download className="h-4 w-4 text-primary" aria-hidden="true" />
-            <span>{tr("Export Shift Roster (CSV)")}</span>
+            <span>{isAr ? "تصدير عينة العاملين (CSV)" : "Export sample roster (CSV)"}</span>
           </button>
         }
       >
-        {/* Search & Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-2.5 mb-4">
-          {/* Search box */}
-          <div className="relative flex-1">
+        <RosterStatusWaffle roster={roster} />
+        <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_11rem_11rem]">
+          <div className="relative min-w-0 sm:col-span-2 xl:col-span-1">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
             <label htmlFor="roster-search-input" className="sr-only">
               {tr("Search staff by name, callsign, or role...")}
@@ -311,66 +328,22 @@ export default function StaffingView() {
               type="search"
               value={filters.searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={tr("Search staff by name, callsign, or role...")}
+              placeholder={isAr ? "ابحث بالاسم أو النداء أو الدور" : "Search name, callsign, or role"}
               className="w-full h-11 ps-9 pe-4 rounded-lg border border-border bg-background/50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
           </div>
-
-          {/* Zone Filter */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 max-w-full">
-            {(["ALL", "RAMP", "SECURITY", "T1", "T2", "T3", "BAGGAGE", "ARFF"] as const).map((zone) => {
-              const isActive = filters.selectedZone === zone;
-              const label = zone === "ALL" ? tr("All Zones") : zone;
-              return (
-                <button
-                  key={zone}
-                  type="button"
-                  onClick={() => setSelectedZone(zone)}
-                  aria-pressed={isActive}
-                  className={`min-h-[44px] min-w-[44px] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-xs font-bold"
-                      : "bg-secondary/20 hover:bg-secondary/40 text-muted-foreground hover:text-foreground border border-border/50"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className="min-w-0">
+            <label htmlFor="roster-zone" className="sr-only">{isAr ? "منطقة العمل" : "Work zone"}</label>
+            <SelectMenu id="roster-zone" label={isAr ? "منطقة العمل" : "Work zone"} value={filters.selectedZone} options={zoneOptions} onChange={setSelectedZone} className="w-full" />
           </div>
-
-          {/* Cert Filter */}
-          <div className="flex items-center gap-1">
-            {(
-              [
-                { id: "ALL", label: isAr ? "الكل" : "All Certs" },
-                { id: "expiring_soon", label: tr("Expiring Soon") },
-                { id: "expired", label: tr("Expired") },
-              ] as const
-            ).map((item) => {
-              const isActive = filters.selectedCertFilter === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setSelectedCertFilter(item.id)}
-                  aria-pressed={isActive}
-                  className={`min-h-[44px] min-w-[44px] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                    isActive
-                      ? "bg-secondary text-foreground border border-primary/50 shadow-xs"
-                      : "bg-secondary/10 hover:bg-secondary/30 text-muted-foreground border border-border/40"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
+          <div className="min-w-0">
+            <label htmlFor="roster-badge" className="sr-only">{isAr ? "حالة التصريح" : "Badge status"}</label>
+            <SelectMenu id="roster-badge" label={isAr ? "حالة التصريح" : "Badge status"} value={filters.selectedCertFilter} options={certOptions} onChange={setSelectedCertFilter} className="w-full" />
           </div>
         </div>
-
-        {/* Live Filter Count for Screen Readers */}
-        <div aria-live="polite" className="sr-only">
-          {filteredRoster.length} staff members matching filters.
+        <div className="mb-3 mt-2 flex min-h-8 items-center justify-between gap-2 text-xs text-muted-foreground" aria-live="polite">
+          <span>{isAr ? `${filteredRoster.length} من أفراد النوبة` : `${filteredRoster.length} staff in selected wave`}</span>
+          {hasRosterFilters && <button type="button" onClick={resetFilters} className="min-h-11 rounded-lg px-3 font-semibold text-primary hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{isAr ? "مسح المرشحات" : "Clear filters"}</button>}
         </div>
 
         {/* Dynamic Table on Desktop / Cards on Mobile */}
@@ -392,15 +365,20 @@ export default function StaffingView() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-border bg-card">
-            <table className="w-full text-start text-xs border-collapse">
+          <>
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:hidden" aria-label={isAr ? "بطاقات سجل الموظفين" : "Staff roster cards"}>
+            {filteredRoster.map(member => <StaffRosterCard key={member.id} member={member} onToggle={() => toggleStaffStatus(member.id)} />)}
+          </div>
+          <div className="table-scroll hidden rounded-xl border border-border bg-card xl:block" role="region" tabIndex={0} aria-label={isAr ? "سجل الموظفين" : "Staff roster"}>
+            <table className="w-full min-w-[1120px] table-fixed border-collapse text-start text-xs">
+              <colgroup><col style={{ width: "18%" }} /><col style={{ width: "22%" }} /><col style={{ width: "16%" }} /><col style={{ width: "12%" }} /><col style={{ width: "21%" }} /><col style={{ width: "11%" }} /></colgroup>
               <thead>
                 <tr className="border-b border-border/80 bg-secondary/30 text-muted-foreground font-mono uppercase tracking-wider text-[11px]">
                   <th scope="col" className="p-3 text-start">{isAr ? "الموظف والنداء" : "Staff & Callsign"}</th>
                   <th scope="col" className="p-3 text-start">{isAr ? "المسمى والمنطقة" : "Role & Zone"}</th>
                   <th scope="col" className="p-3 text-start">{isAr ? "القناة والاتصال" : "Radio / Comm"}</th>
                   <th scope="col" className="p-3 text-start">{isAr ? "الحالة" : "Status"}</th>
-                  <th scope="col" className="p-3 text-start">{isAr ? "ترخيص الإيكاو والصلاحية" : "ICAO Badge & Validity"}</th>
+                  <th scope="col" className="p-3 text-start">{isAr ? "التأهيل وتاريخ الانتهاء" : "Qualification & expiry"}</th>
                   <th scope="col" className="p-3 text-end">{isAr ? "إجراء سريع" : "Action"}</th>
                 </tr>
               </thead>
@@ -420,8 +398,8 @@ export default function StaffingView() {
                         <div className="font-bold text-foreground text-sm">
                           {localize(member.name, language)}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-xs font-mono text-muted-foreground">
-                          <span className="text-primary font-semibold">{member.callsign}</span>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-xs font-mono text-muted-foreground">
+                          <span className="text-primary font-semibold break-all">{member.callsign}</span>
                           <span className="opacity-40">|</span>
                           <span>{member.id}</span>
                         </div>
@@ -444,11 +422,11 @@ export default function StaffingView() {
                       <td className="p-3 font-mono text-xs">
                         <div className="flex items-center gap-1 text-foreground">
                           <Radio className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />
-                          <span>{member.radioChannel}</span>
+                          <span className="break-words">{member.radioChannel}</span>
                         </div>
                         <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
                           <Phone className="h-3 w-3 shrink-0" aria-hidden="true" />
-                          <span>{member.phoneExt}</span>
+                          <span className="break-words">{member.phoneExt}</span>
                         </div>
                       </td>
 
@@ -476,8 +454,8 @@ export default function StaffingView() {
                           </StatusPill>
                           <span className="font-mono text-xs font-bold text-foreground">
                             {member.daysToCertExpiry < 0
-                              ? `${Math.abs(member.daysToCertExpiry)}d overdue`
-                              : `${member.daysToCertExpiry}d left`}
+                              ? (isAr ? `${Math.abs(member.daysToCertExpiry)} يوم تأخير` : `${Math.abs(member.daysToCertExpiry)}d overdue`)
+                              : (isAr ? `${member.daysToCertExpiry} يوم متبقٍ` : `${member.daysToCertExpiry}d left`)}
                           </span>
                         </div>
                         <div className="mt-1 text-xs text-foreground/80 truncate max-w-xs" title={localize(member.badgeType, language)}>
@@ -490,7 +468,7 @@ export default function StaffingView() {
                         <button
                           type="button"
                           onClick={() => toggleStaffStatus(member.id)}
-                          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/50 transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center whitespace-nowrap rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/50 transition-all active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
                           {member.status === "on_duty" ? (isAr ? "تحويل لاستراحة" : "Set Break") : (isAr ? "إعادة للخدمة" : "Set On Duty")}
                         </button>
@@ -501,16 +479,17 @@ export default function StaffingView() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </SectionPanel>
 
       {/* 5. ICAO Airside Safety & Permit Compliance Tracker */}
       <SectionPanel
-        title={tr("ICAO Airside Safety & Permit Compliance Tracker")}
+        title={isAr ? "مراجعة تأهيل العاملين" : "Staff qualification review"}
         action={
           <span className="text-xs font-mono text-status-ok flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-            {isAr ? "معايير السلامة: ICAO Annex 14 / Annex 17" : "Standards: ICAO Annex 14 & 17"}
+            {isAr ? "سجلات تدريبية · تحقق من القواعد المحلية" : "Sample records · verify local rules"}
           </span>
         }
       >
@@ -518,40 +497,82 @@ export default function StaffingView() {
           <div className="p-4 rounded-xl border border-border/70 bg-card">
             <div className="flex items-center gap-2 mb-2 text-foreground font-bold">
               <Award className="h-5 w-5 text-primary" aria-hidden="true" />
-              <h4>{isAr ? "تراخيص قيادة المهابط (ADP Class 1 & 2)" : "Airside Driving Permits (ADP 1 & 2)"}</h4>
+              <h4>{isAr ? "تصاريح القيادة في الجانب الجوي" : "Airside driving permits"}</h4>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <details className="mt-1 text-xs text-muted-foreground"><summary className="flex min-h-11 cursor-pointer items-center font-semibold text-primary">{isAr ? "عرض المتطلبات" : "View requirements"}</summary><p className="pb-2 leading-relaxed">
               {isAr
-                ? "تراخيص القيادة المعتمدة لدخول ممرات التدحرج والمدرج النشط (05L/05C). تجديد دوري كل 24 شهراً مع اختبار كفاءة طبية وفحص اتصالات الراديو مع برج المراقبة."
-                : "Mandatory driving authorizations for active runways (05L/05C) and taxiways. Bi-annual practical evaluation and VHF ATC radio protocol recertification."}
-            </p>
+                ? "راجع تصريح القيادة والتأهيل العملي وجدول التجديد مع جهة المطار المختصة."
+                : "Confirm driving authorization, practical competency, and renewal dates with the responsible airport authority."}
+            </p></details>
           </div>
 
           <div className="p-4 rounded-xl border border-border/70 bg-card">
             <div className="flex items-center gap-2 mb-2 text-foreground font-bold">
               <ShieldCheck className="h-5 w-5 text-status-ok" aria-hidden="true" />
-              <h4>{isAr ? "تفتيش أمن الطيران (Annex 17 Level 3)" : "Aviation Security (Annex 17 L3)"}</h4>
+              <h4>{isAr ? "تأهيل التفتيش الأمني" : "Security screening qualification"}</h4>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <details className="mt-1 text-xs text-muted-foreground"><summary className="flex min-h-11 cursor-pointer items-center font-semibold text-primary">{isAr ? "عرض المتطلبات" : "View requirements"}</summary><p className="pb-2 leading-relaxed">
               {isAr
-                ? "شهادات مشغلي أجهزة الأشعة وكشف المفرقعات والمواد الخطرة. اختبارات فجائية شهرية لضمان معدلات ضبط 100% لكافة نقاط التفتيش بمباني الركاب 1 و2 و3."
-                : "Continuous Threat Image Projection (TIP) certified screeners. Mandatory monthly proficiency drills for passenger and hold baggage X-ray systems."}
-            </p>
+                ? "راجع تدريب المفتشين وفحوص الكفاءة ومتطلبات إعادة التأهيل مع الجهة الأمنية المختصة."
+                : "Confirm screener training, proficiency checks, and recertification rules with the security authority."}
+            </p></details>
           </div>
 
           <div className="p-4 rounded-xl border border-border/70 bg-card">
             <div className="flex items-center gap-2 mb-2 text-foreground font-bold">
               <ShieldAlert className="h-5 w-5 text-status-warn" aria-hidden="true" />
-              <h4>{isAr ? "الإطفاء والإنقاذ الجوي (Doc 9137 Cat 9)" : "ARFF Rescue & Fire (Doc 9137 Cat 9)"}</h4>
+              <h4>{isAr ? "جاهزية الإنقاذ والإطفاء" : "Rescue and firefighting readiness"}</h4>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <details className="mt-1 text-xs text-muted-foreground"><summary className="flex min-h-11 cursor-pointer items-center font-semibold text-primary">{isAr ? "عرض المتطلبات" : "View requirements"}</summary><p className="pb-2 leading-relaxed">
               {isAr
-                ? "فريق التدخل السريع لمكافحة حرائق الطائرات فئة 9 بقاعدة صقر 7. جاهزية استجابة فورية خلال 120 ثانية إلى أي نقطة على مهابط مطار القاهرة الدولي."
-                : "Category 9 heavy aircraft rescue tender crews at Station 7 Falcon Base. 120-second rapid intervention mandate to any touchdown point at HECA."}
-            </p>
+                ? "راجع فئة التغطية والموارد وأهداف الاستجابة والتدريب المتكرر وفق خطة طوارئ المطار المعتمدة."
+                : "Confirm coverage category, resources, response targets, and recurrent training against the approved aerodrome emergency plan."}
+            </p></details>
           </div>
         </div>
       </SectionPanel>
     </div>
   );
+}
+
+function StaffRosterCard({ member, onToggle }: { member: StaffMember; onToggle: () => void }) {
+  const { language, tr } = useLocale();
+  const isAr = language === "ar";
+  const isExpired = member.certStatus === "expired";
+  const isExpiring = member.certStatus === "expiring_soon";
+  const status = member.status === "on_duty" ? tr("On Duty") : member.status === "break" ? tr("Break") : member.status === "dispatched" ? tr("Dispatched") : tr("Standby");
+  const badge = isExpired ? tr("Expired") : isExpiring ? tr("Expiring Soon") : tr("Valid");
+  const remaining = member.daysToCertExpiry < 0
+    ? (isAr ? `${Math.abs(member.daysToCertExpiry)} يوم تأخير` : `${Math.abs(member.daysToCertExpiry)}d overdue`)
+    : (isAr ? `${member.daysToCertExpiry} يوم متبقٍ` : `${member.daysToCertExpiry}d left`);
+
+  return <article className="min-w-0 rounded-xl border border-border bg-card p-3.5">
+    <div className="flex flex-wrap items-start justify-between gap-2">
+      <div className="min-w-0 flex-1">
+        <h3 className="break-words text-sm font-bold text-foreground">{localize(member.name, language)}</h3>
+        <p className="mt-0.5 break-all font-mono text-xs text-primary">{member.callsign}</p>
+      </div>
+      <StatusPill tone={member.status === "on_duty" ? "ok" : member.status === "dispatched" ? "info" : "warn"}>{status}</StatusPill>
+    </div>
+    <p className="mt-2 text-sm leading-snug text-foreground">{localize(member.roleTitle, language)}</p>
+    <p className="mt-1 text-xs text-muted-foreground"><span className="font-mono font-semibold text-foreground">{member.zone}</span> · {localize(member.zoneLabel, language)}</p>
+    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+      <StatusPill tone={isExpired ? "crit" : isExpiring ? "warn" : "ok"}>{badge}</StatusPill>
+      <span className="font-mono text-xs tabular-nums text-muted-foreground">{remaining}</span>
+    </div>
+    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+      <details className="min-w-0 text-xs text-muted-foreground">
+        <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-primary">{isAr ? "تفاصيل الاتصال والتصريح" : "Contact & badge details"}</summary>
+        <dl className="grid gap-2 pb-2">
+          <div><dt className="font-semibold">{isAr ? "قناة الاتصال" : "Radio"}</dt><dd className="break-words font-mono">{member.radioChannel}</dd></div>
+          <div><dt className="font-semibold">{isAr ? "الهاتف" : "Phone"}</dt><dd className="break-words font-mono">{member.phoneExt}</dd></div>
+          <div><dt className="font-semibold">{isAr ? "نوع التصريح" : "Badge"}</dt><dd className="break-words">{localize(member.badgeType, language)}</dd></div>
+          <div><dt className="font-semibold">{isAr ? "سجل السلامة" : "Safety record"}</dt><dd>{member.safetyDaysZeroIncidents} {isAr ? "يوم بدون حوادث" : "incident-free days"}</dd></div>
+        </dl>
+      </details>
+      <button type="button" onClick={onToggle} className="min-h-11 shrink-0 rounded-lg border border-border px-3 text-xs font-semibold text-foreground hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={`${member.status === "on_duty" ? (isAr ? "تحويل إلى استراحة" : "Set break for") : (isAr ? "إعادة إلى الخدمة" : "Set on duty for")} ${localize(member.name, language)}`}>
+        {member.status === "on_duty" ? (isAr ? "استراحة" : "Set break") : (isAr ? "إلى الخدمة" : "Set on duty")}
+      </button>
+    </div>
+  </article>;
 }

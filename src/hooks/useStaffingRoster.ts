@@ -15,6 +15,7 @@ import { notifyManager } from "../utils/toast";
 import { exportToCsv } from "../utils/exportCsv";
 import { localize } from "../utils/helpers";
 import { useSimulation } from "../context/simulation";
+import { badgeValidity } from "../utils/staffBadge";
 
 export interface StaffingFilterState {
   activeWaveId: StaffingShiftWaveId;
@@ -41,7 +42,7 @@ export function useStaffingRoster(language: Language = "en") {
     selectedCertFilter: "ALL",
   });
 
-  const [roster, setRoster] = useState<StaffMember[]>(staffMembers);
+  const [roster, setRoster] = useState<StaffMember[]>(() => staffMembers.map(member => ({ ...member, ...badgeValidity(member.icaoCertValidUntil) })));
   const [dispatchedUnits, setDispatchedUnits] = useState<Set<string>>(new Set());
 
   // Synchronize when activeShiftWave changes from elsewhere
@@ -82,13 +83,13 @@ export function useStaffingRoster(language: Language = "en") {
 
   const resetFilters = useCallback(() => {
     soundEffects.playClick();
-    setFilters({
-      activeWaveId: "midday",
+    setFilters(prev => ({
+      activeWaveId: prev.activeWaveId,
       searchQuery: "",
       selectedZone: "ALL",
       selectedRole: "ALL",
       selectedCertFilter: "ALL",
-    });
+    }));
   }, []);
 
   // Shift Waves info
@@ -106,7 +107,7 @@ export function useStaffingRoster(language: Language = "en") {
     const valid = roster.filter((s) => s.certStatus === "valid").length;
     const expiringSoon = roster.filter((s) => s.certStatus === "expiring_soon").length;
     const expired = roster.filter((s) => s.certStatus === "expired").length;
-    const compliancePct = total > 0 ? Math.round((valid / total) * 100) : 100;
+    const compliancePct = total > 0 ? Math.round(((valid + expiringSoon) / total) * 100) : 100;
     return {
       total,
       valid,
@@ -178,18 +179,18 @@ export function useStaffingRoster(language: Language = "en") {
       const unit = surgeCrewUnits.find((u) => u.id === unitId);
       if (!unit) return;
 
-      soundEffects.playDispatch();
+      soundEffects.playClick();
       setDispatchedUnits((prev) => {
         const next = new Set(prev);
         next.add(unitId);
         return next;
       });
 
-      const title = language === "ar" ? "تم إرسال سرية التدخل السريع" : "Surge Crew Unit Dispatched";
+      const title = language === "ar" ? "تم التخصيص في المحاكاة" : "Simulation assignment updated";
       const message =
         language === "ar"
-          ? `${localize(unit.title, "ar")} (${unit.headcount} فرد) متجهة إلى ${localize(unit.targetZoneLabel, "ar")} - وصول متوقع خلال ${unit.dispatchEtaMin} دقيقة.`
-          : `${localize(unit.title, "en")} (${unit.headcount} crew) en route to ${localize(unit.targetZoneLabel, "en")} - ETA ${unit.dispatchEtaMin}m.`;
+          ? `${localize(unit.title, "ar")} (${unit.headcount} فرد) مخصصون افتراضياً لمنطقة ${localize(unit.targetZoneLabel, "ar")}. لم يُرسل أي فريق.`
+          : `${localize(unit.title, "en")} (${unit.headcount} crew) assigned to ${localize(unit.targetZoneLabel, "en")} in this simulation. No team was dispatched.`;
 
       notifyManager(title, message, "ok");
     },
@@ -209,11 +210,11 @@ export function useStaffingRoster(language: Language = "en") {
         return next;
       });
 
-      const title = language === "ar" ? "تم استدعاء الطاقم وإنهاء الانتشار" : "Surge Crew Unit Recalled";
+      const title = language === "ar" ? "أُلغي التخصيص الافتراضي" : "Simulation assignment undone";
       const message =
         language === "ar"
-          ? `عادت ${localize(unit.title, "ar")} إلى وضع الاستعداد التشغيلي.`
-          : `${localize(unit.title, "en")} has returned to standby station.`;
+          ? `أصبحت ${localize(unit.title, "ar")} متاحة مجدداً في السيناريو.`
+          : `${localize(unit.title, "en")} is available again in the scenario.`;
 
       notifyManager(title, message, "info");
     },
@@ -269,7 +270,7 @@ export function useStaffingRoster(language: Language = "en") {
           "Radio Callsign",
           "Radio Frequency",
           "Status",
-          "ICAO Badge / Certification",
+          "Sample qualification",
           "Valid Until",
           "Days Remaining",
           "Zero-Incident Days",
@@ -316,6 +317,7 @@ export function useStaffingRoster(language: Language = "en") {
     shiftWaves: staffingShiftWaves,
     totalStaffOnDuty,
     icaoMetrics,
+    roster,
     filteredRoster,
     surgeUnits,
     dispatchSurgeUnit,

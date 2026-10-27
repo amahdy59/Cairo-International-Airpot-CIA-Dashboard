@@ -1,6 +1,5 @@
 import { useId, memo, type ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
-import { useAnimatedNumber } from "../../hooks/useAnimatedNumber";
 
 type StatusTone = "ok" | "info" | "warn" | "high" | "crit" | "neutral";
 
@@ -30,14 +29,6 @@ export function MetricCard({
     info: "text-primary",
   }[deltaTone];
 
-  const accentClass = {
-    cyan: "from-cyan to-cyan/0",
-    magenta: "from-magenta to-magenta/0",
-    warn: "from-status-warn to-status-warn/0",
-    ok: "from-status-ok to-status-ok/0",
-    crit: "from-status-crit to-status-crit/0",
-  }[accent];
-
   const accentHex = {
     cyan: "var(--cyan)",
     magenta: "var(--magenta)",
@@ -46,39 +37,28 @@ export function MetricCard({
     crit: "var(--status-crit)",
   }[accent];
 
-  const isPositive = deltaTone === "ok" && delta != null && !delta.trim().startsWith("-");
-
-  const numericValue = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));
-  const isNumeric = !isNaN(numericValue) && String(value).trim() !== "";
-  
-  const animatedValue = useAnimatedNumber(
-    isNumeric ? numericValue : 0,
-    1000,
-    (v) => (isNumeric ? Math.floor(v).toLocaleString("en-US") : String(value))
-  );
+  const trend = delta?.trim().match(/^([+\-−])\s*[\d٠-٩]/)?.[1];
 
   return (
-    <article className="panel relative overflow-hidden p-4 rounded-2xl border border-white/10 spring-transition hover:-translate-y-1 hover:shadow-md dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)] group bg-card">
-      <div className="absolute -top-12 -start-12 h-32 w-32 rounded-full opacity-0 dark:opacity-15 blur-2xl pointer-events-none transition-opacity duration-500 group-hover:opacity-20 dark:group-hover:opacity-30" style={{ backgroundColor: accentHex }} />
-      <div className={`absolute inset-y-0 start-0 w-[3px] bg-gradient-to-b ${accentClass} opacity-100 transition-transform duration-500 origin-top group-hover:scale-y-110`} />
+    <article className="panel metric-card relative overflow-hidden p-4">
       <div className="relative z-10 flex items-start justify-between gap-3 ps-1">
         <div className="min-w-0">
-          <p className="text-xs font-mono rtl:font-sans uppercase rtl:normal-case tracking-[0.15em] rtl:tracking-normal text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">{label}</p>
-          <div className="mt-2 flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">{isNumeric ? animatedValue : value}</span>
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+            <span className="text-2xl font-bold tracking-tight tabular-nums text-foreground lg:text-3xl">{value}</span>
             {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
           </div>
           {hint && <p className="mt-1 text-xs text-muted-foreground font-medium">{hint}</p>}
         </div>
         {Icon && (
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border/50 bg-secondary/30 transition-transform duration-500 group-hover:scale-110 group-hover:bg-secondary/50">
+          <div className="hidden sm:grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border/50 bg-secondary/30">
             <Icon className="h-5 w-5 opacity-80 transition-opacity duration-300 group-hover:opacity-100" style={{ color: accentHex }} aria-hidden="true" />
           </div>
         )}
       </div>
       {delta && (
         <p className={`relative z-10 mt-2 inline-flex items-center gap-1 text-xs ${toneClass}`}>
-          {isPositive ? <ArrowUpRight aria-hidden="true" className="h-3 w-3" /> : <ArrowDownRight aria-hidden="true" className="h-3 w-3" />}
+          {trend && (trend === "+" ? <ArrowUpRight aria-hidden="true" className="h-3 w-3" /> : <ArrowDownRight aria-hidden="true" className="h-3 w-3" />)}
           <span className="font-mono">{delta}</span>
         </p>
       )}
@@ -176,19 +156,21 @@ export const Sparkline = memo(function Sparkline({ data, color = "var(--cyan)", 
   );
 });
 
-export function ProgressBar({ value, max = 100, color = "var(--cyan)", className = "" }: { value: number; max?: number; color?: string; className?: string }) {
-  const percent = Math.min(100, Math.max(0, (value / max) * 100));
+export function ProgressBar({ value, max = 100, color = "var(--cyan)", className = "", label }: { value: number; max?: number; color?: string; className?: string; label?: string }) {
+  const safeMax = Number.isFinite(max) && max > 0 ? max : 100;
+  const safeValue = Number.isFinite(value) ? Math.min(safeMax, Math.max(0, value)) : 0;
+  const percent = (safeValue / safeMax) * 100;
 
   return (
     <div 
       role="progressbar"
-      aria-valuenow={value}
+      aria-valuenow={safeValue}
       aria-valuemin={0}
-      aria-valuemax={max}
-      aria-label={`${value} out of ${max}`}
+      aria-valuemax={safeMax}
+      aria-label={label ?? `${safeValue} / ${safeMax}`}
       className={`relative h-1.5 w-full overflow-hidden rounded-full bg-secondary ${className}`}
     >
-      <div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${percent}%`, background: color, boxShadow: `0 0 10px ${color}` }} />
+      <div className="absolute inset-y-0 start-0 rounded-full" style={{ width: `${percent}%`, background: color }} />
     </div>
   );
 }

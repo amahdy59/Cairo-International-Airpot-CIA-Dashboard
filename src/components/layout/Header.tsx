@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   ArrowUp,
@@ -32,18 +33,22 @@ import { useAirfieldRadio } from "../../hooks/useAirfieldRadio";
 import { useSoundEffects } from "../../hooks/useSoundEffects";
 import { localize } from "../../utils/helpers";
 import { MetarWidget } from "../common/MetarWidget";
+import { useModalFocus } from "../../hooks/useModalFocus";
 
 export function BackToTopButton() {
   const { language } = useLocale();
   return (
     <button
       type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-5 end-5 z-50 grid h-12 w-12 place-items-center rounded-full border border-border bg-primary text-primary-foreground shadow-[0_14px_34px_color-mix(in_oklab,var(--primary)_28%,transparent)] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_color-mix(in_oklab,var(--primary)_36%,transparent)] cursor-pointer active-spring"
+      onClick={() => {
+        document.getElementById("main-content")?.focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      }}
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 font-semibold text-primary hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       aria-label={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
-      title={localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
     >
-      <ArrowUp aria-hidden="true" className="h-5 w-5" />
+      <ArrowUp aria-hidden="true" className="h-4 w-4" />
+      {localize({ en: "Back to top", ar: "العودة إلى الأعلى" }, language)}
     </button>
   );
 }
@@ -95,6 +100,14 @@ export function Header({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const settingsTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useModalFocus(isMobileMenuOpen, () => setIsMobileMenuOpen(false));
+
+  useEffect(() => {
+    const breakpoint = window.matchMedia("(min-width: 1024px)");
+    const onResize = () => { if (breakpoint.matches) setIsMobileMenuOpen(false); };
+    breakpoint.addEventListener("change", onResize);
+    return () => breakpoint.removeEventListener("change", onResize);
+  }, []);
 
   const isResourcesPage = activePage === "resources";
   const resourcesLabel = language === "ar" ? "التوثيق والمواصفات" : "Docs & Specs";
@@ -165,7 +178,7 @@ export function Header({
 
       <div className="mx-auto flex h-16 max-w-[1720px] w-full items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 lg:px-8">
         {/* Island 1: Brand & Operational Status Indicator */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink min-w-0">
           <a
             href="#main"
             onClick={(e) => {
@@ -194,10 +207,10 @@ export function Header({
           <div className="hidden 2xl:flex items-center gap-1.5 rounded-full border border-border/50 bg-secondary/35 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
             <span className={`h-2 w-2 rounded-full ${isDrillActive ? "bg-status-crit animate-ping" : "bg-status-ok"}`} />
             <span className="font-mono font-bold text-foreground">
-              {isDrillActive ? (language === "ar" ? "محاكاة طوارئ" : "DRILL") : "AOCC ACTIVE"}
+              {isDrillActive ? (language === "ar" ? "محاكاة طوارئ" : "DRILL") : (language === "ar" ? "عرض تدريبي" : "TRAINING VIEW")}
             </span>
             <span>&bull;</span>
-            <span>CAT III</span>
+            <span>{language === "ar" ? "بيانات نموذجية" : "SAMPLE DATA"}</span>
           </div>
         </div>
 
@@ -208,22 +221,24 @@ export function Header({
         >
           <div
             role="tablist"
+            aria-label={tr("Manager dashboard sections")}
             aria-orientation="horizontal"
-            className="flex h-11 items-center gap-0.5 xl:gap-1 rounded-xl border border-white/10 bg-secondary/30 p-1 backdrop-blur-md overflow-x-auto no-scrollbar"
+            className="flex min-h-13 items-center gap-0.5 xl:gap-1 rounded-xl border border-border bg-secondary/30 p-1 overflow-x-auto"
             onKeyDown={(e) => {
-              const tabs: ManagerTab[] = ["digital", "operations", "safety", "staffing"];
-              const currentIndex = tabs.indexOf(activeTab);
+              const tabs = ["digital", "operations", "safety", "staffing", "docs"] as const;
+              const currentIndex = tabs.indexOf(isResourcesPage ? "docs" : activeTab);
               let nextIndex = currentIndex;
-              if (e.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
-              else if (e.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+              const direction = language === "ar" ? -1 : 1;
+              if (e.key === "ArrowRight") nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+              else if (e.key === "ArrowLeft") nextIndex = (currentIndex - direction + tabs.length) % tabs.length;
               else if (e.key === "Home") nextIndex = 0;
               else if (e.key === "End") nextIndex = tabs.length - 1;
 
               if (nextIndex !== currentIndex && nextIndex !== -1) {
                 e.preventDefault();
                 const nextTab = tabs[nextIndex];
-                setActiveTab(nextTab);
-                onShowDashboard();
+                if (nextTab === "docs") onShowResources();
+                else { setActiveTab(nextTab); onShowDashboard(); }
                 setTimeout(() => document.getElementById(`tab-${nextTab}`)?.focus(), 0);
               }
             }}
@@ -238,13 +253,13 @@ export function Header({
                   role="tab"
                   tabIndex={isActive ? 0 : -1}
                   aria-selected={isActive}
-                  aria-controls={isResourcesPage ? undefined : "main-content"}
+                  aria-controls={isActive ? "main-content" : undefined}
                   onClick={() => {
                     playClick();
                     setActiveTab(tab.id);
                     onShowDashboard();
                   }}
-                  className={`group relative flex h-10 min-h-[40px] xl:min-h-[42px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+                  className={`group relative flex min-h-11 items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-xs font-bold"
                       : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
@@ -265,11 +280,12 @@ export function Header({
               role="tab"
               tabIndex={isResourcesPage ? 0 : -1}
               aria-selected={isResourcesPage}
+              aria-controls={isResourcesPage ? "main-content" : undefined}
               onClick={() => {
                 playClick();
                 onShowResources();
               }}
-              className={`group relative flex h-10 min-h-[40px] xl:min-h-[42px] items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+              className={`group relative flex min-h-11 items-center gap-1 xl:gap-1.5 rounded-lg px-2.5 xl:px-3 text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer active-spring focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
                 isResourcesPage
                   ? "bg-primary text-primary-foreground shadow-xs font-bold"
                   : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
@@ -287,7 +303,7 @@ export function Header({
         {/* Island 3: Executive Controls & Quick Tools */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ms-auto">
           {/* Cairo Clock Telemetry (Desktop xl+) */}
-          <div className="hidden xl:flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/35 px-2.5 h-11 min-h-[44px]">
+          <div className="hidden 2xl:flex items-center gap-1.5 rounded-xl border border-border/60 bg-secondary/35 px-2.5 h-11 min-h-[44px]">
             <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-primary shrink-0" />
             <span dir="ltr" className="font-mono text-xs font-bold text-foreground">
               {times.cairo}
@@ -308,7 +324,7 @@ export function Header({
                 playClick();
                 onOpenCommandPalette();
               }}
-              className="flex h-11 min-h-[44px] items-center gap-2 rounded-xl border border-border bg-secondary/35 px-2.5 sm:px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active-spring cursor-pointer"
+              className="flex h-11 min-h-[44px] min-w-11 justify-center items-center gap-2 rounded-xl border border-border bg-secondary/35 px-2.5 sm:px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active-spring cursor-pointer"
               aria-label={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
               title={language === "ar" ? "لوحة الأوامر السريعة (Ctrl+K)" : "Command Palette (Ctrl+K)"}
             >
@@ -350,7 +366,7 @@ export function Header({
               <div
                 role="dialog"
                 aria-label={language === "ar" ? "لوحة التحكم السريعة بالنظام" : "Quick System Controls"}
-                className="absolute end-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/10 bg-surface/95 p-3.5 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-200 dark:bg-card/95"
+                className="settings-popover absolute end-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-2xl border border-border bg-card p-3.5 shadow-xl z-50"
               >
                 <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
                   <span className="text-xs font-bold text-foreground">
@@ -388,11 +404,11 @@ export function Header({
                           </span>
                           <div>
                             <span className="font-semibold block text-foreground">Cairo Tower ATC</span>
-                            <span className="text-[10px] text-muted-foreground font-mono">118.1 MHz Live Feed</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">118.1 MHz {language === "ar" ? "محاكاة" : "simulation"}</span>
                           </div>
                         </div>
                         <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${!isMuted ? "bg-status-ok/20 text-status-ok" : "bg-muted text-muted-foreground"}`}>
-                          {!isMuted ? (language === "ar" ? "يعمل" : "LIVE") : (language === "ar" ? "صامت" : "MUTED")}
+                          {!isMuted ? (language === "ar" ? "يعمل" : "ON") : (language === "ar" ? "صامت" : "MUTED")}
                         </span>
                       </button>
 
@@ -486,12 +502,13 @@ export function Header({
                       <button
                         type="button"
                         onClick={() => setHighContrast(!highContrast)}
+                        aria-pressed={highContrast}
                         className={`flex items-center gap-2 rounded-xl border p-2 transition-colors cursor-pointer ${
                           highContrast ? "border-primary bg-primary/15 text-primary" : "border-border/60 bg-background/50 hover:bg-secondary"
                         }`}
                       >
                         <Contrast className="h-3.5 w-3.5" />
-                        <span className="font-medium">AAA Contrast</span>
+                        <span className="font-medium">{language === "ar" ? "تباين عالٍ" : "High contrast"}</span>
                       </button>
 
                       {/* Language Switch */}
@@ -537,9 +554,10 @@ export function Header({
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-controls="mobile-navigation"
             className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-border bg-secondary/35 text-foreground hover:bg-secondary lg:hidden transition-colors cursor-pointer"
             aria-expanded={isMobileMenuOpen}
-            aria-label={tr("Toggle navigation menu")}
+            aria-label={language === "ar" ? "فتح قائمة التنقل" : "Toggle navigation menu"}
           >
             {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -547,12 +565,13 @@ export function Header({
       </div>
 
       {/* Mobile Slide-Over Drawer Navigation (< lg) */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 top-16 z-40 lg:hidden bg-background/95 backdrop-blur-xl border-t border-border/40 p-4 flex flex-col gap-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="space-y-1">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block px-2 mb-1">
-              {tr("Manager dashboard sections")}
-            </span>
+      {isMobileMenuOpen && createPortal(
+        <div ref={mobileMenuRef} id="mobile-navigation" role="dialog" aria-modal="true" aria-label={tr("Manager dashboard sections")} tabIndex={-1} className="fixed inset-0 z-[90] lg:hidden bg-background p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-4 overflow-y-auto shadow-xl">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold">{language === "ar" ? "التنقل" : "Navigate"}</h2>
+            <button type="button" onClick={() => setIsMobileMenuOpen(false)} aria-label={tr("Close")} className="grid min-h-11 min-w-11 place-items-center rounded-lg border border-border"><X aria-hidden="true" className="h-5 w-5" /></button>
+          </div>
+          <nav aria-label={tr("Manager dashboard sections")} className="space-y-1">
             {navItems.map((tab) => {
               const Icon = tab.icon;
               const isActive = !isResourcesPage && activeTab === tab.id;
@@ -560,6 +579,7 @@ export function Header({
                 <button
                   key={tab.id}
                   type="button"
+                  aria-current={isActive ? "page" : undefined}
                   onClick={() => {
                     playClick();
                     setActiveTab(tab.id);
@@ -583,6 +603,7 @@ export function Header({
                 onShowResources();
                 setIsMobileMenuOpen(false);
               }}
+              aria-current={isResourcesPage ? "page" : undefined}
               className={`flex h-12 w-full items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-colors cursor-pointer ${
                 isResourcesPage ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
               }`}
@@ -590,7 +611,7 @@ export function Header({
               <FileText className="h-4 w-4 shrink-0" />
               <span>{resourcesLabel}</span>
             </button>
-          </div>
+          </nav>
 
           <div className="mt-auto border-t border-border/40 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs text-muted-foreground">
             <div className="sm:hidden">
@@ -601,7 +622,7 @@ export function Header({
               <span>HECA AOCC Command Hub</span>
             </div>
           </div>
-        </div>
+        </div>, document.body
       )}
     </header>
   );

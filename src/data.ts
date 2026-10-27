@@ -421,13 +421,13 @@ export const copy = {
     brand: "CIA Command Hub",
     manager: "Manager view",
     heroTitle: "Operations and safety overview",
-    heroBody: "A focused management surface for live flow, flight movement, safety checks and maintenance attention.",
+    heroBody: "A focused training view for passenger flow, flight movement, safety checks and maintenance attention.",
     digital: "Digital Twin",
     operations: "Operations",
     safety: "Safety",
     staffing: "Staffing & HR",
     resources: "System Guide & Specifications",
-    footer: "Independent mission-critical digital twin prototype for Cairo International Airport (CAI/HECA).",
+    footer: "Independent airport operations training prototype for Cairo International Airport (CAI/HECA).",
     contrast: "Toggle high contrast",
     theme: "Switch color theme",
     language: "Switch language",
@@ -473,7 +473,8 @@ export const scenes: AirportScene[] = [
     image: import.meta.env.BASE_URL + "manager-assets/terminal-2-light.webp",
     darkImage: import.meta.env.BASE_URL + "manager-assets/terminal-2-dark.webp",
     hotspots: [
-      { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", impact: "Departing passengers may reach passport control late during the next arrival/departure overlap.", evidence: "Security queue reached 17m. Open secondary screening lanes immediately.", action: "Open one extra screening lane for 30 minutes.", source: "Queue sensor", updatedAt: "14:15" }
+      { id: "t2-security", cx: 45.0, cy: 50.0, status: "warning", title: "T2 Security Queue Rising", category: "Terminal", source: "Training scenario", updatedAt: "14:15" },
+      { id: "t2-scanner", cx: 57.0, cy: 44.0, status: "warning", title: "T2-B Scanner Offline", category: "Safety", source: "Training scenario", updatedAt: "14:12" }
     ]
   },
   {
@@ -484,8 +485,10 @@ export const scenes: AirportScene[] = [
     image: import.meta.env.BASE_URL + "manager-assets/terminal-3-light.webp",
     darkImage: import.meta.env.BASE_URL + "manager-assets/terminal-3-dark.webp",
     hotspots: [
-      { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Passenger processing is stable across check-in, passport control, and departure gates.", evidence: "Average wait is below 5 minutes.", source: "Queue sensor", updatedAt: "14:04" },
-      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Risk", category: "Operations", impact: "A late inbound aircraft may compress boarding time and create connection pressure.", evidence: "Inbound aircraft is 18 minutes behind stand target.", action: "Assign a ramp runner and pre-stage boarding staff.", source: "Gate control", updatedAt: "14:10" }
+      { id: "t3-flow", cx: 52.3, cy: 37.8, status: "good", title: "Terminal 3 Passenger Flow", category: "Terminal", impact: "Passenger processing is stable across check-in, passport control, and departure gates in the example.", source: "Training scenario", updatedAt: "14:04" },
+      { id: "gate-b12", cx: 65.0, cy: 45.0, status: "critical", title: "Gate B12 Boarding Risk", category: "Operations", source: "Training scenario", updatedAt: "14:10" },
+      { id: "stand-305-306", cx: 74.0, cy: 57.0, status: "critical", title: "Stand assignment conflict 305–306", category: "Airside", source: "Training scenario", updatedAt: "14:10" },
+      { id: "t3-baggage", cx: 44.0, cy: 56.0, status: "warning", title: "T3 Baggage Sorter Interruption", category: "Baggage", source: "Training scenario", updatedAt: "14:20" }
     ]
   },
   {
@@ -496,7 +499,7 @@ export const scenes: AirportScene[] = [
     image: import.meta.env.BASE_URL + "manager-assets/landside-light.webp",
     darkImage: import.meta.env.BASE_URL + "manager-assets/landside-dark.webp",
     hotspots: [
-      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Entry Queue", category: "Landside", impact: "Curbside access may slow for passengers arriving by car or shuttle.", evidence: "Entry queue is above 15 vehicles.", action: "Deploy two traffic wardens at the parking entry split.", source: "Traffic camera", updatedAt: "14:02" }
+      { id: "parking-congestion", cx: 20.5, cy: 62.1, status: "warning", title: "Parking Entry Queue", category: "Landside", source: "Training scenario", updatedAt: "14:02" }
     ]
   },
   {
@@ -515,7 +518,7 @@ export const scenes: AirportScene[] = [
 export const sampleIncomingFlights: IncomingFlight[] = [
   { airline: "EgyptAir", flight: "MS786", eta: "13:40", gate: "T3 / F06", status: "On time", tone: "ok", origin: "Frankfurt (FRA)" },
   { airline: "Qatar Airways", flight: "QR1303", eta: "14:05", gate: "T2 / B03", status: "Landing", tone: "info", origin: "Doha (DOH)" },
-  { airline: "Emirates", flight: "EK927", eta: "14:25", gate: "T2 / B12", status: "Delayed +18m", tone: "warn", origin: "Dubai (DXB)" },
+  { airline: "Emirates", flight: "EK927", eta: "14:25", gate: "T3 / Gate 306", status: "Estimated", tone: "info", origin: "Dubai (DXB)" },
   { airline: "Saudia", flight: "SV301", eta: "14:55", gate: "T1 / A04", status: "On time", tone: "ok", origin: "Jeddah (JED)" },
 ];
 
@@ -523,6 +526,7 @@ export interface InfluxForecastPoint {
   time: string;
   current: number;
   forecast: number;
+  modeledCapacity?: number;
 }
 
 export interface FlowZoneMetric {
@@ -778,7 +782,7 @@ export interface DrillScenario {
 export const drillScenarios: DrillScenario[] = [
   {
     id: "baseline",
-    title: { en: "Normal Operations (Live)", ar: "العمليات العادية (مباشر)" },
+    title: { en: "Normal operations", ar: "العمليات العادية" },
     badge: { en: "Nominal", ar: "طبيعي" },
     tone: "ok",
     summary: { en: "Standard airfield and terminal flow under nominal weather conditions.", ar: "انسيابية حركة الساحات والمباني وفق المعدلات القياسية والطقس المستقر." },
@@ -1115,7 +1119,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "121.900 MHz",
     status: "on_duty",
     icaoCertValidUntil: "2027-02-28",
-    badgeType: { en: "ICAO Annex 14 Apron Controller Class 1", ar: "ترخيص إيكاو ملحق 14 لمراقبي الساحة - فئة 1" },
+    badgeType: { en: "Apron operations qualification", ar: "تأهيل عمليات ساحة الطائرات" },
     certStatus: "valid",
     daysToCertExpiry: 541,
     safetyDaysZeroIncidents: 620,
@@ -1133,7 +1137,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "121.900 MHz",
     status: "on_duty",
     icaoCertValidUntil: "2026-11-15",
-    badgeType: { en: "ICAO Annex 14 Airside Driving (Runway/Taxiway)", ar: "ترخيص قيادة بساحة الطيران والمدرج (إيكاو)" },
+    badgeType: { en: "Airside driving permit", ar: "تصريح القيادة في الجانب الجوي" },
     certStatus: "valid",
     daysToCertExpiry: 71,
     safetyDaysZeroIncidents: 410,
@@ -1151,7 +1155,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "TETRA SEC-02",
     status: "on_duty",
     icaoCertValidUntil: "2026-09-22",
-    badgeType: { en: "ICAO Annex 17 Aviation Security Supervisor", ar: "ترخيص أمن الطيران المدني ملحق 17 - إشرافي" },
+    badgeType: { en: "Aviation security supervision training", ar: "تدريب الإشراف على أمن الطيران" },
     certStatus: "expiring_soon",
     daysToCertExpiry: 17,
     safetyDaysZeroIncidents: 890,
@@ -1169,7 +1173,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "121.900 MHz",
     status: "on_duty",
     icaoCertValidUntil: "2026-10-05",
-    badgeType: { en: "ICAO Annex 14 Visual Docking & Marshalling", ar: "ترخيص إرشاد وتوجيه الطائرات البصري" },
+    badgeType: { en: "Aircraft marshalling competency", ar: "تأهيل توجيه الطائرات" },
     certStatus: "expiring_soon",
     daysToCertExpiry: 30,
     safetyDaysZeroIncidents: 340,
@@ -1223,7 +1227,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "121.600 MHz (ARFF)",
     status: "on_duty",
     icaoCertValidUntil: "2027-01-20",
-    badgeType: { en: "ICAO Doc 9137 Cat 9 Rescue Fire Fighter", ar: "ترخيص مكافحة حرائق الطائرات والإنقاذ فئة 9" },
+    badgeType: { en: "Aircraft rescue and firefighting training", ar: "تدريب إنقاذ الطائرات ومكافحة الحرائق" },
     certStatus: "valid",
     daysToCertExpiry: 502,
     safetyDaysZeroIncidents: 1250,
@@ -1259,7 +1263,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "TETRA OPS-02",
     status: "break",
     icaoCertValidUntil: "2027-04-10",
-    badgeType: { en: "Passenger Terminal Management IATA/ICAO", ar: "ترخيص إدارة وتدفق صالات الركاب IATA/ICAO" },
+    badgeType: { en: "Terminal operations training", ar: "تدريب عمليات مبنى الركاب" },
     certStatus: "valid",
     daysToCertExpiry: 582,
     safetyDaysZeroIncidents: 480,
@@ -1277,7 +1281,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "TETRA SEC-03",
     status: "on_duty",
     icaoCertValidUntil: "2027-03-14",
-    badgeType: { en: "ICAO Screener Certification TIP Level 3", ar: "ترخيص فحص الأمتعة بالأشعة المتقدمة - مستوى 3" },
+    badgeType: { en: "Baggage screening competency", ar: "تأهيل فحص الأمتعة" },
     certStatus: "valid",
     daysToCertExpiry: 555,
     safetyDaysZeroIncidents: 910,
@@ -1295,7 +1299,7 @@ export const staffMembers: StaffMember[] = [
     radioChannel: "121.900 MHz",
     status: "standby",
     icaoCertValidUntil: "2026-08-30",
-    badgeType: { en: "ICAO Annex 14 FOD Prevention & Runway Safety", ar: "ترخيص إيكاو لمنع الأجسام الغريبة وتفتيش المدارج" },
+    badgeType: { en: "Airside hazard inspection training", ar: "تدريب تفتيش مخاطر الجانب الجوي" },
     certStatus: "expired",
     daysToCertExpiry: -6,
     safetyDaysZeroIncidents: 210,

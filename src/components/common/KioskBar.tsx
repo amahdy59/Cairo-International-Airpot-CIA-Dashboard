@@ -18,6 +18,8 @@ import { useAirfieldRadio } from "../../hooks/useAirfieldRadio";
 import { RADIO_CHANNELS, RadioChannel } from "../../services/airfieldAudio";
 import { localize } from "../../utils/helpers";
 import { ManagerTab } from "../../data";
+import { SelectMenu } from "./SelectMenu";
+import { useModalFocus } from "../../hooks/useModalFocus";
 
 interface KioskBarProps {
   activeTab: ManagerTab;
@@ -48,7 +50,7 @@ export function KioskBar({ activeTab }: KioskBarProps) {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
-  const [showChannelMenu, setShowChannelMenu] = useState(false);
+  const infoDialogRef = useModalFocus(showInfoModal, () => setShowInfoModal(false));
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -97,7 +99,7 @@ export function KioskBar({ activeTab }: KioskBarProps) {
           />
         </div>
 
-        {/* Live Radio Caption Strip (WCAG 2.2 AAA Real-Time Captioning) */}
+        {/* Caption strip for simulated radio transmissions. */}
         {!isMuted && currentTransmission && (
           <div className="w-full flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -161,17 +163,14 @@ export function KioskBar({ activeTab }: KioskBarProps) {
                 <span className="text-muted-foreground hidden md:inline">
                   • {localize({ en: "Auto-cycles every 25s", ar: "تبديل تلقائي كل ٢٥ث" }, language)}
                 </span>
-                <select
-                  value={kioskPreset}
-                  onChange={(e) => setKioskPreset(e.target.value as KioskPreset)}
-                  className="ms-1 h-7 rounded-lg border border-border/70 bg-secondary/50 px-1.5 text-[11px] font-semibold text-foreground focus:outline-none cursor-pointer"
-                  aria-label={language === "ar" ? "تحديد نمط شاشة العرض" : "Video Wall Preset"}
-                >
-                  <option value="all-cycle">{language === "ar" ? "دورة شاملة (4)" : "Full Cycle (4)"}</option>
-                  <option value="flight-tactical">{language === "ar" ? "العمليات والمناوبات" : "Tactical Ops"}</option>
-                  <option value="airside-ground">{language === "ar" ? "المدرجات والساحة" : "Airside Ground"}</option>
-                  <option value="crisis-command">{language === "ar" ? "غرفة الطوارئ" : "Crisis Command"}</option>
-                </select>
+                <SelectMenu<KioskPreset> id="kiosk-preset" label={language === "ar" ? "نمط شاشة العرض" : "Video wall preset"}
+                  value={kioskPreset} onChange={setKioskPreset} className="ms-1 w-32 text-xs"
+                  options={[
+                    { value: "all-cycle", label: language === "ar" ? "دورة شاملة" : "Full cycle" },
+                    { value: "flight-tactical", label: language === "ar" ? "العمليات والمناوبات" : "Tactical ops" },
+                    { value: "airside-ground", label: language === "ar" ? "المدرجات والساحة" : "Airside ground" },
+                    { value: "crisis-command", label: language === "ar" ? "غرفة الطوارئ" : "Crisis command" },
+                  ]} />
               </div>
             </div>
           </div>
@@ -258,48 +257,10 @@ export function KioskBar({ activeTab }: KioskBarProps) {
                 )}
               </button>
 
-              {/* Radio Channel Dropdown Toggle */}
-              {!isMuted && (
-                <button
-                  type="button"
-                  onClick={() => setShowChannelMenu((p) => !p)}
-                  className="absolute -top-1.5 -end-1.5 grid h-4 w-4 place-items-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold shadow hover:scale-110 transition cursor-pointer"
-                  title={localize({ en: "Select radio channel", ar: "تغيير القناة اللاسلكية" }, language)}
-                  aria-label={localize({ en: "Select radio channel", ar: "تغيير القناة اللاسلكية" }, language)}
-                >
-                  ▾
-                </button>
-              )}
-
-              {/* Channel Select Popover */}
-              {showChannelMenu && !isMuted && (
-                <div className="absolute bottom-12 end-0 z-50 w-52 rounded-xl border border-border bg-popover p-1.5 shadow-xl backdrop-blur-lg animate-in fade-in zoom-in-95">
-                  <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    {localize({ en: "Radio Frequency", ar: "التردد اللاسلكي" }, language)}
-                  </div>
-                  {(["tower", "atis", "operations"] as RadioChannel[]).map((ch) => (
-                    <button
-                      key={ch}
-                      type="button"
-                      onClick={() => {
-                        setChannel(ch);
-                        setShowChannelMenu(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                        activeChannel === ch
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-secondary/60 text-foreground"
-                      }`}
-                    >
-                      <span>{localize(RADIO_CHANNELS[ch].name, language)}</span>
-                      <span className="font-mono text-[10px] opacity-80">
-                        {RADIO_CHANNELS[ch].frequency}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
+            {!isMuted && <SelectMenu<RadioChannel> id="radio-channel" label={language === "ar" ? "التردد اللاسلكي" : "Radio channel"}
+              value={activeChannel} onChange={setChannel} className="w-28 text-xs"
+              options={(["tower", "atis", "operations"] as RadioChannel[]).map(ch => ({ value: ch, label: localize(RADIO_CHANNELS[ch].name, language), detail: RADIO_CHANNELS[ch].frequency }))} />}
 
             {/* Separator */}
             <span className="h-6 w-px bg-border/80 mx-0.5" />
@@ -370,9 +331,11 @@ export function KioskBar({ activeTab }: KioskBarProps) {
       {/* Accessible Operational Info Modal explaining Purpose */}
       {showInfoModal && (
         <div
+          ref={infoDialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="kiosk-info-title"
+          tabIndex={-1}
           className="fixed inset-0 z-[60] grid place-items-center bg-background/80 p-4 backdrop-blur-sm animate-in fade-in"
           onClick={() => setShowInfoModal(false)}
         >
@@ -396,7 +359,7 @@ export function KioskBar({ activeTab }: KioskBarProps) {
               <button
                 type="button"
                 onClick={() => setShowInfoModal(false)}
-                className="grid h-8 w-8 place-items-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
+                className="grid min-h-11 min-w-11 place-items-center rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground cursor-pointer"
                 aria-label={localize({ en: "Close explanation", ar: "إغلاق الشرح" }, language)}
               >
                 <X className="h-4 w-4" />
@@ -427,8 +390,8 @@ export function KioskBar({ activeTab }: KioskBarProps) {
                   <Volume2 className="h-4 w-4" />
                   {localize(
                     {
-                      en: "Airfield Radio Voice Audio Feed",
-                      ar: "البث الصوتي لإذاعة برج المراقبة",
+                      en: "Simulated radio audio",
+                      ar: "صوت راديو تدريبي",
                     },
                     language
                   )}
@@ -436,8 +399,8 @@ export function KioskBar({ activeTab }: KioskBarProps) {
                 <p className="text-muted-foreground">
                   {localize(
                     {
-                      en: "Click the radio speaker button on the bar to hear authentic Cairo Tower (118.10 MHz) and ATIS (126.80 MHz) air traffic clearances synthesized with realistic VHF radio filters and mic squelch bursts.",
-                      ar: "اضغط على زر مكبر الصوت بالشريط للاستماع إلى نداءات برج مراقبة القاهرة (118.10 ميجاهرتز) ومعلومات ATIS المصممة بمؤثرات الراديو اللاسلكي ونقر الميكروفون الواقعي.",
+                      en: "The radio speaker plays simulated aviation-style audio. It is not a live ATC feed or a verified operational frequency.",
+                      ar: "يشغّل زر الراديو صوتاً تدريبياً بأسلوب اتصالات الطيران. ليس بثاً حياً للمراقبة الجوية ولا تردداً تشغيلياً موثقاً.",
                     },
                     language
                   )}

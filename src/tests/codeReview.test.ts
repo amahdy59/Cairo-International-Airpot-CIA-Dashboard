@@ -112,14 +112,14 @@ describe("Code Review & Telemetry Data Integrity", () => {
     expect(hasConflict).toBe(true);
   });
 
-  it("validates ICAO Emergency Incident Playbooks and mandatory checklists", async () => {
+  it("validates bilingual training emergency review checklists", async () => {
     const { PLAYBOOKS } = await import("../features/safety/IncidentPlaybookModal");
     expect(PLAYBOOKS.length).toBeGreaterThanOrEqual(3);
     PLAYBOOKS.forEach((pb) => {
       expect(pb.id.trim().length).toBeGreaterThan(0);
       expect(pb.title.trim().length).toBeGreaterThan(0);
       expect(pb.arTitle.trim().length).toBeGreaterThan(0);
-      expect(pb.icaoRef).toMatch(/^(ICAO|ECAA)/);
+      expect(pb.reference).toContain("Local");
       expect(pb.steps.length).toBeGreaterThanOrEqual(3);
       pb.steps.forEach((step) => {
         expect(step.id).toBeDefined();
@@ -162,15 +162,15 @@ describe("Code Review & Telemetry Data Integrity", () => {
     // Footer attribution verification
     expect(appContent).toContain("Designed & Architected by Ahmed Mahdy (Advansys IS)");
     expect(appContent).toContain("https://www.linkedin.com/in/creativemahdy");
-    expect(appContent).toContain("https://mahdy-resume.vercel.app/");
+    expect(appContent).toContain("https://creativemahdy.space/");
 
-    // Header AAA touch target verification (>= 40-44px class tokens)
-    expect(headerContent).toContain("min-h-[40px]");
+    // Primary navigation now uses the 44px (spacing 11) minimum too.
+    expect(headerContent).toContain("min-h-11");
     expect(headerContent).toContain("min-h-[44px]");
     expect(headerContent).toContain("min-w-[44px]");
   });
 
-  it("validates Executive Decisions Dock architecture and 3 cross-domain approvals", async () => {
+  it("validates decision review labels and cross-view navigation", async () => {
     const fs = await import("fs");
     const path = await import("path");
     const modalContent = fs.readFileSync(
@@ -184,9 +184,11 @@ describe("Code Review & Telemetry Data Integrity", () => {
 
     // Modal structure verification
     expect(modalContent).toContain("Executive Decision Dock");
-    expect(modalContent).toContain("Shift Turnover Briefing Formal Sign-Off");
-    expect(modalContent).toContain("Stand Conflict: Wingspan Separation Margin");
-    expect(modalContent).toContain("Tactical Surge: Dispatch 14 Roving Biometric Marshals");
+    expect(modalContent).toContain("Review sample shift handover");
+    expect(modalContent).toContain("Stand assignment: SV302 and EK927");
+    expect(modalContent).toContain("no actual clearance has been calculated");
+    expect(modalContent).toContain("Review passport-control surge proposal");
+    expect(modalContent).toContain("No crew was dispatched");
     expect(modalContent).toContain("role=\"dialog\"");
     expect(modalContent).toContain("aria-modal=\"true\"");
 

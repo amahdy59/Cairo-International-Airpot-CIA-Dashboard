@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { soundEffects } from "../services/soundEffects";
 import { notifyManager } from "../utils/toast";
 import { useSimulation } from "../context/simulation";
+import { useOperationalEvents } from "../context/operationalEvents";
+import { shiftClockTime, timeDeltaMinutes } from "../utils/operationalTime";
 
 export interface AcdmTurnaround {
   id: string;
@@ -32,7 +34,7 @@ export const INITIAL_ACDM_TURNAROUNDS: AcdmTurnaround[] = [
     airline: "EgyptAir",
     aircraft: "SU-GFN (B787-9)",
     acType: "E",
-    stand: "Gate 305",
+    stand: "Gate 304",
     eldt: "14:20",
     aldt: "14:22",
     aibt: "14:28",
@@ -52,7 +54,7 @@ export const INITIAL_ACDM_TURNAROUNDS: AcdmTurnaround[] = [
     airline: "Saudia",
     aircraft: "HZ-AR22 (B777-300ER)",
     acType: "E",
-    stand: "Gate 307",
+    stand: "Gate 305",
     eldt: "14:35",
     aldt: "14:48",
     aibt: "14:55",
@@ -92,7 +94,7 @@ export const INITIAL_ACDM_TURNAROUNDS: AcdmTurnaround[] = [
     airline: "Lufthansa",
     aircraft: "D-AIUW (A320neo)",
     acType: "C",
-    stand: "Gate 314",
+    stand: "Gate 307",
     eldt: "13:50",
     aldt: "13:52",
     aibt: "13:58",
@@ -192,6 +194,7 @@ export function getScenarioTurnarounds(scenarioId: string): AcdmTurnaround[] {
 
 export function useAcdmEngine() {
   const { scenarioId } = useSimulation();
+  const { standForFlight } = useOperationalEvents();
   const [turnarounds, setTurnarounds] = useState<AcdmTurnaround[]>(() => getScenarioTurnarounds(scenarioId));
   const [filter, setFilter] = useState<"all" | "delayed" | "handling" | "ready">("all");
 
@@ -200,16 +203,20 @@ export function useAcdmEngine() {
   }, [scenarioId]);
 
   const updateTobt = (id: string, newTobt: string, reason: string) => {
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(newTobt)) return;
     soundEffects.playClick();
     setTurnarounds((prev) =>
       prev.map((item) => {
         if (item.id === id) {
-          const delayMinutes = item.delayMinutes + 10;
+          const targetShift = timeDeltaMinutes(item.tobt, newTobt) ?? 0;
+          const delayMinutes = Math.max(0, timeDeltaMinutes(item.eobt, newTobt) ?? item.delayMinutes);
           return {
             ...item,
             tobt: newTobt,
+            tsat: shiftClockTime(item.tsat, targetShift),
+            ttot: shiftClockTime(item.ttot, targetShift),
             delayMinutes,
-            status: delayMinutes > 15 ? "delayed" : item.status,
+            status: delayMinutes > 15 ? "delayed" : item.status === "delayed" ? "handling" : item.status,
             criticalMilestone: `M04: TOBT revised to ${newTobt} (${reason})`,
           };
         }
@@ -217,16 +224,16 @@ export function useAcdmEngine() {
       })
     );
     notifyManager(
-      "A-CDM TOBT Updated",
-      `Milestone recalculated for ${id} (New TOBT: ${newTobt})`,
+      "Scenario target revised",
+      `Target times updated for ${id} (TOBT: ${newTobt}). No external A-CDM system was changed.`,
       "ok"
     );
   };
 
   const filteredTurnarounds = useMemo(() => {
-    if (filter === "all") return turnarounds;
-    return turnarounds.filter((t) => t.status === filter);
-  }, [turnarounds, filter]);
+    const visible = filter === "all" ? turnarounds : turnarounds.filter((t) => t.status === filter);
+    return visible.map((item) => ({ ...item, stand: standForFlight(item.inboundFlight.split(" ")[0]) ?? item.stand }));
+  }, [turnarounds, filter, standForFlight]);
 
   const kpis = useMemo(() => {
     const total = turnarounds.length;
@@ -234,8 +241,8 @@ export function useAcdmEngine() {
     const avgDelay = Math.round(
       turnarounds.reduce((sum, t) => sum + t.delayMinutes, 0) / (total || 1)
     );
-    const tobtCompliance = Math.round(((total - delayed) / (total || 1)) * 100);
-    return { total, delayed, avgDelay, tobtCompliance };
+    const noRecordedDelayPct = Math.round(((total - delayed) / (total || 1)) * 100);
+    return { total, delayed, avgDelay, noRecordedDelayPct };
   }, [turnarounds]);
 
   return {

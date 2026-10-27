@@ -5,10 +5,11 @@ import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
 import { useSafetyCompliance } from '../../hooks/useSafetyCompliance';
 import { exportToCsv } from '../../utils/exportCsv';
-import { maintenanceRows, aircraftRiskRows, Tone } from '../../data';
+import { maintenanceRows, aircraftRiskRows, Tone, type SafetyCheckRow } from '../../data';
 import { SectionPanel, StatusPill, ProgressBar } from '../../components/command-center/MetricWidgets';
 import { IncidentPlaybookModal } from './IncidentPlaybookModal';
 import { DrillPostMortemModal } from './DrillPostMortemModal';
+import { AircraftRiskScatter } from './AircraftRiskScatter';
 
 function SafetyView() {
   const [isPlaybookOpen, setIsPlaybookOpen] = useState(false);
@@ -25,13 +26,13 @@ function SafetyView() {
           </span>
           <div>
             <h2 className="text-sm sm:text-base font-bold text-foreground">
-              {language === "ar" ? "بروتوكولات الطوارئ والأزمات الميدانية (ICAO SOP)" : "ICAO Emergency Contingency & Crisis Playbooks"}
+              {language === "ar" ? "قوائم مراجعة الطوارئ التدريبية" : "Training contingency checklists"}
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {language === "ar"
-                ? "إجراءات القيادة الفورية لحالات الرؤية المتدنية LVP، طوارئ المدارج FOD، والهبوط الطبي الاضطراري"
-                : "Standard operating procedures for Low Visibility (LVP), Runway FOD closures, and priority diversions."}
-            </p>
+            <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
+              <span className="rounded border border-border px-1.5 py-0.5">{language === "ar" ? "الرؤية المنخفضة" : "Low visibility"}</span>
+              <span className="rounded border border-border px-1.5 py-0.5">{language === "ar" ? "عوائق المدارج" : "Runway FOD"}</span>
+              <span className="rounded border border-border px-1.5 py-0.5">{language === "ar" ? "تحويلات الأولوية" : "Priority diversions"}</span>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
@@ -178,15 +179,14 @@ function SafetyAlertAge() {
   const max = Math.max(...buckets.map((item) => item.value));
   return (
     <SectionPanel title={tr("Safety alert age")} action={<div className="flex shrink-0 flex-wrap justify-end gap-2"><StatusPill tone="warn">{tr("1 overdue")}</StatusPill></div>} className="flex flex-col">
-      <p className="mb-5 text-sm text-muted-foreground">{tr("Aging buckets show whether issues are accumulating before they become critical.")}</p>
-      <div className="mt-auto grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
+      <div className="my-auto grid grid-cols-2 items-end gap-4 sm:grid-cols-4">
         {buckets.map((bucket) => {
-          const height = 40 + (bucket.value / max) * 58;
+          const height = (bucket.value / max) * 96;
           const color = bucket.tone === "crit" ? "bg-status-crit" : bucket.tone === "warn" ? "bg-status-warn" : bucket.tone === "ok" ? "bg-status-ok" : "bg-cyan";
           return (
             <div key={bucket.label} className="text-center">
               <div className="mx-auto flex h-28 w-full max-w-18 items-end rounded-lg bg-secondary/70 p-2">
-                <div className={`w-full rounded-md ${color}`} style={{ height }} aria-label={`${bucket.value} ${tr(bucket.label)}`} />
+                <div className={`w-full rounded-md ${color}`} style={{ height }} aria-hidden="true" />
               </div>
               <p className="mt-2 text-lg font-semibold">{bucket.value}</p>
               <p className="text-sm text-muted-foreground">{tr(bucket.label)}</p>
@@ -199,34 +199,54 @@ function SafetyAlertAge() {
 }
 
 function SafetyChecks() {
-  const { tr } = useLocale();
+  const { tr, language } = useLocale();
   const { reactiveSafetyChecks } = useSimulation();
+  const ready = reactiveSafetyChecks.filter(item => item.tone === "ok");
+  const monitor = reactiveSafetyChecks.filter(item => item.tone === "info" || item.tone === "neutral");
+  const action = reactiveSafetyChecks.filter(item => !["ok", "info", "neutral"].includes(item.tone));
+  const total = reactiveSafetyChecks.length;
+  const readyStop = total ? ready.length / total * 100 : 0;
+  const monitorStop = total ? (ready.length + monitor.length) / total * 100 : 0;
+  const ring = total ? `conic-gradient(var(--status-ok) 0 ${readyStop}%, var(--status-info) ${readyStop}% ${monitorStop}%, var(--status-warn) ${monitorStop}% 100%)` : "var(--secondary)";
+  const visible = reactiveSafetyChecks.filter(item => item.tone !== "ok");
 
   return (
     <SectionPanel title={tr("Safety checks")} className="h-full flex flex-col overflow-hidden">
-      <div className="grid gap-3 flex-1 content-start overflow-y-auto pe-1 pb-1">
-        {reactiveSafetyChecks.map((item) => {
-          const Icon = item.icon || ShieldCheck;
-          return (
-            <article key={item.title} className="panel-inner grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <div className="flex min-w-0 items-center gap-4">
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg border border-primary/40 bg-primary/10">
-                  <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="font-semibold">{tr(item.title)}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{tr(item.detail)}</p>
-                </div>
-              </div>
-              <div className="sm:justify-self-end">
-                <StatusPill tone={item.tone}>{tr(item.badge)}</StatusPill>
-              </div>
-            </article>
-          );
-        })}
+      <div role="region" tabIndex={0} aria-label={tr("Safety checks")} className="flex-1 overflow-y-auto pe-1 pb-1">
+        <div className="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-border bg-background/50 p-3">
+          <div role="img" aria-label={language === "ar" ? `${total} فحوص: ${ready.length} سليمة، ${monitor.length} للمراقبة، ${action.length} تتطلب إجراء` : `${total} checks: ${ready.length} on track, ${monitor.length} monitor, ${action.length} need action`}
+            className="grid h-28 w-28 shrink-0 place-items-center rounded-full" style={{ background: ring }}>
+            <span aria-hidden="true" className="grid h-[72px] w-[72px] place-items-center rounded-full bg-card text-xl font-bold tabular-nums text-foreground">{total}</span>
+          </div>
+          <ul className="grid flex-1 gap-1.5 text-sm">
+            <li className="flex items-center justify-between gap-3"><span className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-status-ok" />{language === "ar" ? "سليم" : "On track"}</span><strong className="tabular-nums">{ready.length}</strong></li>
+            <li className="flex items-center justify-between gap-3"><span className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-status-info" />{language === "ar" ? "مراقبة" : "Monitor"}</span><strong className="tabular-nums">{monitor.length}</strong></li>
+            <li className="flex items-center justify-between gap-3"><span className="flex items-center gap-2"><span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-status-warn" />{language === "ar" ? "إجراء مطلوب" : "Needs action"}</span><strong className="tabular-nums">{action.length}</strong></li>
+          </ul>
+        </div>
+        <div className="grid gap-2">
+          {visible.length ? visible.map(item => <SafetyCheckItem key={item.title} item={item} />)
+            : <p className="text-sm text-muted-foreground">{language === "ar" ? "لا توجد فحوص تتطلب متابعة." : "No checks need follow-up."}</p>}
+        </div>
+        {ready.length > 0 && <details className="mt-2 rounded-lg border border-border px-3">
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">{language === "ar" ? `عرض الفحوص السليمة (${ready.length})` : `View on-track checks (${ready.length})`}</summary>
+          <div className="grid gap-2 pb-3">{ready.map(item => <SafetyCheckItem key={item.title} item={item} />)}</div>
+        </details>}
       </div>
     </SectionPanel>
   );
+}
+
+function SafetyCheckItem({ item }: { item: SafetyCheckRow }) {
+  const { tr } = useLocale();
+  const Icon = item.icon || ShieldCheck;
+  return <article className="panel-inner grid gap-2 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+    <div className="flex min-w-0 items-center gap-3">
+      <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-primary" />
+      <div className="min-w-0"><h3 className="text-sm font-semibold">{tr(item.title)}</h3><p className="text-xs text-muted-foreground">{tr(item.detail)}</p></div>
+    </div>
+    <div className="sm:justify-self-end"><StatusPill tone={item.tone}>{tr(item.badge)}</StatusPill></div>
+  </article>;
 }
 
 function MaintenanceTable() {
@@ -257,7 +277,7 @@ function MaintenanceTable() {
 
   return (
     <SectionPanel
-      title={tr("Recent aircraft maintenance")}
+      title={language === "ar" ? "سجل صيانة نموذجي" : "Sample maintenance log"}
       action={
         <button
           type="button"
@@ -272,16 +292,26 @@ function MaintenanceTable() {
       }
       className="h-full flex flex-col overflow-hidden"
     >
-      <div className="-mx-1 flex-1 overflow-x-auto overflow-y-auto">
+      <div className="grid gap-2 xl:hidden">
+        {maintenanceRows.map(item => <article key={item.reg} className="rounded-lg border border-border bg-background/40 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-mono text-sm font-semibold">{item.reg} <span className="text-xs font-normal text-muted-foreground">{item.type}</span></span>
+            <StatusPill tone={item.tone}>{tr(item.status)}</StatusPill>
+          </div>
+          <p className="mt-1.5 text-sm">{tr(item.task)}</p>
+          <p className="mt-1 font-mono text-xs text-muted-foreground">{tr(item.date)} · {tr(item.duration)}</p>
+        </article>)}
+      </div>
+      <div className="table-scroll hidden flex-1 overflow-y-auto xl:block" role="region" tabIndex={0} aria-label={tr("Maintenance log")}>
         <table className="w-full min-w-[620px] text-sm">
-          <caption className="sr-only">{tr("Recent aircraft maintenance")}</caption>
+          <caption className="sr-only">{language === "ar" ? "سجل صيانة نموذجي" : "Sample maintenance log"}</caption>
           <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
-              <th className="px-1 py-2 text-start">{tr("A/C")}</th>
-              <th className="px-1 py-2 text-start">{tr("Task")}</th>
-              <th className="px-1 py-2 text-start">{tr("Date")}</th>
-              <th className="px-1 py-2 text-start">{tr("Dur")}</th>
-              <th className="px-1 py-2 text-start">{tr("Status")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("A/C")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Task")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Date")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Dur")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Status")}</th>
             </tr>
           </thead>
           <tbody>
@@ -347,17 +377,20 @@ function AircraftRiskTable() {
       }
       className="flex flex-col"
     >
-      <div className="-mx-1 overflow-x-auto flex-1 pb-1">
+      <AircraftRiskScatter rows={aircraftRiskRows} />
+      <details className="mt-2 rounded-lg border border-border px-3">
+        <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">{language === "ar" ? `عرض تفاصيل الطائرات (${aircraftRiskRows.length})` : `View aircraft details (${aircraftRiskRows.length})`}</summary>
+      <div className="table-scroll pb-3" role="region" tabIndex={0} aria-label={tr("Aircraft risk index")}>
         <table className="w-full min-w-[780px] text-sm">
           <caption className="sr-only">{tr("Aircraft requiring attention")}</caption>
           <thead className="font-mono rtl:font-sans text-xs uppercase rtl:normal-case tracking-wider rtl:tracking-normal text-muted-foreground">
             <tr>
-              <th className="px-1 py-2 text-start">{tr("Registration")}</th>
-              <th className="px-1 py-2 text-start">{tr("Type")}</th>
-              <th className="px-1 py-2 text-start">{tr("Events")}</th>
-              <th className="px-1 py-2 text-start">{tr("MTBF")}</th>
-              <th className="px-1 py-2 text-start">{tr("Top issue")}</th>
-              <th className="px-1 py-2 text-start">{tr("Risk")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Registration")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Type")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Events")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("MTBF")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Top issue")}</th>
+              <th scope="col" className="px-1 py-2 text-start">{tr("Risk")}</th>
             </tr>
           </thead>
           <tbody>
@@ -382,6 +415,7 @@ function AircraftRiskTable() {
           </tbody>
         </table>
       </div>
+      </details>
     </SectionPanel>
   );
 }

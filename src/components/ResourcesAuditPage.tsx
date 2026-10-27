@@ -35,8 +35,8 @@ const personas = [
     device: { en: "4K Wall Display", ar: "شاشة جدارية 4K" },
     shift: { en: "12h Shift", ar: "نوبة ١٢ ساعة" },
     need: {
-      en: "Automated video wall cycling, high-contrast alerts, and live ATC voice context.",
-      ar: "تبديل تلقائي لشاشات العرض، تنبيهات عالية التباين، وبث صوتي مباشر لبرج المراقبة.",
+      en: "Illustrative video wall views, high-contrast alerts, and simulated radio context.",
+      ar: "تبديل تلقائي لشاشات العرض، تنبيهات عالية التباين، وصوت راديو تدريبي.",
     },
   },
   {
@@ -54,7 +54,7 @@ const personas = [
   {
     id: "tarek",
     name: { en: "Tarek", ar: "طارق" },
-    title: { en: "ICAO Safety Auditor", ar: "مدقق سلامة الطيران" },
+    title: { en: "Airside Safety Reviewer", ar: "مراجع السلامة الميدانية" },
     avatarPath: import.meta.env.BASE_URL + "tarek_avatar_v2.png",
     device: { en: "13\" Laptop", ar: "لابتوب ١٣ بوصة" },
     shift: { en: "Audits", ar: "فترات التدقيق" },
@@ -219,7 +219,7 @@ export default function ResourcesAuditPage({
       id: "accessibility" as const,
       label: { en: "Accessibility", ar: "إتاحة الوصول" },
       icon: ShieldCheck,
-      hint: { en: "WCAG 2.2 AAA", ar: "معيار AAA" },
+      hint: { en: "Keyboard & contrast", ar: "لوحة المفاتيح والتباين" },
     },
     {
       id: "tools" as const,
@@ -230,7 +230,7 @@ export default function ResourcesAuditPage({
   ];
 
   return (
-    <div className="flex flex-col min-w-0 gap-5 max-w-4xl mx-auto w-full text-foreground animate-in fade-in duration-300 pb-16">
+    <div className="flex flex-col min-w-0 gap-5 max-w-4xl mx-auto w-full text-foreground pb-16">
       
       {/* Top Header & Simplified Tab Bar */}
       <header className="sticky top-20 sm:top-24 z-30 rounded-2xl border border-border/80 bg-background/95 p-2.5 sm:p-3 shadow-md backdrop-blur-xl flex flex-col gap-2.5">
@@ -263,6 +263,15 @@ export default function ResourcesAuditPage({
           role="tablist"
           aria-label={localize({ en: "Documentation Topics", ar: "أقسام الدليل" }, language)}
           className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-secondary/30 p-1 rounded-xl border border-border/60"
+          onKeyDown={event => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const current = subTabs.findIndex(tab => tab.id === activeTab);
+            const direction = language === "ar" ? -1 : 1;
+            const next = event.key === "Home" ? 0 : event.key === "End" ? subTabs.length - 1 : (current + (event.key === "ArrowRight" ? direction : -direction) + subTabs.length) % subTabs.length;
+            handleTabSelect(subTabs[next].id);
+            requestAnimationFrame(() => document.getElementById(`docs-tab-${subTabs[next].id}`)?.focus());
+          }}
         >
           {subTabs.map((tab) => {
             const Icon = tab.icon;
@@ -270,9 +279,12 @@ export default function ResourcesAuditPage({
             return (
               <button
                 key={tab.id}
+                id={`docs-tab-${tab.id}`}
                 role="tab"
                 type="button"
                 aria-selected={isCurrent}
+                aria-controls={isCurrent ? "docs-panel" : undefined}
+                tabIndex={isCurrent ? 0 : -1}
                 onClick={() => handleTabSelect(tab.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer text-start ${
                   isCurrent
@@ -297,7 +309,7 @@ export default function ResourcesAuditPage({
       {/* TAB 1: AI & CODE ARCHITECTURE */}
       {/* ============================================================ */}
       {activeTab === "architecture" && (
-        <main className="flex flex-col gap-4 animate-in fade-in duration-200">
+        <div id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${activeTab}`} className="flex flex-col gap-4">
           
           {/* Autonomous AI Workflow (3 Steps) */}
           <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
@@ -406,14 +418,14 @@ export default function ResourcesAuditPage({
             </div>
           </section>
 
-        </main>
+        </div>
       )}
 
       {/* ============================================================ */}
       {/* TAB 2: DESIGN EVOLUTION & PROTOTYPING */}
       {/* ============================================================ */}
       {activeTab === "design" && (
-        <main className="flex flex-col gap-4 animate-in fade-in duration-200">
+        <div id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${activeTab}`} className="flex flex-col gap-4">
           {/* Wireframe vs Polished Interface (Clean Toggle or Side-by-Side) */}
           <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -466,14 +478,14 @@ export default function ResourcesAuditPage({
               )}
             </div>
           </section>
-        </main>
+        </div>
       )}
 
       {/* ============================================================ */}
-      {/* TAB 3: WCAG 2.2 AAA ACCESSIBILITY */}
+      {/* TAB 3: ACCESSIBILITY REVIEW */}
       {/* ============================================================ */}
       {activeTab === "accessibility" && (
-        <main className="flex flex-col gap-4 animate-in fade-in duration-200">
+        <div id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${activeTab}`} className="flex flex-col gap-4">
           
           {/* Contrast Card */}
           <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
@@ -481,38 +493,29 @@ export default function ResourcesAuditPage({
               <div>
                 <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
                   <Contrast className="h-4 w-4 text-status-ok" />
-                  <span>{localize({ en: "Color Contrast Standards (7:1 Minimum)", ar: "معايير التباين اللوني (٧:١ كحد أدنى)" }, language)}</span>
+                  <span>{localize({ en: "Visual accessibility checks", ar: "فحوص الإتاحة البصرية" }, language)}</span>
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {localize({ en: "Full WCAG 2.2 Level AAA compliance across dark and light modes.", ar: "امتثال كامل لمعيار WCAG 2.2 AAA في الأنماط الداكنة والفاتحة." }, language)}
+                  {localize({ en: "High-contrast themes and keyboard support. Automated checks are supplemented by manual review; this prototype has not been independently certified.", ar: "أنماط عالية التباين ودعم لوحة المفاتيح. تستكمل المراجعة اليدوية الفحوص الآلية؛ هذا النموذج غير معتمد من جهة مستقلة." }, language)}
                 </p>
               </div>
               <span className="text-xs font-mono text-status-ok bg-status-ok/10 px-2.5 py-1 rounded-md font-bold">
-                WCAG 2.2 AAA PASS
+                {language === "ar" ? "قيد المراجعة" : "Accessibility review"}
               </span>
             </div>
 
-            {/* 4 Swatches */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-              <div className="p-3 rounded-xl bg-secondary/20 border border-cyan/40 flex flex-col">
-                <span className="text-xs font-bold text-cyan font-mono">Cyan Focus</span>
-                <span className="text-xl font-bold font-mono text-foreground mt-1">8.2:1</span>
-                <span className="text-[10px] text-muted-foreground">Passes AAA (7:1)</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
+              <div className="flex items-center gap-2.5 rounded-xl border border-border bg-background p-3">
+                <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-md border-2 border-primary text-primary">1</span>
+                <span>{localize({ en: "Visible keyboard focus", ar: "مؤشر تركيز واضح" }, language)}</span>
               </div>
-              <div className="p-3 rounded-xl bg-secondary/20 border border-status-ok/40 flex flex-col">
-                <span className="text-xs font-bold text-status-ok font-mono">Status Green</span>
-                <span className="text-xl font-bold font-mono text-foreground mt-1">7.6:1</span>
-                <span className="text-[10px] text-muted-foreground">Passes AAA (7:1)</span>
+              <div className="flex items-center gap-2.5 rounded-xl border border-border bg-background p-3">
+                <span aria-hidden="true" className="flex shrink-0 gap-1"><span className="h-7 w-2 rounded bg-status-ok" /><span className="h-7 w-2 rounded bg-status-warn" /><span className="h-7 w-2 rounded bg-status-crit" /></span>
+                <span>{localize({ en: "Status has text and color", ar: "الحالة بالنص واللون" }, language)}</span>
               </div>
-              <div className="p-3 rounded-xl bg-secondary/20 border border-status-warn/40 flex flex-col">
-                <span className="text-xs font-bold text-status-warn font-mono">Status Amber</span>
-                <span className="text-xl font-bold font-mono text-foreground mt-1">7.1:1</span>
-                <span className="text-[10px] text-muted-foreground">Passes AAA (7:1)</span>
-              </div>
-              <div className="p-3 rounded-xl bg-secondary/20 border border-status-crit/40 flex flex-col">
-                <span className="text-xs font-bold text-status-crit font-mono">Status Red</span>
-                <span className="text-xl font-bold font-mono text-foreground mt-1">7.4:1</span>
-                <span className="text-[10px] text-muted-foreground">Passes AAA (7:1)</span>
+              <div className="flex items-center gap-2.5 rounded-xl border border-border bg-background p-3">
+                <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-secondary font-bold text-foreground">Aa</span>
+                <span>{localize({ en: "Readable text in both themes", ar: "نص مقروء في النمطين" }, language)}</span>
               </div>
             </div>
           </section>
@@ -534,7 +537,7 @@ export default function ResourcesAuditPage({
                   <span>{localize({ en: "Fast command palette for drills and tools.", ar: "لوحة أوامر سريعة للتدريبات والأدوات." }, language)}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <kbd className="px-1.5 py-0.5 bg-secondary rounded border border-border text-[10px] font-mono text-foreground font-bold">1 - 3</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-secondary rounded border border-border text-[10px] font-mono text-foreground font-bold">1 - 4</kbd>
                   <span>{localize({ en: "Number keys switch between main views.", ar: "أرقام للتبديل الفوري بين الأقسام." }, language)}</span>
                 </li>
               </ul>
@@ -548,28 +551,28 @@ export default function ResourcesAuditPage({
               <ul className="space-y-1.5 text-xs text-muted-foreground pl-0 list-none">
                 <li className="flex items-center gap-1.5">
                   <Check className="h-3.5 w-3.5 text-status-ok shrink-0" />
-                  <span>{localize({ en: "Min 44×44px touch targets on all interactive elements.", ar: "مساحات لمس لا تقل عن ٤٤×٤٤ بكسل." }, language)}</span>
+                  <span>{localize({ en: "Primary controls have generous touch targets.", ar: "مساحات لمس مناسبة لعناصر التحكم الأساسية." }, language)}</span>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Check className="h-3.5 w-3.5 text-status-ok shrink-0" />
-                  <span>{localize({ en: "Live on-screen captions accompany all radio voice audio.", ar: "نصوص مقروءة ترافق كافة التسجيلات الصوتية." }, language)}</span>
+                  <span>{localize({ en: "Simulated radio messages include on-screen text.", ar: "تظهر رسائل الراديو المحاكية كنص على الشاشة." }, language)}</span>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Check className="h-3.5 w-3.5 text-status-ok shrink-0" />
-                  <span>{localize({ en: "Zero horizontal scrolling at up to 200% zoom.", ar: "تفادي التمرير الأفقي حتى تكبير ٢٠٠٪." }, language)}</span>
+                  <span>{localize({ en: "Wide tables scroll within labeled regions on small screens.", ar: "تُمرَّر الجداول العريضة داخل مناطق معنونة بالشاشات الصغيرة." }, language)}</span>
                 </li>
               </ul>
             </div>
           </section>
 
-        </main>
+        </div>
       )}
 
       {/* ============================================================ */}
       {/* TAB 4: INTERACTIVE TOOLS & PERSONAS */}
       {/* ============================================================ */}
       {activeTab === "tools" && (
-        <main className="flex flex-col gap-4 animate-in fade-in duration-200">
+        <div id="docs-panel" role="tabpanel" aria-labelledby={`docs-tab-${activeTab}`} className="flex flex-col gap-4">
           
           {/* Cairo Tower Radio Console */}
           <section className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5 flex flex-col gap-3">
@@ -581,7 +584,7 @@ export default function ResourcesAuditPage({
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {localize(
-                    { en: "VHF 400–3400Hz voice synthesis with squelch bursts and live captions.", ar: "توليد صوتي لنداءات الطيران مع فلتر VHF ونصوص متزامنة." },
+                    { en: "Simulated VHF-style voice audio with synchronized sample captions.", ar: "صوت تدريبي بأسلوب اتصالات الطيران مع نصوص توضيحية متزامنة." },
                     language
                   )}
                 </p>
@@ -724,7 +727,7 @@ export default function ResourcesAuditPage({
             })()}
           </section>
 
-        </main>
+        </div>
       )}
 
       {/* Verified System Architect & Creator Credentials (Persistent across all tabs) */}
@@ -756,8 +759,8 @@ export default function ResourcesAuditPage({
             <span className="text-[11px] text-muted-foreground font-mono mt-0.5 block">
               {localize(
                 {
-                  en: "Mission-Critical Cockpits • Human Factors Engineering • WCAG 2.2 AAA Certified",
-                  ar: "تصميم أنظمة العمليات الحرجة • هندسة العوامل البشرية • معيار AAA لإتاحة الوصول",
+                  en: "Mission-Critical Cockpits • Human Factors Engineering • Accessible Interface Design",
+                  ar: "تصميم أنظمة العمليات الحرجة • هندسة العوامل البشرية • تصميم واجهات سهلة الوصول",
                 },
                 language
               )}
@@ -777,7 +780,7 @@ export default function ResourcesAuditPage({
             <ExternalLink className="h-3.5 w-3.5 opacity-60" />
           </a>
           <a
-            href="https://mahdy-resume.vercel.app/"
+            href="https://creativemahdy.space/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex min-h-[44px] items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 font-bold text-primary-foreground shadow hover:opacity-90 transition-all active-spring"

@@ -1,94 +1,47 @@
-# Cairo International Airport (CIA) Command Hub
+# Cairo International Airport Command Hub
 
-An enterprise-grade, highly scalable Operations & Safety Dashboard designed for airport managers. This project provides a real-time, bird's-eye view of passenger flow, flight movements, safety checks, and aircraft maintenance priorities.
+A bilingual airport manager dashboard prototype covering the digital twin, operations, safety, staffing, and supporting documentation. Most operational figures and scenarios are simulated. The incoming flights panel uses a sample when no flight-feed endpoint is configured.
 
-## 📖 Table of Contents
-- [Architecture & Folder Structure](#architecture--folder-structure)
-- [Tech Stack & Libraries](#tech-stack--libraries)
-- [UX & UI Design Principles](#ux--ui-design-principles)
-- [Developer Guidelines](#developer-guidelines)
-- [Setup & Scripts](#setup--scripts)
+Each dashboard view includes a compact **Data sources** disclosure. It explains which values are fixed examples, modeled forecasts, or local training interactions. Weather and runway plans are examples, and the staffing roster is synthetic. Checklists and decision controls only update this browser session; they do not authorize or dispatch airport activity.
 
----
+The shared training event record powers the manager work queue, role filters, digital twin hotspots, simulated stand reassignment, operations flight boards, passenger journey view, and handover summary. Events carry a responsible team, scenario timestamp, evidence, passenger impact, proposed action, and local action history. Assignments and stand moves are browser-session simulations; they do not dispatch teams or update an airport system.
 
-## 🏗 Architecture & Folder Structure
+Operations keeps the new visuals close to the decisions they support: the existing hourly passenger forecast compares demand with explicitly modeled capacity, turnaround cards use a planned/actual milestone path, and a baggage exception path appears only in the sorter-failure scenario. The chart details disclose exact values and calculation limits. The capacity model and baggage statuses are training data; bag scan counts and real staffing capacity are not connected.
 
-The application is built using a **Feature-Sliced Design (FSD)** approach to ensure scalability and maintainability as the application grows. Rather than grouping files by type (e.g., all components together, all hooks together), files are grouped by their respective domain or feature.
+For a Vercel deployment, configure `AVIATIONSTACK_KEY` as a server environment variable and `VITE_FLIGHT_FEED_URL=/api/flights` for the client. The `api/flights.ts` endpoint keeps the key server-side and caches successful responses for five minutes per instance. Other static hosts can provide a compatible server endpoint, or continue to show the labeled sample. Never put the provider key in a `VITE_` variable: [Vite exposes those values to browser code](https://vite.dev/guide/env-and-mode). The key previously used in the browser should be rotated before enabling the server endpoint.
 
-```text
-src/
-├── components/          # Shared, global UI components
-│   ├── command-center/  # Reusable widgets (MetricCards, SectionPanels)
-│   └── layout/          # Global layout wrappers (Header, ErrorBoundary)
-├── context/             # React Context providers (e.g., LocaleContext)
-├── features/            # Feature-sliced domain modules
-│   ├── digital-twin/    # Airport spatial mapping & live flights
-│   ├── operations/      # Passenger influx and ground flow metrics
-│   └── safety/          # Alert aging, maintenance, and risk tracking
-├── hooks/               # Global custom React hooks (e.g., useAnimatedNumber)
-├── utils/               # Helper functions (localization, tone mappers)
-├── App.tsx              # Main orchestrator and layout router
-├── data.ts              # Centralized mock data, schemas, and types
-└── styles.css           # Tailwind configuration and custom CSS variables
-```
-
----
-
-## 🛠 Tech Stack & Libraries
-
-- **Core:** React 18, TypeScript, Vite
-- **Styling:** TailwindCSS v4 (using the new inline `@theme` configuration)
-- **Icons:** `lucide-react` (Lightweight, consistent SVG icons)
-- **Data Integration:** 
-  - `AviationStack API` for live flight tracking.
-  - Built-in graceful degradation: Automatically falls back to high-fidelity mocked data if the API is unreachable or rate-limited.
-- **Charts:** Custom-built React SVGs (e.g., `ForecastLineChart`, `Sparkline`) for maximum performance and highly specific styling without heavy charting library overhead.
-
----
-
-## 🎨 UX & UI Design Principles
-
-This dashboard was designed with a focus on **Cognitive Load Reduction**, **Accessibility**, and **Action-Oriented Workflows**.
-
-### 1. Accessibility & Internationalization First
-- **True RTL Support:** Full English (LTR) and Arabic (RTL) bidirectional support deeply integrated into the layout using logical CSS properties (e.g., `ml-`, `mr-` replaced with `start-`, `end-`).
-- **High Contrast Mode:** A dedicated toggle that strips out low-contrast backgrounds and enforces WCAG AA compliant text colors for visually impaired users or brightly lit environments.
-- **Dark/Light Themes:** Fully integrated semantic color tokens adapting to user system preferences.
-
-### 2. Action-Oriented UX Writing
-- We avoid passive, descriptive text (e.g., *"Security pressure building"*).
-- We use prescriptive, command-driven alerts (e.g., *"Open 2 secondary lanes immediately"*) so managers can make decisions instantly without second-guessing the required action.
-- All "Mock/Sample" developer tags are hidden in production, replaced with contextual states like "Offline Mode".
-
-### 3. Visual Depth & Micro-Animations
-- **Glassmorphism:** Strategic use of `backdrop-blur` and `oklch` color mixing for a premium, lightweight feel.
-- **Depth (Dark Mode):** Instead of flat blacks, dark mode utilizes layered `box-shadows` and translucent inner borders (`rgba(255,255,255,0.05)`) to create a physical, tactile sense of elevation.
-- **Dynamic Interactions:** Custom hooks like `useAnimatedNumber` provide a satisfying "count up" effect on mount, while subtle `group-hover` Tailwind classes scale up cards and bloom shadows dynamically.
-
----
-
-## 🧑‍💻 Developer Guidelines
-
-If you are contributing to this project, please adhere to the following best practices:
-
-1. **Performance (React.memo):** 
-   Complex SVGs (like `ForecastLineChart` and `Sparkline`) and expensive visual widgets must be wrapped in `React.memo()`. This prevents the entire dashboard from re-rendering when a parent component (like the clock) ticks every 30 seconds.
-2. **Graceful Failures (Error Boundaries):**
-   Every major feature module (`<DigitalTwinView />`, `<OperationsView />`, etc.) must be wrapped in `<ErrorBoundary>`. If an API payload malforms or a chart crashes, the rest of the dashboard must remain perfectly functional.
-3. **Adding New Features:**
-   Do not dump components into the global `/components` folder. Create a new directory inside `/features/` (e.g., `/features/baggage/`) and encapsulate the logic, sub-components, and specific hooks there.
-
----
-
-## 🚀 Setup & Scripts
+## Run locally
 
 ```bash
-# Install dependencies
 npm install
-
-# Start the local development server (Vite)
 npm run dev
-
-# Build for production
-npm run build
 ```
+
+Open the URL printed by Vite. The configured base path is `/Cairo-International-Airpot-CIA-Dashboard/`.
+
+## Quality checks
+
+```bash
+npm run audit:all
+```
+
+This runs TypeScript checking, ESLint, Vitest, and a production build. `npm run test`, `npm run check:responsive`, and `npm run build` are also available separately.
+
+## Project layout
+
+- `src/App.tsx` coordinates page navigation, locale, theme, and view loading.
+- `src/features/` contains the digital twin, operations, safety, and staffing views.
+- `src/components/` holds shared navigation, widgets, dialogs, and documentation.
+- `src/context/` provides locale, scenario, and shared operational-event state.
+- `src/data/apronStands.ts` contains the sample stand plan and pure diversion calculation.
+- `src/hooks/` contains interaction and data hooks.
+- `src/data.ts` provides prototype data and bilingual copy.
+- `src/styles.css` defines design tokens and shared styling.
+
+The app uses React 19, TypeScript, Vite, Tailwind CSS v4, Lucide icons, and lightweight SVG charts. It supports English and Arabic layout, light and dark themes, and a high contrast preference. The [UX review](UX_REVIEW.md) records the latest improvements, verification, and remaining checks.
+
+Pushes to `main` run the repository quality gates and deploy to GitHub Pages. The artifact includes `release.json` with the commit SHA; the post-deploy check compares it to the workflow SHA and checks linked assets before reporting success. The public Pages build has no server flight-feed endpoint unless separately provided by the hosting environment.
+
+## Production integration boundary
+
+The map coordinates, clearance flag, flight assignments, queues, staffing, weather, and incident records are illustrative. Stand fit cannot be inferred from aircraft wingspan alone; it needs surveyed stand geometry, clearances, movement routes, and an approved stand plan. An operational release also needs authenticated roles, source timestamps and health, approved data contracts with airport systems, event persistence and audit, and review by airport operations, airline, ground handling, security, and accessibility specialists. The current UI explicitly marks simulated actions and camera stills.

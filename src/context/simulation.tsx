@@ -24,7 +24,6 @@ import {
   safetyChecks,
   ScenarioFlowData,
 } from "../data";
-import { notifyManager } from "../utils/toast";
 import { soundEffects } from "../services/soundEffects";
 import { aoccBroadcast } from "../services/broadcastChannel";
 
@@ -132,6 +131,9 @@ export function SimulationProvider({
   const reactiveInfluxForecast = useMemo<InfluxForecastPoint[]>(() => {
     const raw = activeScenario.influxForecast || influxForecastRows;
     const terminalScale = activeTerminal === "T3" ? 0.48 : activeTerminal === "T2" ? 0.34 : activeTerminal === "T1" ? 0.18 : 1.0;
+    // Explicitly modeled training capacity; no staffing or queue sensor feed is connected.
+    const hourlyCapacity = [1100, 1250, 1450, 1400, 1240];
+    const capacityWaveScale: Record<ShiftWaveId, number> = { all: 1, morning: 1, midday: 1.05, night: 0.6 };
     
     const waveMultipliers: Record<ShiftWaveId, number[]> = {
       all: [1.0, 1.0, 1.0, 1.0, 1.0],
@@ -145,6 +147,7 @@ export function SimulationProvider({
       time: pt.time,
       current: Math.round(pt.current * terminalScale * mults[idx % mults.length]),
       forecast: Math.round(pt.forecast * terminalScale * mults[idx % mults.length]),
+      modeledCapacity: Math.round(hourlyCapacity[idx % hourlyCapacity.length] * terminalScale * capacityWaveScale[activeShiftWave]),
     }));
   }, [activeScenario, activeTerminal, activeShiftWave]);
 
@@ -186,7 +189,7 @@ export function SimulationProvider({
   }, [activeScenario, activeShiftWave]);
 
   const reactiveGateWaits = useMemo<GateWaitRow[]>(() => {
-    const raw = activeScenario.gateWaits || gateWaitRows;
+    const raw = (activeScenario.gateWaits || gateWaitRows).map((gate) => gate.gate === "B12" ? { ...gate, terminal: "T3" as const } : gate);
     if (activeTerminal === "ALL") {
       return raw;
     }
@@ -194,7 +197,7 @@ export function SimulationProvider({
   }, [activeScenario, activeTerminal]);
 
   const reactiveDepartures = useMemo<FlightRow[]>(() => {
-    const raw = activeScenario.departures || departures;
+    const raw = (activeScenario.departures || departures).map((flight) => flight.flight === "SV302" ? { ...flight, gate: "Gate 305", terminal: "T3" as const } : flight.flight === "MS777" ? { ...flight, gate: "B12", terminal: "T3" as const } : flight);
     if (activeTerminal === "ALL") {
       return raw;
     }
@@ -202,7 +205,7 @@ export function SimulationProvider({
   }, [activeScenario, activeTerminal]);
 
   const reactiveArrivals = useMemo<FlightRow[]>(() => {
-    const raw = activeScenario.arrivals || arrivals;
+    const raw = (activeScenario.arrivals || arrivals).map((flight) => flight.flight === "EK927" ? { ...flight, gate: "Gate 306", terminal: "T3" as const, time: "14:25", status: "Estimated", tone: "info" as const } : flight);
     if (activeTerminal === "ALL") {
       return raw;
     }
@@ -226,20 +229,6 @@ export function SimulationProvider({
     if (broadcast) {
       aoccBroadcast.broadcast({ type: "SCENARIO_CHANGE", scenarioId: id });
     }
-    const target = drillScenarios.find((s) => s.id === id);
-    if (target && id !== "baseline") {
-      notifyManager(
-        target.title.en,
-        `Emergency Drill Active: ${target.summary.en}`,
-        target.tone
-      );
-    } else {
-      notifyManager(
-        "Normal Operations Resumed",
-        "Airfield and terminal metrics restored to live baseline.",
-        "ok"
-      );
-    }
   }, []);
 
   // Synchronize across multi-display windows / tabs
@@ -261,27 +250,14 @@ export function SimulationProvider({
   }, [setScenarioId]);
 
   const toggleKiosk = useCallback(() => {
-    setIsKioskActive((prev) => {
-      const next = !prev;
-      if (next) {
-        setKioskSecondsRemaining(KIOSK_CYCLE_SECONDS);
-        setIsKioskPaused(false);
-        onShowDashboard?.();
-        notifyManager(
-          "AOCC Video Wall Mode Active",
-          "Auto-cycling through AOCC multi-display screens (25s interval).",
-          "info"
-        );
-      } else {
-        notifyManager(
-          "Video Wall Mode Exited",
-          "Manual control restored.",
-          "info"
-        );
-      }
-      return next;
-    });
-  }, [onShowDashboard]);
+    const next = !isKioskActive;
+    setIsKioskActive(next);
+    if (next) {
+      setKioskSecondsRemaining(KIOSK_CYCLE_SECONDS);
+      setIsKioskPaused(false);
+      onShowDashboard?.();
+    }
+  }, [isKioskActive, onShowDashboard]);
 
   const skipKioskNext = useCallback(() => {
     const tabs = PRESET_TABS[kioskPreset];

@@ -84,13 +84,13 @@ export function MetarWidget() {
         }`}
         aria-label={
           language === "ar"
-            ? `حالة الطقس والمدرجات بمطار القاهرة: ${metar.windSpeedKt} عقدة، ${metar.tempC} درجة، ${metar.flightCategory}`
-            : `HECA Weather & Runway Status: ${metar.windSpeedKt}kt, ${metar.tempC}°C, ${metar.flightCategory}`
+            ? `عينة طقس تدريبية: ${metar.windSpeedKt} عقدة، ${metar.tempC} درجة، ${metar.flightCategory}`
+            : `Training weather sample: ${metar.windSpeedKt}kt, ${metar.tempC}°C, ${metar.flightCategory}`
         }
         title={
           language === "ar"
-            ? "عرض تقرير METAR وحالة المدارج لمطار القاهرة الدولي"
-            : "View Cairo METAR & Active Runway Configuration"
+            ? "عرض مثال طقس وخطة مدارج تدريبية، ليست بيانات مباشرة"
+            : "View example weather and runway plan; not live data"
         }
       >
         {/* Animated wind indicator compass needle */}
@@ -118,7 +118,7 @@ export function MetarWidget() {
         <div
           ref={popoverRef}
           role="dialog"
-          aria-label={localize({ en: "HECA Cairo Airfield METAR & Runways", ar: "تقرير METAR ومدرجات مطار القاهرة" }, language)}
+          aria-label={localize({ en: "Training weather sample and runway plan", ar: "عينة طقس وخطة مدارج تدريبية" }, language)}
           className="absolute end-0 top-full z-50 mt-2 w-[340px] max-w-[calc(100vw-1.5rem)] sm:w-[400px] rounded-2xl border border-border bg-background/95 p-3.5 sm:p-4 shadow-2xl backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
         >
           {/* Header */}
@@ -127,14 +127,12 @@ export function MetarWidget() {
               <div className="flex items-center gap-2">
                 <span className="font-mono text-base font-bold text-primary">{metar.station} / CAI</span>
                 <StatusPill tone={categoryTone}>{metar.flightCategory}</StatusPill>
-                {isDrillActive && (
-                  <span className="rounded-full bg-status-crit/15 px-2 py-0.5 text-[10px] font-bold text-status-crit">
-                    {language === "ar" ? "محاكاة طوارئ" : "DRILL OVERRIDE"}
-                  </span>
-                )}
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                  {isDrillActive ? (language === "ar" ? "محاكاة" : "DRILL") : (language === "ar" ? "عينة" : "SAMPLE")}
+                </span>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {localize(metar.airportName, language)} &bull; {metar.observedAt}
+                {localize(metar.airportName, language)} &bull; {language === "ar" ? "وقت المثال" : "Example time"} {metar.observedAt} &bull; {language === "ar" ? "ليست قراءة حالية" : "not current"}
               </p>
             </div>
             <button
@@ -154,7 +152,7 @@ export function MetarWidget() {
           <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
             <div className="flex items-center gap-1.5 font-sans text-xs font-semibold text-primary">
               <Wind className="h-3.5 w-3.5" />
-              <span>{localize({ en: "Active Runway Operations", ar: "تكوين المدارج النشطة" }, language)}</span>
+              <span>{localize({ en: "Scenario runway plan", ar: "خطة المدارج في السيناريو" }, language)}</span>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
               <div className="rounded-lg bg-background/70 p-2">
@@ -200,12 +198,12 @@ export function MetarWidget() {
           {/* Raw METAR String with Copy */}
           <div className="mt-3">
             <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-              <span>{localize({ en: "RAW METAR / SPECI", ar: "النص الخام للميتار" }, language)}</span>
+              <span>{localize({ en: "Example METAR text", ar: "نص ميتار للتدريب" }, language)}</span>
               <button
                 type="button"
                 onClick={handleCopyMetar}
                 className="flex items-center gap-1 text-primary hover:underline cursor-pointer min-h-[28px]"
-                aria-label={localize({ en: "Copy raw METAR", ar: "نسخ النص الخام" }, language)}
+                aria-label={localize({ en: "Copy example METAR text", ar: "نسخ نص الميتار التدريبي" }, language)}
               >
                 {isCopied ? (
                   <>

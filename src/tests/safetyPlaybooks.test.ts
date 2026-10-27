@@ -1,24 +1,24 @@
 ﻿import { describe, it, expect } from "vitest";
 import { PLAYBOOKS, IncidentPlaybook } from "../features/safety/IncidentPlaybookModal";
 
-describe("AOCC Safety Playbooks & Emergency SOP Engine", () => {
-  it("verifies all core safety playbooks conform to ICAO Doc 9137 & Annex 14 standards", () => {
+describe("Training emergency review checklists", () => {
+  it("labels every scenario as requiring an approved local procedure", () => {
     expect(PLAYBOOKS.length).toBeGreaterThanOrEqual(3);
 
     const lvpPlaybook = PLAYBOOKS.find((p) => p.id === "lvp-cat-iii");
     expect(lvpPlaybook).toBeDefined();
-    expect(lvpPlaybook?.icaoRef).toBe("ICAO Doc 9137 Part 8");
+    expect(lvpPlaybook?.reference).toContain("Local");
     expect(lvpPlaybook?.severity).toBe("critical");
-    expect(lvpPlaybook?.summary).toContain("350m");
+    expect(lvpPlaybook?.summary).toContain("Training prompts");
 
     const fodPlaybook = PLAYBOOKS.find((p) => p.id === "runway-fod");
     expect(fodPlaybook).toBeDefined();
-    expect(fodPlaybook?.icaoRef).toBe("ICAO Annex 14 Vol I");
+    expect(fodPlaybook?.reference).toContain("Local");
     expect(fodPlaybook?.severity).toBe("high");
 
     const medPlaybook = PLAYBOOKS.find((p) => p.id === "medical-diversion");
     expect(medPlaybook).toBeDefined();
-    expect(medPlaybook?.icaoRef).toBe("ECAA Doc 4444");
+    expect(medPlaybook?.reference).toContain("Local");
     expect(medPlaybook?.severity).toBe("critical");
   });
 
@@ -42,13 +42,10 @@ describe("AOCC Safety Playbooks & Emergency SOP Engine", () => {
     });
   });
 
-  it("validates runway FOD playbook includes Mu-Meter friction testing target (>= 0.60)", () => {
+  it("avoids unsupported airport-specific thresholds and authorizations", () => {
     const fodPlaybook = PLAYBOOKS.find((p) => p.id === "runway-fod");
-    const frictionStep = fodPlaybook?.steps.find((s) => s.label.includes("Mu-Meter"));
-    expect(frictionStep).toBeDefined();
-    expect(frictionStep?.label).toContain(">= 0.60");
-    expect(frictionStep?.arLabel).toContain("0.60");
-    expect(frictionStep?.role).toBe("Maintenance Lead");
+    expect(fodPlaybook?.steps.map((s) => s.label).join(" ")).not.toMatch(/0\.60|Runway 05C|Issue electronic NOTAM clearance/);
+    expect(PLAYBOOKS.map((p) => p.steps.map((s) => s.label).join(" ")).join(" ")).not.toMatch(/118\.1|Gate 301|350m/);
   });
 
   it("calculates step progression percentage and completion status correctly", () => {

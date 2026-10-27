@@ -26,6 +26,7 @@ import { localize } from '../utils/helpers';
 import { useSimulation } from '../context/simulation';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 import { useAirfieldRadio } from '../hooks/useAirfieldRadio';
+import { useModalFocus } from '../hooks/useModalFocus';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -69,6 +70,7 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useModalFocus(isOpen, onClose);
 
   const { toggleKiosk, setScenarioId, resetDrill, setActiveShiftWave } = useSimulation();
   const { isEnabled: sfxEnabled, toggleSoundEffects } = useSoundEffects();
@@ -78,7 +80,6 @@ export function CommandPalette({
     if (isOpen) {
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen]);
 
@@ -92,7 +93,7 @@ export function CommandPalette({
         category: 'views',
         categoryLabel: { en: 'Views & Tabs', ar: 'الأقسام والتبويبات' },
         title: language === 'ar' ? 'التوأم الرقمي (Digital Twin)' : 'Digital Twin Hub',
-        subtitle: language === 'ar' ? 'عرض الساحات والخرائط والكاميرات الحية' : '3D aprons, terminals, and live CCTV feeds',
+        subtitle: language === 'ar' ? 'عرض خريطة المطار وصور الكاميرات التوضيحية' : 'Airport map and illustrative camera stills',
         icon: Radar,
         shortcut: '1',
         action: () => {
@@ -251,7 +252,7 @@ export function CommandPalette({
         id: 'drill-reset',
         category: 'drills',
         categoryLabel: { en: 'Emergency Drills', ar: 'محاكاة الطوارئ' },
-        title: language === 'ar' ? 'استعادة العمليات المباشرة (إلغاء المحاكاة)' : 'Restore Live Baseline Operations',
+        title: language === 'ar' ? 'استعادة سيناريو التشغيل الأساسي' : 'Restore baseline training scenario',
         subtitle: language === 'ar' ? 'إعادة ضبط كافة مقاييس المطار إلى الوضع الطبيعي' : 'Reset all airfield and terminal metrics to nominal',
         icon: RotateCcw,
         action: () => {
@@ -393,6 +394,10 @@ export function CommandPalette({
   }, [filteredItems]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (filteredItems.length === 0 && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter')) {
+      e.preventDefault();
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev + 1) % filteredItems.length);
@@ -401,7 +406,7 @@ export function CommandPalette({
       e.preventDefault();
       setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length);
       scrollSelectedIntoView((selectedIndex - 1 + filteredItems.length) % filteredItems.length);
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' && e.target === inputRef.current) {
       e.preventDefault();
       if (filteredItems[selectedIndex]) {
         filteredItems[selectedIndex].action();
@@ -425,14 +430,15 @@ export function CommandPalette({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label={language === 'ar' ? 'لوحة الأوامر السريعة' : 'Quick Command Palette'}
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-4 sm:pt-24 px-3 sm:px-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-xl rounded-2xl border border-border/80 bg-background/95 backdrop-blur-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-xl rounded-2xl border border-border bg-card shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[80dvh]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
@@ -441,6 +447,10 @@ export function CommandPalette({
           <Search className="h-5 w-5 text-primary shrink-0" />
           <input
             ref={inputRef}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-results"
+            aria-activedescendant={filteredItems[selectedIndex] ? `command-${filteredItems[selectedIndex].id}` : undefined}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -462,12 +472,15 @@ export function CommandPalette({
           <kbd className="hidden sm:inline-flex items-center rounded border border-border/80 bg-secondary/50 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
             ESC
           </kbd>
+          <button type="button" onClick={onClose} aria-label={language === 'ar' ? 'إغلاق لوحة الأوامر' : 'Close command palette'} className="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary"><X aria-hidden="true" className="h-4 w-4" /></button>
         </div>
 
         {/* Results List */}
         <div
           ref={listRef}
           role="listbox"
+          id="command-results"
+          aria-label={language === 'ar' ? 'الأوامر المتاحة' : 'Available commands'}
           className="flex-1 overflow-y-auto p-2 divide-y divide-border/20 no-scrollbar"
         >
           {filteredItems.length === 0 ? (
@@ -481,6 +494,7 @@ export function CommandPalette({
               return (
                 <div
                   key={item.id}
+                  id={`command-${item.id}`}
                   role="option"
                   aria-selected={isSelected}
                   onMouseEnter={() => setSelectedIndex(index)}

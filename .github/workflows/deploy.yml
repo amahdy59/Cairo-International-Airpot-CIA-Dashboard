@@ -48,6 +48,10 @@ jobs:
       - name: 5. Production Vite Build
         run: npm run build
 
+      - name: Add release identity to Pages artifact
+        if: github.ref == 'refs/heads/main'
+        run: node -e "require('fs').writeFileSync('dist/release.json', JSON.stringify({commit: process.env.GITHUB_SHA}))"
+
       - name: Setup GitHub Pages
         if: github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v4

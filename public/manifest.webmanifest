@@ -1,26 +1,22 @@
-﻿{
-  name: CAI Command Hub | Cairo International Airport,
-  short_name: CAI Hub,
-  description: Cairo International Airport real-time operations, digital twin apron monitoring, and executive decision dashboard.,
-  start_url: ./,
-  scope: ./,
-  display: standalone,
-  orientation: any,
-  background_color: #0B121A,
-  theme_color: #0B121A,
-  lang: en,
-  dir: auto,
-  icons: [
+{
+  "name": "CAI Command Hub | Training Prototype",
+  "short_name": "CAI Hub",
+  "description": "Independent airport operations training prototype with simulated data and a digital twin view.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B121A",
+  "theme_color": "#0B121A",
+  "lang": "en",
+  "dir": "auto",
+  "icons": [
     {
-      src: favicon.svg,
-      sizes: any,
-      type: image/svg+xml,
-      purpose: any maskable
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ],
-  categories: [
-    productivity,
-    utilities,
-    business
-  ]
+  "categories": ["productivity", "utilities", "business"]
 }

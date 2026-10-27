@@ -1,5 +1,6 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
 /* eslint-disable react-refresh/only-export-components */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ShieldAlert,
   CheckCircle2,
@@ -24,7 +25,7 @@ export interface IncidentPlaybook {
   id: string;
   title: string;
   arTitle: string;
-  icaoRef: string;
+  reference: string;
   severity: "critical" | "high" | "warning";
   summary: string;
   arSummary: string;
@@ -36,44 +37,44 @@ export const PLAYBOOKS: IncidentPlaybook[] = [
     id: "lvp-cat-iii",
     title: "Low Visibility Procedures (LVP Cat II/III)",
     arTitle: "إجراءات الرؤية المتدنية (LVP الفئة الثانية / الثالثة)",
-    icaoRef: "ICAO Doc 9137 Part 8",
+    reference: "Local LVP procedure required",
     severity: "critical",
-    summary: "Airfield RVR drops below 350m. Safeguard ILS critical areas and restrict non-essential airside traffic.",
-    arSummary: "انخفاض مدى الرؤية على المدرج (RVR) لأقل من ٣٥٠ م. تأمين مناطق الحماية لجهاز الهبوط الآلي ILS وإيقاف الحركة غير الضرورية.",
+    summary: "Training prompts for a low-visibility scenario. Confirm activation criteria and responsibilities against the airport's approved procedure.",
+    arSummary: "خطوات مراجعة تدريبية لسيناريو تدني الرؤية. يجب التحقق من معايير التفعيل والمسؤوليات وفق الإجراءات المحلية المعتمدة.",
     steps: [
-      { id: "s1", label: "Broadcast LVP Activation on Cairo Tower VHF (118.1 MHz)", arLabel: "بث إشعار تفعيل LVP عبر برج القاهرة اللاسلكي (118.1 MHz)", role: "AOCC Chief", completed: false },
-      { id: "s2", label: "Safeguard Runway 05L/23C ILS localizer & glideslope sensitive areas", arLabel: "تأمين وحماية المناطق الحساسة لمنظومة الهبوط الآلي للمدرج 05L/23C", role: "Airside Safety", completed: false },
-      { id: "s3", label: "Restrict all non-essential ground service equipment from taxiways", arLabel: "إيقاف ومنع كافة المعدات الأرضية غير الحرجة من التحرك عبر الممرات", role: "Ramp Operations", completed: false },
-      { id: "s4", label: "Deploy ARFF Cat 9 fast-response units to airside standby points", arLabel: "نشر وحدات الإطفاء والإنقاذ فئة 9 بنقاط التأهب الميدانية", role: "Falcon-7 ARFF", completed: false },
+      { id: "s1", label: "Check the approved visibility trigger and notify the responsible tower and airside teams", arLabel: "مراجعة معيار الرؤية المعتمد وإبلاغ البرج والفرق الميدانية المسؤولة", role: "AOCC duty lead", completed: false },
+      { id: "s2", label: "Confirm protection of ILS sensitive areas with the responsible team", arLabel: "تأكيد حماية المناطق الحساسة لنظام الهبوط الآلي مع الفريق المختص", role: "Airside safety", completed: false },
+      { id: "s3", label: "Review ground-movement restrictions in the local LVP plan", arLabel: "مراجعة قيود الحركة الأرضية في خطة الرؤية المنخفضة المحلية", role: "Ramp operations", completed: false },
+      { id: "s4", label: "Confirm rescue and firefighting readiness under the local emergency plan", arLabel: "تأكيد جاهزية الإنقاذ والإطفاء وفق خطة الطوارئ المحلية", role: "ARFF liaison", completed: false },
     ],
   },
   {
     id: "runway-fod",
     title: "Runway FOD & Wildlife Hazard Response",
     arTitle: "الاستجابة للأجسام الغريبة والطيور على المدارج (FOD)",
-    icaoRef: "ICAO Annex 14 Vol I",
+    reference: "Local runway inspection procedure required",
     severity: "high",
-    summary: "Immediate suspension of runway departures, physical runway sweep, and friction testing.",
-    arSummary: "تعليق فوري لإقلاع الطائرات، تنفيذ مسح ميداني شامل للمدرج، واختبار معامل الاحتكاك السطحي.",
+    summary: "Training prompts for a reported runway hazard. Confirm runway status and inspection decisions with authorized teams.",
+    arSummary: "خطوات مراجعة تدريبية لبلاغ خطر على المدرج. تأكد من حالة المدرج وقرارات التفتيش مع الفرق المخولة.",
     steps: [
-      { id: "f1", label: "Suspend departure queue on Runway 05C & hold inbound flights", arLabel: "تعليق طابور الإقلاع على المدرج 05C وحجز الرحلات القادمة مؤقتاً", role: "Tower Controller", completed: false },
-      { id: "f2", label: "Dispatch Safety Marshaller vehicle for physical FOD inspection", arLabel: "إرسال مركبة السلامة الميدانية لإجراء مسح مادي دقيق للمدرج", role: "Airside Safety", completed: false },
-      { id: "f3", label: "Perform surface friction reading via Mu-Meter (Target >= 0.60)", arLabel: "قياس معامل احتكاك السطح بجهاز Mu-Meter (المستهدف >= 0.60)", role: "Maintenance Lead", completed: false },
-      { id: "f4", label: "Issue electronic NOTAM clearance & resume full operations", arLabel: "إصدار برقية نوتام إلكترونية واستئناف التشغيل الكامل للمدرج", role: "AOCC Duty Manager", completed: false },
+      { id: "f1", label: "Confirm runway status and traffic coordination with air traffic control", arLabel: "تأكيد حالة المدرج وتنسيق الحركة مع المراقبة الجوية", role: "Tower liaison", completed: false },
+      { id: "f2", label: "Request an inspection by the authorized airside safety team", arLabel: "طلب تفتيش من فريق السلامة الميدانية المخول", role: "Airside safety", completed: false },
+      { id: "f3", label: "Review inspection findings and any required follow-up assessment", arLabel: "مراجعة نتائج التفتيش وأي تقييم إضافي مطلوب", role: "Maintenance lead", completed: false },
+      { id: "f4", label: "Confirm the authorized decision and required aeronautical information updates", arLabel: "تأكيد القرار المخول وتحديثات معلومات الطيران المطلوبة", role: "AOCC duty lead", completed: false },
     ],
   },
   {
     id: "medical-diversion",
     title: "In-Flight Priority Medical Diversion",
     arTitle: "هبوط اضطراري لحالة طبية حرجة بالجو",
-    icaoRef: "ECAA Doc 4444",
+    reference: "Local medical response procedure required",
     severity: "critical",
-    summary: "Priority inbound routing, dedicated gate access, and direct airside quarantine ambulance escort.",
-    arSummary: "توجيه ذو أولوية قصوى، تخصيص بوابة مباشرة لسيارات الإسعاف، ومرافقة طواقم الحجر الصحي.",
+    summary: "Training prompts for an inbound medical event. Coordinate the stand, access route, and response with authorized teams.",
+    arSummary: "خطوات مراجعة تدريبية لحدث طبي على رحلة قادمة. نسّق الموقف ومسار الوصول والاستجابة مع الفرق المخولة.",
     steps: [
-      { id: "m1", label: "Assign Gate 301 with direct road clearance for ambulances", arLabel: "تخصيص البوابة 301 ذات المنفذ المباشر لسيارات الإسعاف", role: "AOCC Gate Planner", completed: false },
-      { id: "m2", label: "Notify Cairo Airport Quarantine Medical Director & Ministry of Health", arLabel: "إخطار مدير الحجر الصحي بمطار القاهرة وطواقم وزارة الصحة", role: "Medical Liaison", completed: false },
-      { id: "m3", label: "Expedite priority taxi route with Marshaller-7 escort vehicle", arLabel: "تأمين مسار تاكسي سريع بمرافقة سيارة الإرشاد مارشال 7", role: "Airside Ramp Lead", completed: false },
+      { id: "m1", label: "Check an appropriate stand and ambulance access with the stand planner", arLabel: "التحقق من موقف مناسب ووصول سيارة الإسعاف مع مخطط المواقف", role: "Stand planner", completed: false },
+      { id: "m2", label: "Confirm notification of the designated airport medical response team", arLabel: "تأكيد إبلاغ فريق الاستجابة الطبية المحدد بالمطار", role: "Medical liaison", completed: false },
+      { id: "m3", label: "Coordinate ground access with the authorized airside team", arLabel: "تنسيق الوصول الأرضي مع الفريق الميداني المخول", role: "Airside liaison", completed: false },
     ],
   },
 ];
@@ -89,14 +90,7 @@ export function IncidentPlaybookModal({
   const [playbooks, setPlaybooks] = useState<IncidentPlaybook[]>(PLAYBOOKS);
   const [activePlaybookId, setActivePlaybookId] = useState<string>("lvp-cat-iii");
 
-  // Close on Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useModalFocus(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -112,7 +106,7 @@ export function IncidentPlaybookModal({
             ...pb,
             steps: pb.steps.map((step) => {
               if (step.id === stepId) {
-                const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                const now = new Date().toISOString().slice(11, 19);
                 return {
                   ...step,
                   completed: !step.completed,
@@ -129,8 +123,8 @@ export function IncidentPlaybookModal({
   };
 
   const handleCompleteAll = () => {
-    soundEffects.playDispatch();
-    const now = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    soundEffects.playClick();
+    const now = new Date().toISOString().slice(11, 19);
     setPlaybooks((prev) =>
       prev.map((pb) => {
         if (pb.id === activePlaybookId) {
@@ -143,20 +137,21 @@ export function IncidentPlaybookModal({
       })
     );
     notifyManager(
-      language === "ar" ? "تم استكمال بروتوكول الطوارئ" : "ICAO Playbook Executed",
+      language === "ar" ? "تمت مراجعة القائمة التدريبية" : "Training checklist reviewed",
       language === "ar"
-        ? `تم تنفيذ كافة بنود بروتوكول: ${currentPlaybook.arTitle}`
-        : `All mandatory action items verified for: ${currentPlaybook.title}`,
+        ? `تم تعليم بنود ${currentPlaybook.arTitle} كمراجعة محلية فقط`
+        : `Items for ${currentPlaybook.title} marked reviewed in this session only`,
       "ok"
     );
   };
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label={language === "ar" ? "كتيب إجراءات الطوارئ والحوادث ICAO" : "ICAO Incident & Crisis Management Playbooks"}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
+      aria-label={language === "ar" ? "قوائم مراجعة الطوارئ التدريبية" : "Training emergency review checklists"}
+      className="printable-dialog fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-white/10 bg-surface/95 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl dark:bg-card/95 overflow-hidden">
         {/* Header */}
@@ -168,14 +163,14 @@ export function IncidentPlaybookModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-bold text-foreground">
-                  {language === "ar" ? "كتيب بروتوكولات الطوارئ والأزمات" : "ICAO Emergency Contingency Playbooks"}
+                  {language === "ar" ? "قوائم مراجعة الطوارئ التدريبية" : "Training contingency checklists"}
                 </h2>
                 <span className="rounded bg-secondary px-2 py-0.5 font-mono text-[10px] font-bold text-muted-foreground uppercase">
-                  AOCC SOP
+                  SAMPLE
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {language === "ar" ? "إجراءات التدخل والقيادة الميدانية المعتمدة من سلطة الطيران المدني" : "Standardized operational contingencies and command checklists."}
+                {language === "ar" ? "أمثلة تدريبية فقط؛ تحقق من إجراءات المطار المعتمدة قبل أي إجراء تشغيلي." : "Illustrative prompts only. Check approved local procedures before operational action."}
               </p>
             </div>
           </div>
@@ -197,6 +192,7 @@ export function IncidentPlaybookModal({
               <button
                 key={pb.id}
                 type="button"
+                aria-pressed={active}
                 onClick={() => {
                   soundEffects.playClick();
                   setActivePlaybookId(pb.id);
@@ -217,11 +213,11 @@ export function IncidentPlaybookModal({
         {/* Active Playbook Content */}
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
           <div className="rounded-2xl border border-border/50 bg-background/50 p-3.5">
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
               <h3 className="font-bold text-sm text-foreground">
                 {language === "ar" ? currentPlaybook.arTitle : currentPlaybook.title}
               </h3>
-              <span className="font-mono text-[11px] font-bold text-primary">{currentPlaybook.icaoRef}</span>
+              <span className="text-[11px] font-semibold text-primary">{language === "ar" ? "يلزم الإجراء المحلي المعتمد" : currentPlaybook.reference}</span>
             </div>
             <p className="text-xs text-muted-foreground">
               {language === "ar" ? currentPlaybook.arSummary : currentPlaybook.summary}
@@ -231,12 +227,13 @@ export function IncidentPlaybookModal({
           {/* Action Checklist */}
           <div className="space-y-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block px-1">
-              {language === "ar" ? "قائمة الإجراءات الإلزامية المسجلة" : "Mandatory Action Items & Audit Log"}
+              {language === "ar" ? "نقاط مراجعة تدريبية" : "Training review prompts"}
             </span>
             {currentPlaybook.steps.map((step) => (
               <button
                 key={step.id}
                 type="button"
+                aria-pressed={step.completed}
                 onClick={() => toggleStep(step.id)}
                 className={`flex w-full items-start gap-3 rounded-xl border p-3 text-start transition-all cursor-pointer ${
                   step.completed
@@ -252,7 +249,7 @@ export function IncidentPlaybookModal({
                   {step.completed && <CheckCircle2 className="h-3.5 w-3.5" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className={`text-xs font-medium block ${step.completed ? "line-through text-muted-foreground" : "text-foreground font-semibold"}`}>
+                  <span className="text-xs font-medium block text-foreground">
                     {language === "ar" ? step.arLabel : step.label}
                   </span>
                   <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
@@ -278,7 +275,7 @@ export function IncidentPlaybookModal({
             className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
           >
             <Printer className="h-4 w-4" />
-            <span>{language === "ar" ? "طباعة السجل" : "Print Audit"}</span>
+            <span>{language === "ar" ? "طباعة القائمة" : "Print checklist"}</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -289,12 +286,12 @@ export function IncidentPlaybookModal({
                 className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all active-spring cursor-pointer"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                <span>{language === "ar" ? "اعتماد وتنفيذ كافة البنود" : "Authorize All Items"}</span>
+                <span>{language === "ar" ? "تعليم الكل كمراجع" : "Mark all reviewed"}</span>
               </button>
             ) : (
               <span className="flex items-center gap-1.5 text-xs font-bold text-status-ok">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>{language === "ar" ? "البروتوكول مكتمل وموثق بالكامل" : "Playbook Fully Executed"}</span>
+                <span>{language === "ar" ? "تمت المراجعة في هذه الجلسة" : "Reviewed in this session"}</span>
               </span>
             )}
           </div>

@@ -1,3 +1,4 @@
+import { useModalFocus } from "../../hooks/useModalFocus";
 import { useState } from "react";
 import { FileText, Printer, CheckCircle2, X, Download } from "lucide-react";
 import { useLocale } from "../../context/locale";
@@ -15,6 +16,8 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
   const { activeScenario, isDrillActive, metar } = useSimulation();
   const [managerNotes, setManagerNotes] = useState("");
   const [dutyManagerName, setDutyManagerName] = useState("Eng. Ahmed Mahdy (AOCC Lead)");
+
+  const dialogRef = useModalFocus(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -41,10 +44,11 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="postmortem-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-fade-in print:p-0 print:bg-white print:static"
+      className="printable-dialog fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-fade-in print:p-0 print:bg-white print:static"
     >
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-card p-4 sm:p-6 shadow-2xl flex flex-col gap-4 text-foreground print:max-w-none print:max-h-none print:border-none print:shadow-none print:text-black">
         {/* Header - Screen only controls */}
@@ -91,7 +95,7 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
                 {language === "ar" ? "سلطة مطار القاهرة الدولي — مركز إدارة العمليات (AOCC)" : "Cairo International Airport — AOCC Command Center"}
               </h1>
               <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                Official Post-Incident Analysis & SOP Compliance Audit • ICAO Doc 9137
+                {language === "ar" ? "ملخص تمرين تدريبي · قيم توضيحية غير معتمدة" : "Training exercise summary · illustrative values, not certified"}
               </p>
             </div>
             <div className="text-end font-mono text-xs">
@@ -138,9 +142,9 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
             </div>
 
             <div className="p-3 rounded-xl border border-border/40 bg-secondary/30 print:border-black/20">
-              <span className="text-[10px] text-muted-foreground uppercase font-mono block">SOP Checklist Compliance</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-mono block">Sample checklist completion</span>
               <span className="text-lg font-mono font-black text-primary print:text-black">100%</span>
-              <span className="text-[10px] text-muted-foreground block">5/5 Verified</span>
+              <span className="text-[10px] text-muted-foreground block">5/5 example steps</span>
             </div>
 
             <div className="p-3 rounded-xl border border-border/40 bg-secondary/30 print:border-black/20">
@@ -159,28 +163,28 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
           {/* Key Directives & Action Timeline */}
           <div className="p-3.5 rounded-xl border border-border/60 bg-background/50 print:bg-transparent print:border-black/20 flex flex-col gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {language === "ar" ? "سجل التدابير والإجراءات المتخذة" : "Operational Directives Log"}
+              {language === "ar" ? "تسلسل مراجعة تدريبي، وليس سجل تنفيذ" : "Example review sequence, not an action log"}
             </span>
             <div className="space-y-1.5 text-xs font-mono">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-status-ok shrink-0" />
                 <span className="text-muted-foreground">T+00:00:</span>
-                <span className="text-foreground print:text-black">Incident / Contingency Playbook triggered by Duty Manager.</span>
+                <span className="text-foreground print:text-black">Review the applicable local contingency procedure.</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-status-ok shrink-0" />
                 <span className="text-muted-foreground">T+01:45:</span>
-                <span className="text-foreground print:text-black">Airside sweeper and marshalling teams dispatched.</span>
+                <span className="text-foreground print:text-black">Confirm airside team availability with the responsible coordinator.</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-status-ok shrink-0" />
                 <span className="text-muted-foreground">T+03:20:</span>
-                <span className="text-foreground print:text-black">A-CDM TOBT revisions pushed to EgyptAir & Star Alliance dispatchers.</span>
+                <span className="text-foreground print:text-black">Review target-time changes with the flight stakeholders.</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-status-ok shrink-0" />
                 <span className="text-muted-foreground">T+04:10:</span>
-                <span className="text-foreground print:text-black">Runway 05C braking friction verified above 0.52 Mu standard.</span>
+                <span className="text-foreground print:text-black">Check whether inspection or surface assessment is required.</span>
               </div>
             </div>
           </div>
@@ -208,6 +212,7 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
                 <span className="text-[10px] text-muted-foreground block font-mono">Duty Manager on Shift</span>
                 <input
                   type="text"
+                  aria-label={language === "ar" ? "مدير النوبة" : "Duty manager on shift"}
                   value={dutyManagerName}
                   onChange={(e) => setDutyManagerName(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-border/60 bg-secondary/30 px-2 py-1 text-xs font-bold font-mono print:border-none print:bg-transparent"
@@ -216,7 +221,7 @@ export function DrillPostMortemModal({ isOpen, onClose }: DrillPostMortemModalPr
               <div className="flex flex-col justify-end text-end sm:text-start">
                 <span className="text-[10px] text-muted-foreground block font-mono">Digital Signature Stamp</span>
                 <span className="mt-1 font-mono text-xs font-bold text-status-ok print:text-black">
-                  VALIDATED • CAI-AOCC-CERTIFIED
+                  {language === "ar" ? "مسودة تدريبية · غير معتمدة" : "TRAINING DRAFT · NOT CERTIFIED"}
                 </span>
               </div>
             </div>

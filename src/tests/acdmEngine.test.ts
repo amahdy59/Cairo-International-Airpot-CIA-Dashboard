@@ -2,7 +2,7 @@
 import { INITIAL_ACDM_TURNAROUNDS, getScenarioTurnarounds, AcdmTurnaround } from '../hooks/useAcdmEngine';
 
 describe('A-CDM Milestone & Turnaround Engine', () => {
-  it('validates ICAO Doc 9971 chronological milestone sequence across all turnarounds', () => {
+  it('validates chronological milestone sequence across sample turnarounds', () => {
     INITIAL_ACDM_TURNAROUNDS.forEach((t) => {
       expect(t.id).toMatch(/^ACDM-[0-9]{2}$/);
       expect(['C', 'D', 'E', 'F']).toContain(t.acType);

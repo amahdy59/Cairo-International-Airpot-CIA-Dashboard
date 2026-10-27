@@ -1,7 +1,7 @@
-﻿import { useState, useEffect } from "react";
+import { useModalFocus } from "../../hooks/useModalFocus";
+import { useState } from "react";
 import {
   X,
-  AlertTriangle,
   CheckCircle2,
   FileSignature,
   PlaneTakeoff,
@@ -31,70 +31,34 @@ export function ExecutiveDecisionsModal({
   const { language, tr } = useLocale();
 
   const [handoverApproved, setHandoverApproved] = useState(false);
-  const [apronDivertApproved, setApronDivertApproved] = useState(false);
   const [surgeCrewDispatched, setSurgeCrewDispatched] = useState(false);
 
-  // Close on Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // Lock body scroll
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
+  const dialogRef = useModalFocus(isOpen, onClose);
 
   const pendingCount =
     (handoverApproved ? 0 : 1) +
-    (apronDivertApproved ? 0 : 1) +
     (surgeCrewDispatched ? 0 : 1);
 
   const handleApproveHandover = () => {
     soundEffects.playClick();
     setHandoverApproved(true);
     notifyManager(
-      language === "ar" ? "محضر الوردية معتمد" : "Shift Handover Approved",
+      language === "ar" ? "تمت مراجعة محضر الوردية" : "Handover reviewed locally",
       language === "ar"
-        ? "تم التصديق الرقمي على محضر تسليم الوردية ونقله للإدارة العامة"
-        : "Shift handover briefing signed off and submitted to executive archive.",
-      "ok"
-    );
-  };
-
-  const handleApproveApronDivert = () => {
-    soundEffects.playDispatch();
-    setApronDivertApproved(true);
-    notifyManager(
-      language === "ar" ? "إذن التحويل معتمد" : "Stand R-14 Divert Authorized",
-      language === "ar"
-        ? "تم تحويل الرحلة SV-301 إلى الموقف R-14 لتفادي تعارض باع الأجنحة مع MS-800"
-        : "Flight SV-301 tactically re-assigned to Remote Stand R-14 to protect wingspan separation.",
+        ? "تم حفظ حالة المراجعة في هذه الجلسة التدريبية فقط"
+        : "Review state saved in this training session only.",
       "ok"
     );
   };
 
   const handleDispatchSurgeCrew = () => {
-    soundEffects.playDispatch();
+    soundEffects.playClick();
     setSurgeCrewDispatched(true);
     notifyManager(
-      language === "ar" ? "نشر تعزيزات الجوازات" : "Surge Crew Dispatched",
+      language === "ar" ? "تمت مراجعة خطة التعزيز" : "Surge proposal reviewed",
       language === "ar"
-        ? "تم نشر 14 موظف دعم إضافي بصالة سفر مبنى 3 لامتصاص ذروة الظهيرة"
-        : "14 tactical roving marshals deployed to Terminal 3 passport control wave.",
+        ? "لم يُرسل أي فريق؛ الحالة محفوظة في هذه الجلسة التدريبية فقط"
+        : "No crew was dispatched; this is a local training state.",
       "ok"
     );
   };
@@ -103,6 +67,7 @@ export function ExecutiveDecisionsModal({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="exec-decisions-title"
@@ -143,14 +108,14 @@ export function ExecutiveDecisionsModal({
                       ? `${pendingCount} قيد المراجعة`
                       : `${pendingCount} Pending`
                     : language === "ar"
-                    ? "مكتمل بالكامل"
-                    : "All Resolved"}
+                    ? "تمت المراجعة محلياً"
+                    : "Reviewed locally"}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {language === "ar"
-                  ? "الموافقات الفورية العابرة للأقسام لضمان انسيابية العمليات والامتثال لمعايير الإيكاو"
-                  : "Cross-domain tactical authorizations requiring immediate leadership clearance."}
+                  ? "قرارات تدريبية فقط؛ لا تتصل بأنظمة المطار ولا تنفذ إجراءات تشغيلية."
+                  : "Training decisions only. No airport system is updated or operational action taken."}
               </p>
             </div>
           </div>
@@ -189,7 +154,7 @@ export function ExecutiveDecisionsModal({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
-                      {language === "ar" ? "إدارة العمليات AOCC" : "AOCC DIRECTIVE"}
+                      {language === "ar" ? "مراجعة تدريبية" : "TRAINING REVIEW"}
                     </span>
                     <span className="text-muted-foreground/40">&bull;</span>
                     <span className="text-xs text-muted-foreground">
@@ -198,13 +163,13 @@ export function ExecutiveDecisionsModal({
                   </div>
                   <h3 className="font-bold text-foreground text-sm sm:text-base mt-0.5">
                     {language === "ar"
-                      ? "المصادقة التنفيذية على محضر تسليم الوردية"
-                      : "Shift Turnover Briefing Formal Sign-Off"}
+                      ? "مراجعة مثال تسليم الوردية"
+                      : "Review sample shift handover"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {language === "ar"
-                      ? "يتضمن تقرير نوبة الصباح 148 حركة طيران، حالة المدارج الاسمية CAT III، وتوصيات نقل طاقم الإسناد لمبنى 3."
-                      : "AOCC Shift Summary: 148 flight movements, CAT III nominal status, and recommended staffing transfer to Terminal 3."}
+                      ? "مثال تدريبي لتسليم الوردية يتضمن مراجعة حركة الرحلات وتوزيع العاملين بين المباني."
+                      : "Training handover example covering flight movement review and staffing across terminals."}
                   </p>
                 </div>
               </div>
@@ -214,7 +179,7 @@ export function ExecutiveDecisionsModal({
                 {handoverApproved ? (
                   <div className="inline-flex items-center gap-1.5 rounded-xl border border-status-ok/30 bg-status-ok/10 px-3 py-2 text-xs font-semibold text-status-ok">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>{language === "ar" ? "معتمد ومؤرشف" : "Signed Off"}</span>
+                    <span>{language === "ar" ? "تمت المراجعة محلياً" : "Reviewed locally"}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -240,7 +205,7 @@ export function ExecutiveDecisionsModal({
                       className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 active:scale-95 transition shadow-xs cursor-pointer"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      <span>{language === "ar" ? "اعتماد المحضر" : "Sign Off"}</span>
+                      <span>{language === "ar" ? "تعليم كمراجع" : "Mark reviewed"}</span>
                     </button>
                   </div>
                 )}
@@ -248,22 +213,14 @@ export function ExecutiveDecisionsModal({
             </div>
           </div>
 
-          {/* Decision 2: Stand S-305 / S-306 Wingspan Divert */}
+          {/* Decision 2: Review the stand assignment training example */}
           <div
-            className={`rounded-2xl border p-4 transition-all duration-200 ${
-              apronDivertApproved
-                ? "border-status-ok/30 bg-status-ok/5"
-                : "border-status-warn/40 bg-status-warn/5 shadow-xs"
-            }`}
+            className="rounded-2xl border border-status-warn/40 bg-status-warn/5 p-4 shadow-xs"
           >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <div
-                  className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl ${
-                    apronDivertApproved
-                      ? "bg-status-ok/20 text-status-ok"
-                      : "bg-status-warn/20 text-status-warn"
-                  }`}
+                  className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-status-warn/20 text-status-warn"
                 >
                   <PlaneTakeoff className="h-5 w-5" aria-hidden="true" />
                 </div>
@@ -279,53 +236,34 @@ export function ExecutiveDecisionsModal({
                   </div>
                   <h3 className="font-bold text-foreground text-sm sm:text-base mt-0.5">
                     {language === "ar"
-                      ? "تعارض باع الأجنحة بين MS-800 و SV-301"
-                      : "Stand Conflict: Wingspan Separation Margin"}
+                      ? "تعارض تخصيص بين الرحلتين SV302 وEK927"
+                      : "Stand assignment: SV302 and EK927"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {language === "ar"
-                      ? "تزامن وقوف طائرة بوينج 777-300ER وطائرة إيرباص A330-300 بالموقفين المتجاورين ينتهك هامش الأمان (4.2م). الإجراء: تحويل فوري لـ SV-301 إلى الموقف البعيد R-14."
-                      : "Simultaneous parking of B777-300ER and A330-300 breaches 7.5m wingtip safety buffer. Recommendation: Divert SV-301 to Stand R-14."}
+                      ? "بيانات المثال تشير إلى تعارض بين الموقفين 305 و306. راجع محاكاة نقل EK927 إلى R-14؛ لم تُحسب مسافة فصل فعلية."
+                      : "The training data flags Gates 305 and 306. Review the proposed move of EK927 to R-14; no actual clearance has been calculated."}
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 pt-1 sm:pt-0">
-                {apronDivertApproved ? (
-                  <div className="inline-flex items-center gap-1.5 rounded-xl border border-status-ok/30 bg-status-ok/10 px-3 py-2 text-xs font-semibold text-status-ok">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>{language === "ar" ? "تم التحويل لـ R-14" : "Diverted to R-14"}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    {onNavigateTab && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onNavigateTab("digital");
-                        }}
-                        className="min-h-[44px] inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-secondary/50 px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition cursor-pointer"
-                        title={language === "ar" ? "عرض الخريطة التفاعلية" : "View in Digital Twin"}
-                      >
-                        <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
-                        <span className="hidden sm:inline">
-                          {language === "ar" ? "المخطط" : "Map"}
-                        </span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleApproveApronDivert}
-                      className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl bg-status-warn px-3.5 py-2 text-xs font-bold text-black hover:opacity-90 active:scale-95 transition shadow-xs cursor-pointer"
-                    >
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      <span>{language === "ar" ? "اعتماد التحويل (R-14)" : "Authorize R-14 Divert"}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              {onNavigateTab && <button type="button" onClick={() => {
+                onClose();
+                onNavigateTab("digital");
+                let attempts = 0;
+                const revealStandDiagram = () => {
+                  const panel = document.getElementById("stand-assignments");
+                  if (panel) {
+                    panel.scrollIntoView({ block: "start", behavior: "smooth" });
+                    panel.focus({ preventScroll: true });
+                  } else if (attempts++ < 12) {
+                    window.setTimeout(revealStandDiagram, 100);
+                  }
+                };
+                window.setTimeout(revealStandDiagram, 0);
+              }} className="min-h-11 shrink-0 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-foreground hover:bg-secondary">
+                {language === "ar" ? "راجع مخطط المواقف" : "Review stand diagram"}
+              </button>}
             </div>
           </div>
 
@@ -351,7 +289,7 @@ export function ExecutiveDecisionsModal({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-cyan">
-                      {language === "ar" ? "القوى العاملة والتوزيع" : "WORKFORCE DISPATCH"}
+                      {language === "ar" ? "تخطيط القوى العاملة" : "WORKFORCE PLANNING"}
                     </span>
                     <span className="text-muted-foreground/40">&bull;</span>
                     <span className="text-xs text-muted-foreground">
@@ -360,13 +298,13 @@ export function ExecutiveDecisionsModal({
                   </div>
                   <h3 className="font-bold text-foreground text-sm sm:text-base mt-0.5">
                     {language === "ar"
-                      ? "إرسال 14 موظف دعم إضافي لذروة الجوازات"
-                      : "Tactical Surge: Dispatch 14 Roving Biometric Marshals"}
+                      ? "مراجعة مقترح تعزيز الجوازات"
+                      : "Review passport-control surge proposal"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {language === "ar"
-                      ? "ارتفاع متوقع بنسبة +38% في كثافة الركاب بين 14:00 - 16:30. فتح 4 بوابات بيومترية إضافية يتطلب تفعيل سرية الدعم المركزية."
-                      : "Anticipated +38% passenger surge between 14:00 - 16:30. Opening 4 supplemental e-gates requires activating Central Reserve Unit."}
+                      ? "سيناريو تدريبي لزيادة الطلب. تحقق من قياسات الطوابير والموارد المتاحة قبل وضع خطة تعزيز فعلية."
+                      : "Training surge scenario. Verify measured queues and available staff before any real deployment plan."}
                   </p>
                 </div>
               </div>
@@ -376,7 +314,7 @@ export function ExecutiveDecisionsModal({
                 {surgeCrewDispatched ? (
                   <div className="inline-flex items-center gap-1.5 rounded-xl border border-status-ok/30 bg-status-ok/10 px-3 py-2 text-xs font-semibold text-status-ok">
                     <CheckCircle2 className="h-4 w-4" />
-                    <span>{language === "ar" ? "تم النشر والمتابعة" : "Crew Dispatched"}</span>
+                    <span>{language === "ar" ? "تمت المراجعة محلياً" : "Reviewed locally"}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -399,10 +337,10 @@ export function ExecutiveDecisionsModal({
                     <button
                       type="button"
                       onClick={handleDispatchSurgeCrew}
-                      className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl bg-cyan px-3.5 py-2 text-xs font-bold text-black hover:opacity-90 active:scale-95 transition shadow-xs cursor-pointer"
+                      className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 active:scale-95 transition shadow-xs cursor-pointer"
                     >
                       <Users className="h-3.5 w-3.5" />
-                      <span>{language === "ar" ? "إرسال التعزيزات" : "Dispatch Marshals"}</span>
+                      <span>{language === "ar" ? "تعليم كمراجع" : "Mark reviewed"}</span>
                     </button>
                   </div>
                 )}
@@ -415,8 +353,8 @@ export function ExecutiveDecisionsModal({
         <div className="mt-5 flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
           <span className="font-mono">
             {language === "ar"
-              ? "نظام اتخاذ القرار الموحد AOCC • إصدار 2.4"
-              : "CIA Executive Orchestration Engine v2.4"}
+              ? "قرارات نموذجية · مراجعة محلية فقط"
+              : "Sample decisions · local review only"}
           </span>
           <button
             type="button"

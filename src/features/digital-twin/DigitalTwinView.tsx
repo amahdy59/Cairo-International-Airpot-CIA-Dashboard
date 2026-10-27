@@ -3,12 +3,14 @@ import { Sun, Moon, X, Clock3, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Move, 
 import { localize, localizedFlightStatus } from '../../utils/helpers';
 import { useLocale } from '../../context/locale';
 import { useSimulation } from '../../context/simulation';
+import { useOperationalEvents } from '../../context/operationalEvents';
 import { AirportScene, HotspotStatus, MapHotspot, scenes, IncomingFlight, Tone, ManagerTab } from '../../data';
 import { StatusPill, SectionPanel } from '../../components/command-center/MetricWidgets';
-import { useIncomingCaiFlights } from '../../hooks/useIncomingCaiFlights';
+import { useIncomingCaiFlights, type FlightFeedState } from '../../hooks/useIncomingCaiFlights';
 import { notifyManager } from '../../utils/toast';
 import { soundEffects } from '../../services/soundEffects';
 import { ApronConflictDetector } from './ApronConflictDetector';
+import { SelectMenu } from '../../components/common/SelectMenu';
 
 type Translatable = string | { en: string; ar: string };
 
@@ -76,10 +78,24 @@ export interface DigitalTwinViewProps {
 
 function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinViewProps) {
   const { language, tr } = useLocale();
+  const { events, selectedEventId, selectEvent, assignEvent, standForFlight } = useOperationalEvents();
+  const [activeLayer, setActiveLayer] = useState<"all" | "airside" | "passenger" | "safety" | "services">("all");
   const [activeSceneId, setActiveSceneId] = useState<AirportScene["id"]>("terminal-3");
   const activeScene = useMemo(() => scenes.find((scene) => scene.id === activeSceneId) ?? scenes[0], [activeSceneId]);
   const [imageMode, setImageMode] = useState<"light" | "dark">("light");
   const [dispatchedHotspots, setDispatchedHotspots] = useState<Record<string, 'idle' | 'dispatching' | 'dispatched'>>({});
+
+  useEffect(() => {
+    if (!selectedEventId) return;
+    for (const scene of scenes) {
+      if (scene.hotspots.some((hotspot) => hotspot.id === selectedEventId)) {
+        setActiveSceneId(scene.id);
+        setActiveLayer("all");
+        setSelectedHotspotId(selectedEventId);
+        break;
+      }
+    }
+  }, [selectedEventId]);
 
   useEffect(() => {
     if (selectedSceneId && scenes.some((s) => s.id === selectedSceneId)) {
@@ -110,6 +126,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
   const [activeCctvFeed, setActiveCctvFeed] = useState<{ src: string; label: string } | null>(null);
     const selectHotspotAndScene = (hotspotId: string | null) => {
     setSelectedHotspotId(hotspotId);
+    selectEvent(hotspotId && events.some((event) => event.id === hotspotId) ? hotspotId : null);
     if (hotspotId) {
       for (const scene of scenes) {
         if (scene.hotspots.some((h) => h.id === hotspotId)) {
@@ -129,7 +146,21 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const incoming = useIncomingCaiFlights();
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [markerHitRadius, setMarkerHitRadius] = useState(24);
   const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const container = imageContainerRef.current;
+    if (!container) return;
+    const update = () => {
+      const width = container.querySelector("svg")?.getBoundingClientRect().width ?? 1600;
+      if (width > 0) setMarkerHitRadius(Math.max(24, 22 * 1600 / width));
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(container);
+    update();
+    return () => observer.disconnect();
+  }, []);
 
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -173,7 +204,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
   const handleHotspotClick = (hotspotId: string, e: React.MouseEvent) => {
     const dx = Math.abs(e.clientX - dragStartPos.current.x);
     const dy = Math.abs(e.clientY - dragStartPos.current.y);
-    if (dx > 5 || dy > 5) {
+    if (e.detail !== 0 && (dx > 5 || dy > 5)) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -258,7 +289,13 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
     .map((id) => scenes.find((scene) => scene.id === id))
     .filter((scene): scene is AirportScene => Boolean(scene));
   const ImageModeIcon = imageMode === "dark" ? Sun : Moon;
-  const selectedHotspot = activeScene.hotspots.find(h => h.id === selectedHotspotId);
+  const layerFor = (hotspot: MapHotspot) => hotspot.id === "t2-scanner" ? "safety" : hotspot.id === "catering-facility" ? "services" : ["t2-security", "t3-flow", "parking-congestion", "t3-baggage"].includes(hotspot.id) ? "passenger" : "airside";
+  const activeHotspots = activeScene.hotspots.filter((hotspot) => (hotspot.id !== "t3-baggage" || events.some((event) => event.id === hotspot.id)) && (activeLayer === "all" || layerFor(hotspot) === activeLayer)).map((hotspot) => {
+    const event = events.find((item) => item.id === hotspot.id);
+    return event ? { ...hotspot, status: (event.state === "simulated" ? "info" : event.priority === "critical" ? "critical" : "warning") as HotspotStatus } : hotspot;
+  });
+  const selectedHotspot = activeHotspots.find(h => h.id === selectedHotspotId);
+  const selectedEvent = events.find((event) => event.id === selectedHotspotId);
 
   useEffect(() => {
     if (selectedHotspotId) {
@@ -334,8 +371,10 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
         role="button"
         tabIndex={0}
         aria-label={`${tr(hotspot.title)}. ${tr(hotspot.status === 'warning' ? 'Needs attention' : hotspot.status === 'critical' ? 'Critical' : hotspot.status === 'good' ? 'Good' : hotspot.status === 'offline' ? 'Offline' : 'Info')}`}
+        aria-pressed={isSelected}
         className="cursor-pointer"
       >
+        <circle r={markerHitRadius} fill="transparent" />
         {/* Outer Glow */}
         <circle 
           r={isSelected ? "28" : "20"} 
@@ -377,12 +416,12 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
       <nav className="relative z-10 border border-border bg-background/95 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-sm" aria-label={localize({ en: "Airport image sections", ar: "أقسام صورة المطار" }, language)}>
         <div className="flex min-w-0 items-center justify-between gap-3 overflow-x-auto scroll-smooth touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-max">
-            <h2 className="shrink-0 text-xs sm:text-sm font-bold tracking-tight text-foreground flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+            <h2 className="hidden sm:flex shrink-0 text-sm font-bold tracking-tight text-foreground items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
               <span>{localize({ en: "Visual command map", ar: "خريطة القيادة المرئية" }, language)}</span>
             </h2>
             <span className="hidden sm:inline-block shrink-0 font-mono text-[10px] font-semibold uppercase text-muted-foreground/40">|</span>
-            <div className="flex items-center gap-1 sm:gap-1.5">
+            <div className="hidden sm:flex items-center gap-1.5">
               {jumpScenes.map((scene) => {
                 const active = scene.id === activeSceneId;
                 return (
@@ -405,8 +444,21 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
               })}
             </div>
           </div>
+          <label htmlFor="map-scene" className="cursor-pointer text-sm font-semibold sm:hidden">{language === "ar" ? "المنطقة" : "Area"}</label>
+          <div className="min-w-0 flex-1 sm:hidden"><SelectMenu<AirportScene["id"]> id="map-scene" label={language === "ar" ? "المنطقة" : "Area"} className="w-full"
+            value={activeSceneId} onChange={next => { setActiveSceneId(next); selectHotspotAndScene(null); }}
+            options={jumpScenes.map(scene => ({ value: scene.id, label: tr(scene.label) }))} /></div>
         </div>
       </nav>
+
+      <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card/70 p-2" role="group" aria-label={language === "ar" ? "طبقات التوأم الرقمي" : "Digital twin layers"}>
+        <span className="px-1 text-xs font-semibold text-muted-foreground">{language === "ar" ? "الطبقات" : "Layers"}</span>
+        {(["all", "airside", "passenger", "safety", "services"] as const).map((layer) => <button key={layer} type="button" aria-pressed={activeLayer === layer} onClick={() => { setActiveLayer(layer); setSelectedHotspotId(null); selectEvent(null); }}
+          className={`min-h-11 rounded-lg px-3 text-xs font-semibold transition-colors ${activeLayer === layer ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
+          {language === "ar" ? ({ all: "الكل", airside: "الساحة", passenger: "الركاب", safety: "السلامة", services: "الخدمات" } as const)[layer] : ({ all: "All", airside: "Airside", passenger: "Passenger", safety: "Safety", services: "Services" } as const)[layer]}
+        </button>)}
+        <span className="ms-auto text-xs text-muted-foreground">{activeHotspots.length} {language === "ar" ? "نقاط" : "markers"} · {language === "ar" ? "سيناريو" : "scenario"}</span>
+      </div>
 
       <SectionPanel className="flex flex-col flex-1 min-h-0 overflow-visible p-0!" title="">
         <div className="grid min-w-0 px-1 py-3 lg:p-4 gap-3 lg:gap-4 md:grid-cols-[60%_1fr] lg:grid-cols-[1fr_360px] flex-1 min-h-0 h-full">
@@ -420,12 +472,14 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                     <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                   </div>
                   <span className="font-mono text-xs uppercase tracking-widest text-foreground/80">
-                    {language === "ar" ? "جاري مزامنة المشهد المرئي..." : "Syncing airfield twin..."}
+                    {language === "ar" ? "جارٍ تحميل خريطة توضيحية..." : "Loading illustrative map..."}
                   </span>
                 </div>
               )}
               <div 
                 id="digital-twin-image-container" 
+                role="region"
+                aria-label={language === "ar" ? "خريطة المطار، استخدم مفاتيح الأسهم للتحريك" : "Airport map. Use arrow keys to pan"}
                 ref={imageContainerRef} 
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -475,7 +529,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                     />
 
                     {/* Render Hotspots */}
-                    {isImageLoaded && activeScene.hotspots.map(renderHotspotMarker)}
+                    {isImageLoaded && activeHotspots.map(renderHotspotMarker)}
                   </svg>
                 </div>
               </div>
@@ -540,9 +594,9 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
               </div>
             </div>
           {/* Popover renders OUTSIDE overflow-hidden — fixed to viewport, never cropped */}
-          {activeScene.hotspots.find(h => h.id === hoveredHotspotId) && hoverAnchor && !selectedHotspot && (
+          {activeHotspots.find(h => h.id === hoveredHotspotId) && hoverAnchor && !selectedHotspot && (
             <BriefPopover 
-              hotspot={activeScene.hotspots.find(h => h.id === hoveredHotspotId)!} 
+              hotspot={activeHotspots.find(h => h.id === hoveredHotspotId)!}
               anchor={hoverAnchor} 
             />
           )}
@@ -609,15 +663,26 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                         language === "ar" ? "text-[13px] font-sans" : "font-mono text-[12px]"
                       }`}>
                         <Clock3 className="h-3.5 w-3.5" />
-                        <span>{selectedHotspot.updatedAt}</span>
+                        <span>{selectedHotspot.updatedAt} {language === "ar" ? "وقت العينة" : "sample time"}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
+                {selectedEvent && <div className="rounded-xl border border-border bg-background/50 p-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold text-foreground">{language === "ar" ? "سجل تشغيلي مشترك" : "Shared operational record"}</span>
+                    <span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold text-muted-foreground">{selectedEvent.state === "simulated" ? language === "ar" ? "أُجري في المحاكاة" : "Simulated" : selectedEvent.state === "assigned" ? language === "ar" ? "أُسند للفريق" : "Assigned" : language === "ar" ? "مفتوح" : "Open"}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{language === "ar" ? "المسؤول" : "Owner"}: <strong className="text-foreground">{selectedEvent.role}</strong> · {language === "ar" ? selectedEvent.source.ar : selectedEvent.source.en}</p>
+                  {selectedEvent.flightIds.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{language === "ar" ? "الرحلات" : "Flights"}: <strong dir="ltr" className="text-foreground">{selectedEvent.flightIds.map((flight) => `${flight}${standForFlight(flight) ? ` (${standForFlight(flight)})` : ""}`).join(" · ")}</strong></p>}
+                  <p className="mt-2 text-xs font-semibold text-foreground">{language === "ar" ? "أثر على الركاب" : "Passenger impact"}</p>
+                  <p className="text-xs text-muted-foreground">{language === "ar" ? selectedEvent.passengerImpact.ar : selectedEvent.passengerImpact.en}</p>
+                </div>}
+
                 {/* Operational Impact & Evidence (Flat flow design) */}
                 <div className="space-y-4 pt-1">
-                  {selectedHotspot.impact && (
+                  {(selectedEvent || selectedHotspot.impact) && (
                     <div className="text-sm sm:text-base leading-relaxed text-foreground">
                       <span className={language === "ar"
                         ? "block font-bold text-primary text-xs sm:text-sm mb-1"
@@ -625,10 +690,10 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                       }>
                         {localize({ en: "Operational Impact", ar: "التأثير التشغيلي" }, language)}
                       </span>
-                      <p className="text-muted-foreground font-medium">{tr(selectedHotspot.impact)}</p>
+                      <p className="text-muted-foreground font-medium">{selectedEvent ? language === "ar" ? selectedEvent.impact.ar : selectedEvent.impact.en : tr(selectedHotspot.impact!)}</p>
                     </div>
                   )}
-                  {selectedHotspot.evidence && (
+                  {(selectedEvent || selectedHotspot.evidence) && (
                     <div className="text-sm sm:text-base leading-relaxed text-foreground">
                       <span className={language === "ar"
                         ? "block font-bold text-status-warn text-xs sm:text-sm mb-1"
@@ -636,7 +701,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                       }>
                         {localize({ en: "Evidence", ar: "الأدلة" }, language)}
                       </span>
-                      <p className="text-muted-foreground font-medium">{tr(selectedHotspot.evidence)}</p>
+                      <p className="text-muted-foreground font-medium">{selectedEvent ? language === "ar" ? selectedEvent.evidence.ar : selectedEvent.evidence.en : tr(selectedHotspot.evidence!)}</p>
                     </div>
                   )}
                 </div>
@@ -645,7 +710,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                 {renderEvidenceContent(selectedHotspot.id, language, tr, activeCctvFeed, setActiveCctvFeed)}
 
                 {/* Action Recommendation Callout */}
-                {selectedHotspot.action && (
+                {(selectedEvent || selectedHotspot.action) && (
                   <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3.5 text-start shadow-[0_4px_12px_rgba(88,214,255,0.04)] animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex items-start gap-2.5">
                       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-primary/40 bg-primary/10 text-primary">
@@ -659,13 +724,15 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                           {localize({ en: "RECOMMENDED ACTION", ar: "الإجراء الموصى به" }, language)}
                         </span>
                         <p className="mt-1 text-sm sm:text-base text-foreground font-semibold leading-relaxed">
-                          {tr(selectedHotspot.action)}
+                          {selectedEvent ? language === "ar" ? selectedEvent.proposedAction.ar : selectedEvent.proposedAction.en : tr(selectedHotspot.action!)}
                         </p>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-primary/20 flex items-center justify-between gap-2 flex-wrap">
-                      {dispatchedHotspots[selectedHotspot.id] === 'dispatched' ? (
+                      {selectedEvent && selectedEvent.state !== "open" ? (
+                        <span className="rounded-lg border border-status-info/30 bg-status-info/10 px-3 py-2 text-xs font-semibold text-status-info">{selectedEvent.state === "assigned" ? language === "ar" ? "أُسند للمراجعة" : "Assigned for review" : language === "ar" ? "اكتملت المحاكاة" : "Simulation complete"}</span>
+                      ) : !selectedEvent && dispatchedHotspots[selectedHotspot.id] === 'dispatched' ? (
                         <div className="flex items-center gap-1.5 rounded-lg border border-status-ok/40 bg-status-ok/10 px-3 py-1.5 text-xs font-semibold text-status-ok">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           <span>{language === 'ar' ? 'فريق الدعم في الميدان • زمن الوصول 4 د' : 'Team En Route • ETA 4m'}</span>
@@ -673,11 +740,11 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                       ) : (
                         <button
                           type="button"
-                          disabled={dispatchedHotspots[selectedHotspot.id] === 'dispatching'}
-                          onClick={() => handleDispatch(selectedHotspot.id, tr(selectedHotspot.title), tr(selectedHotspot.action!))}
+                          disabled={!selectedEvent && dispatchedHotspots[selectedHotspot.id] === 'dispatching'}
+                          onClick={() => selectedEvent ? assignEvent(selectedEvent.id) : handleDispatch(selectedHotspot.id, tr(selectedHotspot.title), tr(selectedHotspot.action!))}
                           className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition hover:opacity-90 active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
                         >
-                          {dispatchedHotspots[selectedHotspot.id] === 'dispatching' ? (
+                          {!selectedEvent && dispatchedHotspots[selectedHotspot.id] === 'dispatching' ? (
                             <>
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               <span>{language === 'ar' ? 'جاري الإرسال...' : 'Dispatching...'}</span>
@@ -685,7 +752,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                           ) : (
                             <>
                               <Zap className="h-3.5 w-3.5" />
-                              <span>{language === 'ar' ? 'إرسال فريق التدخل الميداني' : 'Dispatch Ground Response'}</span>
+                              <span>{selectedEvent ? language === 'ar' ? 'إسناد للمراجعة' : 'Assign for review' : language === 'ar' ? 'إرسال فريق التدخل الميداني' : 'Dispatch Ground Response'}</span>
                             </>
                           )}
                         </button>
@@ -696,6 +763,11 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                     </div>
                   </div>
                 )}
+
+                {selectedEvent && <details className="rounded-lg border border-border px-3 py-2 text-xs">
+                  <summary className="min-h-9 cursor-pointer font-semibold text-foreground">{language === "ar" ? `سجل الحدث (${selectedEvent.history.length})` : `Event timeline (${selectedEvent.history.length})`}</summary>
+                  <ol className="space-y-1 border-t border-border pt-2 text-muted-foreground">{selectedEvent.history.map((entry, index) => <li key={`${entry.time}-${index}`}><time>{entry.time}</time> · {language === "ar" ? entry.description.ar : entry.description.en}</li>)}</ol>
+                </details>}
 
                 {/* Cross-Domain Spatial Deep-Linking */}
                 {onNavigateTab && (
@@ -735,8 +807,8 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                   <div className="mt-4 border-t border-border pt-3.5">
                     <h4 className="text-sm font-bold mb-2.5 text-foreground">{localize({ en: "Active Issues", ar: "المشكلات النشطة" }, language)}</h4>
                     <div className="grid gap-2">
-                      {activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").length > 0 ? 
-                        activeScene.hotspots.filter(h => h.status !== "good" && h.status !== "info").map(h => (
+                      {activeHotspots.filter(h => h.status !== "good" && h.status !== "info").length > 0 ?
+                        activeHotspots.filter(h => h.status !== "good" && h.status !== "info").map(h => (
                           <button 
                             key={h.id} 
                             type="button"
@@ -760,7 +832,7 @@ function DigitalTwinView({ theme, selectedSceneId, onNavigateTab }: DigitalTwinV
                 </div>
               
                 <div className="mt-auto border-t border-border px-1.5 py-2.5 lg:p-3 bg-surface-2/25">
-                  <IncomingFlightsPanel flights={incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
+                  <IncomingFlightsPanel flights={incoming.source === "sample" || incoming.source === "unavailable" ? incoming.flights.map((flight) => ({ ...flight, gate: standForFlight(flight.flight) ? `T3 / ${standForFlight(flight.flight)}` : flight.gate })) : incoming.flights} source={incoming.source} updatedAt={incoming.updatedAt} />
                   <div className="mt-2.5">
                     <ZoneStatusPanel />
                   </div>
@@ -783,16 +855,16 @@ function IncomingFlightsPanel({
   updatedAt,
 }: {
   flights: IncomingFlight[];
-  source: "live" | "sample" | "loading";
-  updatedAt: string;
+  source: FlightFeedState;
+  updatedAt: string | null;
 }) {
   const { language, tr } = useLocale();
-  const sourceLabel = source === "live"
-    ? localize({ en: "Live", ar: "مباشر" }, language)
-    : source === "loading"
-      ? localize({ en: "Loading", ar: "تحميل" }, language)
-      : localize({ en: "Offline", ar: "غير متصل" }, language);
-  const sourceTone: Tone = source === "live" ? "ok" : source === "loading" ? "info" : "neutral";
+  const sourceLabel = source === "live" ? localize({ en: "Provider feed", ar: "مصدر الرحلات" }, language)
+    : source === "loading" ? localize({ en: "Connecting", ar: "جارٍ الاتصال" }, language)
+    : source === "stale" ? localize({ en: "Last received", ar: "آخر بيانات مستلمة" }, language)
+    : source === "unavailable" ? localize({ en: "Feed unavailable · sample shown", ar: "المصدر غير متاح · عرض عينة" }, language)
+    : localize({ en: "Sample data", ar: "بيانات تجريبية" }, language);
+  const sourceTone: Tone = source === "live" ? "ok" : source === "loading" ? "info" : source === "stale" || source === "unavailable" ? "warn" : "neutral";
 
   return (
     <section className="panel-inner p-3 lg:p-3.5" aria-label={localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}>
@@ -802,7 +874,7 @@ function IncomingFlightsPanel({
           : "font-mono text-sm sm:text-base uppercase tracking-[0.15em] text-primary font-bold"
         }>{localize({ en: "Incoming flights", ar: "الرحلات القادمة" }, language)}</p>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-mono">{updatedAt}</span>
+          {updatedAt && <span className="text-xs text-muted-foreground font-mono">{updatedAt}</span>}
           <StatusPill tone={sourceTone} className="text-[10px] px-2 py-0.5">{sourceLabel}</StatusPill>
         </div>
       </div>
@@ -841,6 +913,7 @@ function IncomingFlightsPanel({
 function ZoneStatusPanel() {
   const { language } = useLocale();
   const { reactiveZoneStatuses } = useSimulation();
+  const priority = reactiveZoneStatuses.find(zone => zone.tone === "crit" || zone.tone === "high" || zone.tone === "warn");
 
   return (
     <section className="panel-inner p-3 lg:p-3.5" aria-label={localize({ en: "Terminal zone status", ar: "حالة مناطق المباني" }, language)}>
@@ -848,21 +921,20 @@ function ZoneStatusPanel() {
         ? "mb-2.5 text-sm sm:text-base text-primary font-bold"
         : "mb-2.5 font-mono text-sm sm:text-base uppercase tracking-[0.15em] text-primary font-bold"
       }>{localize({ en: "Zone status", ar: "حالة المناطق" }, language)}</p>
-      <div className="grid gap-1.5">
-        {reactiveZoneStatuses.map((zone) => (
-          <div key={zone.zone} className="flex items-center justify-between gap-2.5 text-sm py-1.5 border-b border-border/20 last:border-b-0">
-            <span className="font-bold text-foreground shrink-0">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}</span>
-            <span className="text-muted-foreground text-xs truncate flex-1 min-w-0 text-start px-1.5">{localize(zone.detail, language)}</span>
-            <span className={`text-xs sm:text-sm font-bold uppercase rtl:normal-case shrink-0 ${
-              zone.tone === 'ok' ? 'text-status-ok' :
-              zone.tone === 'warn' ? 'text-status-warn' :
-              zone.tone === 'crit' || zone.tone === 'high' ? 'text-status-crit' : 'text-muted-foreground'
-            }`}>
-              {localize(zone.status, language)}
-            </span>
-          </div>
-        ))}
-      </div>
+      <ul className="grid grid-cols-3 gap-1.5" aria-label={language === "ar" ? "مصفوفة حالة المباني" : "Terminal status matrix"}>
+        {reactiveZoneStatuses.map(zone => {
+          const color = zone.tone === "ok" ? "var(--status-ok)" : zone.tone === "warn" ? "var(--status-warn)" : "var(--status-crit)";
+          return <li key={zone.zone} className="min-w-0 rounded-lg border border-border bg-background/55 px-2 py-2 text-center" style={{ borderBlockStartWidth: 4, borderBlockStartColor: color }}>
+            <span className="block text-sm font-bold text-foreground">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}</span>
+            <span className="mt-1 block text-xs font-semibold" style={{ color }}>{localize(zone.status, language)}</span>
+          </li>;
+        })}
+      </ul>
+      {priority && <p className="mt-2.5 border-s-2 border-status-warn ps-2 text-xs leading-relaxed text-foreground"><strong>{language === "ar" ? priority.zone.replace("Terminal", "مبنى") : priority.zone.replace("Terminal ", "T")}:</strong> {localize(priority.detail, language)}</p>}
+      <details className="mt-2 border-t border-border pt-1">
+        <summary className="flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary">{language === "ar" ? "عرض إجراءات المناطق" : "View zone actions"}</summary>
+        <ul className="grid gap-2 pb-2 text-xs text-muted-foreground">{reactiveZoneStatuses.map(zone => <li key={zone.zone}><strong className="text-foreground">{language === "ar" ? zone.zone.replace("Terminal", "مبنى") : zone.zone.replace("Terminal ", "T")}:</strong> {localize(zone.detail, language)}</li>)}</ul>
+      </details>
     </section>
   );
 }
@@ -915,39 +987,6 @@ function BriefPopover({ hotspot, anchor }: { hotspot: MapHotspot; anchor: {x: nu
   );
 }
 
-function CctvLiveTimecode() {
-  const [timecode, setTimecode] = useState(() => {
-    return new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Africa/Cairo",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    }).format(new Date());
-  });
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTimecode(
-        new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Africa/Cairo",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        }).format(new Date())
-      );
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <div className="absolute top-2 end-2 bg-black/75 text-white font-mono text-[9px] px-2 py-0.5 rounded backdrop-blur-sm tracking-wider">
-      CAI {timecode} | 25 FPS
-    </div>
-  );
-}
-
 function renderCctvEvidence(
   hotspotId: string,
   language: "en" | "ar",
@@ -961,14 +1000,12 @@ function renderCctvEvidence(
       <div className="relative overflow-hidden rounded-xl border border-border bg-black shadow-sm aspect-[16/9] max-h-[160px] w-full">
         <img 
           src={feed.src} 
-          alt={localize({ en: `CCTV feed: ${feed.label}`, ar: `تغذية كاميرا: ${feed.label}` }, language)} 
+          alt={localize({ en: `Illustrative camera still: ${feed.label}`, ar: `صورة كاميرا توضيحية: ${feed.label}` }, language)}
           className="w-full h-full object-cover" 
         />
-        <div className="absolute top-2 start-2 bg-status-crit text-white font-mono rtl:font-sans text-[9px] px-1.5 py-0.5 rounded uppercase rtl:normal-case font-bold tracking-wider rtl:tracking-normal animate-pulse flex items-center gap-1">
-          <span className="h-1 w-1 rounded-full bg-white"></span>
-          {tr("LIVE")}
+        <div className="absolute top-2 start-2 bg-black/75 text-white font-mono rtl:font-sans text-[10px] px-2 py-1 rounded uppercase rtl:normal-case font-bold tracking-wider rtl:tracking-normal">
+          {localize({ en: "Sample still", ar: "صورة توضيحية" }, language)}
         </div>
-        <CctvLiveTimecode />
         <div className="absolute bottom-2 start-2 bg-black/70 text-white font-mono text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
           {feed.label}
         </div>
@@ -978,7 +1015,7 @@ function renderCctvEvidence(
           ? "block text-[11px] text-muted-foreground font-semibold mb-1.5"
           : "block font-mono text-[9px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5"
         }>
-          {localize({ en: "Alternative feeds", ar: "الكاميرات المجاورة والمقترحة" }, language)}
+          {localize({ en: "Illustrative views", ar: "صور توضيحية أخرى" }, language)}
         </span>
         <div className="flex flex-wrap gap-1.5">
           {getAlternativeFeeds(hotspotId).map((f) => {

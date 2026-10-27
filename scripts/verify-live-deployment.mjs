@@ -1,137 +1,65 @@
 const BASE_URL = process.env.DEPLOYMENT_URL || 'https://amahdy59.github.io/Cairo-International-Airpot-CIA-Dashboard/';
-const MAX_ATTEMPTS = parseInt(process.env.MAX_ATTEMPTS || '8', 10);
-const RETRY_DELAY_MS = parseInt(process.env.RETRY_DELAY_MS || '4000', 10);
+const EXPECTED_COMMIT = process.env.GITHUB_SHA;
+const MAX_ATTEMPTS = Number.parseInt(process.env.MAX_ATTEMPTS || '12', 10);
+const RETRY_DELAY_MS = Number.parseInt(process.env.RETRY_DELAY_MS || '5000', 10);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function fetchWithTimeout(url, timeoutMs = 12000) {
+async function fetchWithTimeout(url) {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
+  const timeout = setTimeout(() => controller.abort(), 12000);
   try {
-    const res = await fetch(url, { signal: controller.signal, headers: { 'Cache-Control': 'no-cache' } });
-    clearTimeout(id);
-    return res;
-  } catch (err) {
-    clearTimeout(id);
-    throw err;
+    return await fetch(url, { signal: controller.signal, cache: 'no-store' });
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 async function verify() {
-  console.log('=====================================================');
-  console.log('✈️  CAIRO AOCC LIVE PRODUCTION DEPLOYMENT AUTO-CHECKER');
-  console.log('=====================================================');
-  console.log(`Target URL: ${BASE_URL}\n`);
-
-  // Optional: check GitHub Actions status if accessible
-  try {
-    const runRes = await fetch('https://api.github.com/repos/amahdy59/Cairo-International-Airpot-CIA-Dashboard/actions/runs?per_page=1', {
-      headers: { 'User-Agent': 'CI-Deployment-Autochecker' }
-    });
-    if (runRes.ok) {
-      const runData = await runRes.json();
-      const run = runData.workflow_runs?.[0];
-      if (run) {
-        console.log('=== 1. GITHUB ACTIONS LATEST RUN ===');
-        console.log('Run ID:', run.id);
-        console.log('Commit SHA:', run.head_sha.substring(0, 7));
-        console.log('Status:', run.status, '| Conclusion:', run.conclusion);
-        console.log('Updated At:', run.updated_at, '\n');
-      }
-    }
-  } catch {
-    // GitHub API optional; continue to direct live HTTP audit
-  }
-
-  console.log('=== 2. LIVE DEPLOYMENT ASSET AUDIT ===');
+  if (!EXPECTED_COMMIT) throw new Error('GITHUB_SHA is required to verify the published revision.');
+  const releaseUrl = new URL('release.json', BASE_URL);
   let html = '';
-  let indexRes = null;
-  let attempt = 0;
 
-  while (attempt < MAX_ATTEMPTS) {
-    attempt++;
-    process.stdout.write(`[Attempt ${attempt}/${MAX_ATTEMPTS}] Polling ${BASE_URL}... `);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      indexRes = await fetchWithTimeout(BASE_URL);
-      if (indexRes.status === 200) {
-        html = await indexRes.text();
-        if (html.includes('id="root"')) {
-          console.log('✅ HTTP 200 OK (Root container verified)');
+      const [page, release] = await Promise.all([
+        fetchWithTimeout(BASE_URL),
+        fetchWithTimeout(releaseUrl),
+      ]);
+      if (page.ok && release.ok) {
+        const manifest = await release.json();
+        const candidate = await page.text();
+        if (manifest.commit === EXPECTED_COMMIT && candidate.includes('id="root"')) {
+          html = candidate;
           break;
-        } else {
-          console.log('⚠️ HTTP 200 received but root container missing. Retrying...');
         }
+        console.log(`Attempt ${attempt}: published revision ${manifest.commit || 'missing'}; waiting for ${EXPECTED_COMMIT}.`);
       } else {
-        console.log(`⚠️ HTTP ${indexRes.status}. Retrying...`);
+        console.log(`Attempt ${attempt}: page HTTP ${page.status}; release HTTP ${release.status}.`);
       }
-    } catch (e) {
-      console.log(`⚠️ Network error: ${e.message}. Retrying...`);
+    } catch (error) {
+      console.log(`Attempt ${attempt}: ${error.message}`);
     }
-
-    if (attempt < MAX_ATTEMPTS) {
-      await sleep(RETRY_DELAY_MS);
-    }
+    if (attempt < MAX_ATTEMPTS) await sleep(RETRY_DELAY_MS);
   }
 
-  if (!html || !html.includes('id="root"')) {
-    console.error(`\n❌ FAILED: Live deployment at ${BASE_URL} failed health check after ${MAX_ATTEMPTS} attempts.`);
-    process.exit(1);
+  if (!html) throw new Error(`Revision ${EXPECTED_COMMIT} did not appear at ${BASE_URL}.`);
+
+  const assetUrls = [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+    .map((match) => match[1])
+    .filter((url) => !/^(?:https?:|#|data:)/.test(url));
+
+  for (const asset of new Set(assetUrls)) {
+    const url = new URL(asset, BASE_URL);
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) throw new Error(`Published asset failed: ${url.href} (HTTP ${response.status}).`);
+    console.log(`HTTP ${response.status}: ${url.href}`);
   }
 
-  console.log('\n--- 🔍 AUDITING LINKED PRODUCTION ASSETS ---');
-  const regex = /(?:src|href)=["']([^"']+)["']/g;
-  const assets = new Set();
-  let match;
-  while ((match = regex.exec(html)) !== null) {
-    const url = match[1];
-    if (!url.startsWith('http') && !url.startsWith('#') && !url.startsWith('data:')) {
-      assets.add(url);
-    }
-  }
-
-  console.log(`Discovered ${assets.size} linked production assets:`);
-  let errors = 0;
-
-  for (const asset of assets) {
-    const fullUrl = new URL(asset, BASE_URL).href;
-    try {
-      const aRes = await fetchWithTimeout(fullUrl);
-      const cType = aRes.headers.get('content-type');
-      const cLen = aRes.headers.get('content-length');
-      if (aRes.status === 200) {
-        console.log(`  ✅ [200 OK] ${asset} (${cType}, ${cLen || 'chunked'} bytes)`);
-        if (asset.endsWith('.js')) {
-          const code = await aRes.text();
-          const hasPulse = code.includes('AOCC NOMINAL') || code.includes('ExecutivePulseBar') || code.includes('DRILL ACTIVE');
-          const hasSettings = code.includes('Executive Controls') || code.includes('Tactile Earcons') || code.includes('Cairo Tower ATC');
-          const hasStaffing = code.includes('RAMP-ALPHA-1') || code.includes('useStaffingRoster');
-          console.log(`     -> ExecutivePulseBar: ${hasPulse ? '✅ Verified' : '❌ Missing'}`);
-          console.log(`     -> Consolidated Settings: ${hasSettings ? '✅ Verified' : '❌ Missing'}`);
-          console.log(`     -> Staffing & Roster: ${hasStaffing ? '✅ Verified' : '❌ Missing'}`);
-        }
-      } else {
-        console.error(`  ❌ [${aRes.status}] ${asset} at ${fullUrl}`);
-        errors++;
-      }
-    } catch (e) {
-      console.error(`  ❌ [Network Error] ${asset}:`, e.message);
-      errors++;
-    }
-  }
-
-  console.log('\n=====================================================');
-  if (errors === 0) {
-    console.log('🎉 LIVE DEPLOYMENT VERIFIED: 100% HEALTHY WITH ZERO ISSUES!');
-    console.log('=====================================================');
-    process.exit(0);
-  } else {
-    console.error(`❌ DEPLOYMENT ISSUES DETECTED: ${errors} asset(s) failed.`);
-    console.log('=====================================================');
-    process.exit(1);
-  }
+  console.log(`Published revision ${EXPECTED_COMMIT} is accessible with ${new Set(assetUrls).size} linked assets.`);
 }
 
-verify().catch(e => {
-  console.error('Fatal audit error:', e);
-  process.exit(1);
+verify().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
 });

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0f172a" />
     <meta
       name="description"
-      content="CAI Command Hub is a focused Cairo International Airport management dashboard for operations, safety, passenger flow, and maintenance decisions."
+      content="CAI Command Hub is an independent airport operations training prototype with simulated flights, staffing, safety, and digital twin views."
     />
     <title>CAI Command Hub | Managers</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -26,13 +26,6 @@
       </p>
     </noscript>
     <div id="root"></div>
-    <script>
-      if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('./sw.js').catch(function() {});
-        });
-      }
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
