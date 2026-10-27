@@ -42,7 +42,7 @@ jobs:
       - name: 3. Automated Vitest Suites
         run: npm run test
 
-      - name: 4. Automated Reviews (Code, Responsiveness, WCAG 2.2 AAA)
+      - name: 4. Automated code, responsive, and accessibility source checks
         run: npm run review
 
       - name: 5. Production Vite Build
@@ -50,7 +50,8 @@ jobs:
 
       - name: Add release identity to Pages artifact
         if: github.ref == 'refs/heads/main'
-        run: node -e "require('fs').writeFileSync('dist/release.json', JSON.stringify({commit: process.env.GITHUB_SHA}))"
+        run: |
+          node -e "require('fs').writeFileSync('dist/release.json', JSON.stringify({commit: process.env.GITHUB_SHA}))"
 
       - name: Setup GitHub Pages
         if: github.ref == 'refs/heads/main'
